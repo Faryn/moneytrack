@@ -1,0 +1,178 @@
+# MoneyTrack MVP specification
+
+Status: draft based on the product discussion. Items explicitly marked as assumptions need review before implementation.
+
+## Purpose
+
+A small personal expense tracker for fewer than ten users. The main question is: **How much of my budget is left this month?** Recording an expense should take only a few seconds. Budgeting should remain simpler than YNAB.
+
+Design inspiration: [MoneyControl](https://apps.apple.com/us/app/moneycontrol-budget-tracker/id634892482) for quick capture and a straightforward budget overview, and [Dime](https://apps.apple.com/us/app/dime-budget-expense-tracker/id1635280255) for a native iOS-oriented experience. These are references, not requirements to reproduce their feature sets.
+
+The primary client is a native iOS app using SwiftUI and standard system components wherever practical. A small backend synchronizes data and serves an accompanying website. Expense creation must work offline and sync later.
+
+## Confirmed scope
+
+- Personal expenses are the default.
+- A saved expense can be made shared through its action menu.
+- Only the user's personal share counts against their budget.
+- Supported splits between two people are 100/0, 50/50, and 0/100.
+- Shared expenses track how much is owed between people.
+- Shared expenses are visible to both participating users after accepting a direct email invitation. A separate contact list is not required.
+- Either participant can edit or delete a shared expense; both can see its change history. Personal category assignments can be edited only by their owner.
+- Categories are a flat list with yearly budget amounts.
+- Each category receives one twelfth of its yearly budget each month.
+- Unspent budget carries into the next month within the same calendar year.
+- Carryover resets on January 1. Historical expenses and shared balances remain.
+- The home screen emphasizes the total remaining monthly budget. Categories appear when drilling down.
+- New expenses use a short form initially. Category suggestions assist entry.
+- Natural-language entry is a later enhancement, supporting German and English using built-in iOS capabilities only. No cloud AI.
+- The date defaults to today; entering a different date is a secondary action.
+- No dedicated refund workflow in the MVP. Users can delete an expense.
+- Recurring expenses are deferred.
+
+## Main screens and flows
+
+### Home
+
+- Display the selected month's total remaining budget prominently.
+- Show the monthly allocation, carryover, and personal spending as supporting figures.
+- Allow moving between months.
+- Provide an obvious Add Expense action and a recent expense list.
+- Open the category breakdown from the budget summary.
+- Provide access to balances owed to or by people without competing with the budget headline.
+
+### Add expense
+
+1. Enter an amount.
+2. Enter an optional description, such as `Theodor` (the restaurant name).
+3. Accept or change the suggested category.
+4. Save immediately to local storage.
+
+The date is today by default and can be changed through an additional control. An example expense is amount `78 €`, description `Theodor`, category `Restaurants`. The description must not automatically be interpreted as a participant.
+
+Category selection is explicit and editable. Assumption: suggestions initially use previously categorized descriptions and a remembered last category; new or ambiguous descriptions require the user to choose a category. Suggestions do not require cloud services.
+
+### Make an expense shared
+
+From a saved expense's action menu:
+
+1. Select Share Expense.
+2. Enter the other person's email address to invite them, or use an already accepted sharing relationship.
+3. Choose who paid; default to the current user.
+4. Choose the current user's share: all, half, or none.
+5. Confirm the personal budget impact and resulting debt.
+
+An accepted shared expense is one common record visible to both participants. Only each participant's own share counts against their budget. Each user selects a private category for their own share; the other participant cannot see their categories or budgets. Invitation acceptance and delivery need connectivity, while invitation requests and edits can be queued offline. The exact treatment of a pending invitation and the removal of an already accepted share are proposed in the [data model and sync draft](docs/data-model-and-sync.md).
+
+Either participant can edit the common description, amount, date, payer, and split, or delete the shared expense. A history visible to both records the actor, time, and shared changes, including deletion. Private category changes are not exposed to the other participant. Financial changes update each person's budget and their shared balance consistently; concurrent changes use the conflict handling described below.
+
+Examples for an expense of €78:
+
+| Paid by | User's share | User's budget usage | Resulting obligation |
+| --- | --- | --- | --- |
+| User | 100% | €78 | None |
+| User | 50% | €39 | Other person owes user €39 |
+| User | 0% | €0 | Other person owes user €78 |
+| Other person | 100% | €78 | User owes other person €78 |
+| Other person | 50% | €39 | User owes other person €39 |
+| Other person | 0% | €0 | None |
+
+The category describes the current user's budget impact. Shared budget management and groups of more than two participants per expense are outside the MVP.
+
+### People and repayments
+
+Show each person's net balance and the expenses and repayments behind it. Obligations in opposite directions offset each other for that person.
+
+Participants are MoneyTrack users connected through direct email invitations. A recipient without an account can create one and accept the invitation. There is no separate contact-management feature or non-account placeholder debtor. Balance views are derived from actual sharing relationships. These choices are recorded in [ADR 0005](docs/adr/0005-shared-expenses-and-email-invitations.md).
+
+Assumption: allow recording a full or partial repayment so balances can be cleared. Repayments affect debts only, never the expense budget. Expense deletion or editing recalculates obligations; any separately recorded repayments remain part of the balance history.
+
+### Categories and budgets
+
+Allow creating and renaming categories and setting each category's yearly amount for a selected calendar year. Calculate the total yearly and monthly budgets from the categories. Categories with historical expenses can be archived without losing history.
+
+The category breakdown shows monthly allocation, carryover, spending, and remaining budget. Opening a category shows its expenses. Provide a yearly view of budget versus personal spending.
+
+## Budget rules
+
+For each category and month:
+
+`remaining = monthly allocation + carryover from previous month - personal spending`
+
+- January starts with zero carryover.
+- The next month's carryover equals the previous month's remaining budget.
+- Assumption: negative balances carry forward too, so overspending reduces the next month's available budget.
+- The home total is the sum of the categories' remaining amounts.
+- Use the expense date to assign spending to a calendar month.
+- Making an expense shared adjusts budget usage in its original month, regardless of when sharing was configured.
+- Editing, deleting, or recategorizing an expense recomputes affected balances through the rest of that year.
+- Store money exactly in minor currency units. Distribute rounding remainders deterministically so the twelve monthly allocations equal the yearly amount exactly.
+- For an odd-cent equal split, assign the extra cent to the payer's share and show the exact amounts before confirmation.
+- Assumption: changing a category's yearly budget redistributes it across all twelve months of that year and recalculates that year's remaining balances. The confirmation must make this effect clear.
+- Resetting yearly budget carryover does not clear outstanding debts between people.
+
+## Offline operation and synchronization
+
+- Create, view, edit, delete, categorize, and share expenses using locally stored data while offline.
+- Queue changes and synchronize automatically when connectivity returns.
+- Keep a clear local saved state even when synchronization is pending or fails.
+- Repeating synchronization must never duplicate an expense, repayment, or sharing action.
+- Synchronize deletions so an item does not reappear from another device.
+- Keep an expense's payer and split consistent when syncing; budget usage and debts must derive from the same saved version.
+- Preserve conflicting edits for review rather than silently discarding financial changes. The conflict interaction needs a separate design before implementation.
+
+## Website and backend
+
+Assumption: the website is an online companion supporting expense entry and editing, category and yearly budget management, monthly review, shared balances, and repayment entry. Offline website support is deferred.
+
+The application operates its own backend for accounts, authenticated access, per-user data isolation, synchronization, and persistent storage. Use SQLite on the server; CloudKit is not selected. The website and sync API remain one application as recorded in [ADR 0001](docs/adr/0001-single-repository-and-combined-server.md). Application-owned authentication and server storage are recorded in [ADR 0002](docs/adr/0002-own-authentication-and-sqlite-backend.md). Hosting remains undecided. Keep operations appropriate for fewer than ten users.
+
+Implement the server in Elixir with Phoenix: LiveView for the online website, a JSON API for iOS, and Ecto with SQLite for database access and migrations. Website and API writes use the same application contexts. This stack is recorded in [ADR 0003](docs/adr/0003-phoenix-server.md).
+
+### Login
+
+- Sign in using a username and password on iOS or the website.
+- After signing in, optionally enroll a passkey for future passwordless sign-in to the same account.
+- Allow viewing and revoking enrolled passkey credentials in account settings; retain password login as an alternative.
+- Passkeys are an alternative login method, not a mandatory second factor or a separate account.
+- Keep saved local expenses available offline when a session expires; reconnecting sync may require reauthentication.
+- Account recovery and the need for a recovery email remain undecided.
+- Shared-expense invitations use email as recipient identity and must be accepted by an account that proves control of that address. This does not replace username login or settle email-based password recovery.
+
+This authentication decision is recorded in [ADR 0004](docs/adr/0004-password-login-and-passkeys.md).
+
+No bank connections or income tracking are required. Shared balance tracking does not imply bank transfers or payment processing.
+
+## Platform and language
+
+- Target the latest stable iOS version available when implementation starts; older-device support is not a priority.
+- Prefer native SwiftUI navigation, forms, sheets, menus, lists, and accessibility behavior.
+- Support standard Dynamic Type and light/dark appearance.
+- Assumption: EUR is the only currency in the MVP.
+- Assumption: provide German and English interface text; future natural-language entry must understand both languages.
+- Built-in iOS parsing must remain optional: the manual entry form always works without AI availability or connectivity.
+
+## Acceptance examples
+
+1. A €6,000 yearly category budget allocates €500 per month. Spending €400 in January leaves €100. February starts with €600 available.
+2. Spending €550 against January's €500 leaves −€50. Under the proposed overspending rule, February starts with €450.
+3. With a €500 allocation, saving a personal €78 expense leaves €422. Once sharing is accepted, making it an equal split paid by the user changes remaining budget to €461 and creates a €39 receivable.
+4. Recording repayment of that €39 clears the receivable and leaves the remaining budget at €461.
+5. An expense created offline appears immediately and reaches another signed-in device once synchronization completes, exactly once.
+6. Deleting an expense restores its personal budget impact and removes its debt obligation. Repeated synchronization does not restore the deleted item.
+7. January of the following year begins with that year's monthly allocation and no prior-year budget carryover. Outstanding debts remain visible.
+8. An email recipient creates an account if needed, proves control of the invited address, and accepts sharing. Both participants can then view the same expense, while their category assignments and budgets remain private.
+9. Either participant edits a shared expense. Both receive the updated expense and shared change history, with their own budget impact recalculated. Neither can edit or inspect the other's category assignment.
+
+## Deferred features
+
+- German/English natural-language entry, including strings such as `78€, Theodor, Restaurants`.
+- Voice-specific entry, receipt scanning, and receipt attachments.
+- Shared budgets, multi-person expense groups, arbitrary percentage splits, and multiple payers.
+- Dedicated refunds, recurring expenses, bank imports, income, account balances, and reconciliation.
+- Multiple currencies and offline website operation.
+- Widgets, Shortcuts, and additional Apple platforms.
+
+## Assumptions to review
+
+The main unconfirmed choices are negative rollover, full-year budget recalculation after a budget edit, EUR-only operation, repayment recording, the website's initial scope, and interface languages. Pending invitations, removal of sharing, account creation and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.

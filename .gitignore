@@ -1,0 +1,54 @@
+# Local OS and editor state
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+.elixir_ls/
+xcuserdata/
+*.xcuserstate
+
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+
+# Elixir / Phoenix generated output
+_build/
+deps/
+/server/cover/
+/server/doc/
+/server/priv/static/assets/
+/server/priv/static/cache_manifest.json
+erl_crash.dump
+*.ez
+
+# JavaScript dependencies and caches
+node_modules/
+.npm/
+
+# Swift / Xcode generated output
+.build/
+.swiftpm/
+DerivedData/
+*.xcarchive
+*.ipa
+*.dSYM/
+
+# Runtime databases and sidecars
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Local application data, backups, and logs
+/data/
+/backups/
+/server/data/
+/server/backups/
+*.log
