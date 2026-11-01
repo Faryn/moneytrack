@@ -11,3 +11,5 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0005](0005-shared-expenses-and-email-invitations.md) | Accepted | Email-invited shared expenses with edit/delete access and history for both users; private categories; no contact list |
 | [0006](0006-calendar-year-budget-calculation.md) | Accepted | Positive and negative carryover within a year; yearly amount edits recalculate the whole year; exact-cent monthly allocation |
 | [0007](0007-swiftdata-local-store-and-outbox.md) | Accepted | Versioned SwiftData local store; domain mutations and pending changes saved together; no CloudKit |
+| [0008](0008-connected-accounts-and-transport.md) | Accepted | Administrator-created accounts, HTTPS, server-readable storage, hashed/revocable sessions, and isolated native credentials |
+| [0009](0009-personal-sync-contract.md) | Accepted for personal expenses | Versioned per-operation sync, stable retries, revision conflicts, private cursors, explicit local import, and SwiftData V2 migration |

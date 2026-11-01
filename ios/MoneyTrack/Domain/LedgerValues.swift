@@ -2,7 +2,7 @@ import Foundation
 
 enum LedgerError: LocalizedError {
     case invalidAmount, invalidDate, missingCategory, emptyCategory, duplicateCategory, missingExpense
-    case sharedEditingUnavailable
+    case sharedEditingUnavailable, categoryTooLong, descriptionTooLong
 
     var errorDescription: String? {
         switch self {
@@ -12,6 +12,8 @@ enum LedgerError: LocalizedError {
         case .emptyCategory: "Enter a category name."
         case .duplicateCategory: "A category with this name already exists."
         case .missingExpense: "This expense is no longer available."
+        case .categoryTooLong: "Use a category name of at most 100 characters."
+        case .descriptionTooLong: "Use a description of at most 500 characters."
         case .sharedEditingUnavailable: "This shared expense needs to be edited through its connected account."
         }
     }

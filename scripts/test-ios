@@ -35,5 +35,7 @@ xcodebuild \
   -derivedDataPath "$derived_data" \
   -resultBundlePath "$results" \
   -parallel-testing-enabled NO \
-  CODE_SIGNING_ALLOWED=NO \
+  MONEYTRACK_TEST_SERVER="${MONEYTRACK_TEST_SERVER:-}" \
+  CODE_SIGNING_ALLOWED=YES \
+  CODE_SIGN_IDENTITY=- \
   test

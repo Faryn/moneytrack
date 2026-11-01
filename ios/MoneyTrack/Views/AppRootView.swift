@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AppRootView: View {
     @Environment(LedgerStore.self) private var store
+    @Environment(AppSession.self) private var app
+    @Environment(\.scenePhase) private var phase
     @State private var month: BudgetMonth
     @State private var selectedTab = AppTab.budget
     @State private var sheet: RootSheet?
@@ -28,7 +30,7 @@ struct AppRootView: View {
                 NavigationStack {
                     ContentUnavailableView(
                         "No shared expenses", systemImage: "person.2",
-                        description: Text("Shared expenses and balances will appear here when your account is connected.")
+                        description: Text("Shared expenses and invitations are coming next.")
                     )
                     .navigationTitle("Shared")
                     .toolbar { EntryToolbar(add: { sheet = .expense }, account: { sheet = .account }) }
@@ -45,6 +47,9 @@ struct AppRootView: View {
             }
         }
         .sensoryFeedback(.success, trigger: store.saveCount)
+        .task(id: app.profileKey) { await app.synchronize() }
+        .onChange(of: store.saveCount) { Task { await app.synchronize() } }
+        .onChange(of: phase) { if phase == .active { Task { await app.synchronize() } } }
     }
 }
 
@@ -71,29 +76,6 @@ struct EntryToolbar: ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Button("Add Expense", systemImage: "plus", action: add)
                 .accessibilityIdentifier("expense.add")
-        }
-    }
-}
-
-private struct AccountView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        Form {
-            Section {
-                LabeledContent("Storage", value: "On this iPhone")
-                LabeledContent("Account", value: "Not connected")
-            } footer: {
-                Text("Your expenses are saved on this iPhone. They aren't backed up to a MoneyTrack account yet.")
-            }
-            Section("About") {
-                LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0")
-            }
-        }
-        .navigationTitle("Account")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Close", systemImage: "xmark") { dismiss() }
-            }
         }
     }
 }

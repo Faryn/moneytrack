@@ -2,6 +2,8 @@
 
 Status: draft for implementation planning, not an accepted sync ADR. Accepted product choices are in [SPEC.md](../SPEC.md) and [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md). Proposed behavior below still needs review.
 
+The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). The shared records, invitation lifecycle, and repayment behavior below remain proposals.
+
 ## Ownership
 
 Separate common financial facts from private budgeting choices:
@@ -66,7 +68,7 @@ Use the confirmed budget rounding, positive/negative carryover, whole-year recal
 
 ## Proposed sync contract
 
-Use a versioned JSON API and a durable local outbox. SwiftData is selected in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md), with domain/outbox saves and rollback tested. Its current pending payload is an internal prototype format, not this wire contract. Forward migration, account bootstrap, revisions, and acknowledgments need implementation before it can synchronize.
+Use a versioned JSON API and a durable local outbox. SwiftData is selected in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md), with domain/outbox saves and rollback tested. The subsequent personal implementation in ADR 0009 adds a tested V2 migration, prepared wire requests, explicit account copying, revisions, acknowledgments, and conflict review. Shared history/permissions and invitation work are still outside that implementation.
 
 ### Push
 

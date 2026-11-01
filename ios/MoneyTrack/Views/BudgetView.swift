@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BudgetView: View {
     @Environment(LedgerStore.self) private var store
+    @Environment(AppSession.self) private var app
     @Binding var month: BudgetMonth
     let openYearlyPlan: () -> Void
     private var overview: [CategoryBudget] { store.overview(month: month) }
@@ -10,6 +11,13 @@ struct BudgetView: View {
     var body: some View {
         List {
             Section { MonthSelector(month: $month) }
+            if !store.issues.isEmpty {
+                Section {
+                    NavigationLink { SyncReviewList() } label: {
+                        Label("Changes need review", systemImage: "exclamationmark.triangle")
+                    }
+                }
+            }
             if hasPlan {
                 Section {
                     RemainingAmount(amount: overview.reduce(0) { $0 + $1.remaining }, large: true)
@@ -58,6 +66,7 @@ struct BudgetView: View {
             }
         }
         .navigationTitle("Budget")
+        .refreshable { await app.synchronize() }
     }
 }
 

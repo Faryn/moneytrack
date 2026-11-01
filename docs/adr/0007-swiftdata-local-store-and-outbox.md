@@ -25,3 +25,7 @@ The first app works locally without authentication or a server connection. Its o
 V1 is the first implemented schema. Before the first schema change, add and test a forward migration against populated V1 fixtures, including pending operations and tombstones. This prototype does not claim to have tested a V1-to-V2 migration.
 
 Use record property names that avoid underlying Core Data reserved names, such as `entityKind` instead of `entity`. Store implementation and limitations are described in [local storage](../local-storage.md). Server SQLite remains a separate Ecto-managed database.
+
+## Subsequent implementation
+
+[ADR 0009](0009-personal-sync-contract.md) implements personal synchronization and a tested V1-to-V2 lightweight migration. V1 model definitions remain frozen; the migration adds separate operation/server/cursor state while preserving records, queued IDs/payloads, and tombstones. The original local-only prototype boundaries above describe the initial decision, not the current feature set.

@@ -8,7 +8,11 @@ defmodule MoneyTrackWeb.Endpoint do
     store: :cookie,
     key: "_moneytrack_key",
     signing_salt: "ww3cUt16",
-    same_site: "Lax"
+    same_site: "Lax",
+    http_only: true,
+    secure: Application.compile_env(:moneytrack, :secure_cookies, false),
+    encryption_salt: "moneytrack-session-encryption",
+    max_age: 30 * 24 * 60 * 60
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
@@ -46,7 +50,8 @@ defmodule MoneyTrackWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    json_decoder: Phoenix.json_library()
+    json_decoder: Phoenix.json_library(),
+    length: 1_000_000
 
   plug Plug.MethodOverride
   plug Plug.Head

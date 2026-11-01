@@ -6,7 +6,7 @@ A personal expense and budget tracker for a small user base, primarily on iPhone
 
 The native iOS app now supports local personal expenses, flat categories, yearly budget editing, monthly totals and category breakdowns, category details, and searchable expense history. Entries can be created, edited, and deleted offline and survive relaunch. Standard SwiftUI tabs, navigation, forms, sheets, menus, and adaptive green/red amount colors lead the UX.
 
-SwiftData saves each local mutation and its pending change together. The Phoenix server still provides the LiveView empty state, liveness endpoint, Ecto/SQLite foundation, and a tested budget calculator. Authentication, passkeys, invitations, shared expenses, and network synchronization are not implemented yet. No real financial data or sample records are seeded into normal stores.
+The first connected flow is implemented: administrator-created accounts, username/password login on iOS and web, Keychain-held native sessions, and personal-expense/category/budget sync. The website supports monthly review, yearly budget amounts, and expense creation/edit/deletion through the same owner-scoped ledger service. SwiftData preserves offline changes, exact retry payloads, revisions, conflicts, and deletions. Passkeys, invitations, shared expenses, recovery, and production deployment remain unfinished. Normal stores receive no sample data.
 
 ## Agreed product direction
 
@@ -62,12 +62,14 @@ After initial setup, run checks from the repository root:
 scripts/check-server
 scripts/check-ios
 scripts/test-ios
+# Optional full check with a temporary backend and synthetic accounts:
+scripts/check-connected
 ```
 
-Verified on 2026-11-01: 15 server tests and 10 native tests pass, including shared calculation examples, disk reopening, failed-save rollback, and a simulator flow covering setup, entry, relaunch, editing, deletion, and an overspent category. The native app runs on iOS 26.5 using Xcode 27.2. Server assets and website/liveness smoke checks were verified during scaffolding. Neither app has been deployed.
+Verified on 2026-11-01: 30 server tests and 21 native tests pass, including populated V1-to-V2 migration, Keychain, disk failure recovery, and a real temporary backend. Native integration checks exercise retry, conflict resolution, deletion, session expiry/re-login, explicit on-device copying, and account restoration after relaunch. Website tests verify the same change feed and preservation of stale forms/drafts. Neither app has been deployed.
 
 ## Next implementation milestone
 
-Prove one complete flow: sign in, create an expense offline on iOS, reconnect, see it on the website, edit it there, and receive the update on iOS without duplication or silent loss.
+The personal iOS ↔ server/website flow is now verified. Next: optional passkeys and two-person shared expenses, after choosing the stable HTTPS domain/relying party identity and resolving the remaining invitation/repayment choices.
 
 Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). No hosting provider, domain, production account configuration, or public release has been configured.

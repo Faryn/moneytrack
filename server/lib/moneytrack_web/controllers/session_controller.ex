@@ -1,0 +1,124 @@
+defmodule MoneyTrackWeb.SessionController do
+  use MoneyTrackWeb, :controller
+  alias MoneyTrack.{Accounts, Ledger}
+  alias MoneyTrackWeb.Auth
+
+  def new(conn, _params), do: render(conn, :new, error: nil)
+
+  def create(conn, params) do
+    with :ok <- Auth.allow_login(conn, params["username"]),
+         {:ok, user} <- Accounts.authenticate(params["username"], params["password"]),
+         {:ok, token, _session} <- Accounts.create_session(user, "browser", "Website") do
+      Plug.CSRFProtection.delete_csrf_token()
+
+      conn
+      |> configure_session(renew: true)
+      |> clear_session()
+      |> put_session(:session_token, token)
+      |> redirect(to: ~p"/")
+    else
+      {:error, seconds} when is_integer(seconds) ->
+        conn
+        |> put_resp_header("retry-after", to_string(seconds))
+        |> put_status(429)
+        |> render(:new, error: "Too many attempts. Please try again shortly.")
+
+      _ ->
+        conn |> put_status(401) |> render(:new, error: "Username or password is incorrect.")
+    end
+  end
+
+  def delete(conn, _params) do
+    Plug.CSRFProtection.delete_csrf_token()
+    if session = conn.assigns[:current_session], do: Accounts.revoke_session(session)
+    conn |> configure_session(drop: true) |> redirect(to: ~p"/login")
+  end
+
+  def api_create(conn, params) do
+    label = if is_binary(params["deviceName"]), do: params["deviceName"], else: "iPhone"
+
+    with :ok <- Auth.allow_login(conn, params["username"]),
+         {:ok, user} <- Accounts.authenticate(params["username"], params["password"]),
+         {:ok, token, session} <- Accounts.create_session(user, "device", label) do
+      json(conn, %{
+        user: Accounts.identity(user),
+        token: token,
+        expiresAt: DateTime.to_iso8601(session.expires_at)
+      })
+    else
+      {:error, seconds} when is_integer(seconds) ->
+        conn
+        |> put_resp_header("retry-after", to_string(seconds))
+        |> put_status(429)
+        |> json(%{error: "rate_limited", message: "Too many attempts. Please try again shortly."})
+
+      _ ->
+        conn
+        |> put_status(401)
+        |> json(%{error: "invalid_credentials", message: "Username or password is incorrect."})
+    end
+  end
+
+  def api_show(conn, _), do: json(conn, %{user: Accounts.identity(conn.assigns.current_user)})
+
+  def api_delete(conn, _) do
+    Accounts.revoke_session(conn.assigns.current_session)
+    send_resp(conn, 204, "")
+  end
+
+  def sync_push(conn, params) do
+    case Ledger.apply_operation(conn.assigns.current_user, params) do
+      {:ok, record} ->
+        json(conn, %{record: record})
+
+      {:error, {:conflict, current}} ->
+        conn
+        |> put_status(409)
+        |> json(%{
+          error: "revision_conflict",
+          message: "This item changed on another device. Review both versions.",
+          current: current
+        })
+
+      {:error, :operation_reused} ->
+        failure(
+          conn,
+          409,
+          "operation_reused",
+          "This saved request has different content. Review your changes."
+        )
+
+      {:error, :not_found} ->
+        failure(
+          conn,
+          404,
+          "not_found",
+          "This item or its category is unavailable to this account."
+        )
+
+      {:error, {:validation, message}} ->
+        failure(conn, 422, "validation_failed", message)
+
+      {:error, _} ->
+        failure(conn, 422, "invalid_operation", "Check this item's fields before trying again.")
+    end
+  end
+
+  def sync_pull(conn, params) do
+    case Ledger.changes(conn.assigns.current_user, params["cursor"]) do
+      {:ok, page} ->
+        json(conn, page)
+
+      {:error, _} ->
+        failure(
+          conn,
+          400,
+          "invalid_cursor",
+          "Restart synchronization without discarding local changes."
+        )
+    end
+  end
+
+  defp failure(conn, status, code, message),
+    do: conn |> put_status(status) |> json(%{error: code, message: message})
+end

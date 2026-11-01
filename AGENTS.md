@@ -12,7 +12,7 @@
 - Use Ecto with server-side SQLite. Do not introduce PostgreSQL, CloudKit, a separate frontend application, or additional services without a requirement that justifies a new decision.
 - iOS leads the UX. Follow Apple's Human Interface Guidelines and prefer standard SwiftUI navigation, lists, forms, sheets, menus, and accessibility behavior; adapt the web companion to the native flows. Form-based expense entry precedes natural-language parsing; any later parsing stays on-device and supports German and English.
 - Budget home must show category budgets at a glance, with direct category-detail navigation. Use accessible green/red amount semantics with labels/signs; do not hide all category budgets behind another overview screen.
-- Login is username/password with optional passkeys. Do not silently replace username login with email-only or magic-link-only authentication.
+- Accounts are administrator-created for now. Use HTTPS in production and ordinary server-readable storage with owner-scoped access; end-to-end encryption is not required. Login is username/password with optional passkeys. Do not silently replace username login with email-only or magic-link-only authentication.
 - Shared expenses have two participating accounts, email invitations, shared edit/delete access and history, and private per-user category assignments. No contact management feature.
 
 ## Financial correctness and synchronization
@@ -20,7 +20,7 @@
 - Store money exactly in minor currency units, never binary floating point. Keep expense calendar dates separate from UTC audit timestamps.
 - Only personal shares consume budget. Repayments, if implemented, clear obligations without creating another expense.
 - Carry both unused and overspent category budgets forward within the calendar year. Editing a yearly amount recalculates that whole year; January starts with zero carryover. See ADR 0006 for exact-cent allocation.
-- Use the versioned SwiftData store for iOS. Save domain mutations and their outbox entries together; never reset the store on an open/migration failure. The current outbox is a local durability foundation, not an implemented sync protocol.
+- Use the versioned SwiftData store for iOS. Save domain mutations and their outbox entries together; never reset the store on an open/migration failure. The personal sync contract is in ADR 0009; keep prepared operation bytes immutable until acknowledged or explicitly resolved.
 - Shared amount, payer, participants, and split must remain consistent as one revision.
 - Route website and API writes through common contexts. Record mutations, revisions, shared history, and sync events atomically.
 - Preserve local pending changes, make sync retries harmless, synchronize deletions, and surface conflicting financial edits. Do not use silent last-write-wins for conflicts.

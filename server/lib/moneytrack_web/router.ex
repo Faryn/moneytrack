@@ -1,5 +1,6 @@
 defmodule MoneyTrackWeb.Router do
   use MoneyTrackWeb, :router
+  import MoneyTrackWeb.Auth, only: [fetch_browser: 2, require_browser: 2, require_api: 2]
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -8,16 +9,21 @@ defmodule MoneyTrackWeb.Router do
     plug :put_root_layout, html: {MoneyTrackWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :no_store
+    plug :fetch_browser
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :no_store
   end
 
   scope "/", MoneyTrackWeb do
     pipe_through :browser
 
-    live "/", BudgetLive, :index
+    get "/login", SessionController, :new
+    post "/login", SessionController, :create
+    delete "/logout", SessionController, :delete
   end
 
   scope "/api", MoneyTrackWeb do
@@ -25,6 +31,37 @@ defmodule MoneyTrackWeb.Router do
 
     get "/health", HealthController, :show
   end
+
+  pipeline :authenticated_browser do
+    plug :require_browser
+  end
+
+  pipeline :authenticated_api do
+    plug :require_api
+  end
+
+  scope "/", MoneyTrackWeb do
+    pipe_through [:browser, :authenticated_browser]
+
+    live_session :authenticated, on_mount: [{MoneyTrackWeb.Auth, :required}] do
+      live "/", BudgetLive, :index
+    end
+  end
+
+  scope "/api/v1", MoneyTrackWeb do
+    pipe_through :api
+    post "/sessions", SessionController, :api_create
+  end
+
+  scope "/api/v1", MoneyTrackWeb do
+    pipe_through [:api, :authenticated_api]
+    get "/session", SessionController, :api_show
+    delete "/session", SessionController, :api_delete
+    post "/sync", SessionController, :sync_push
+    get "/sync", SessionController, :sync_pull
+  end
+
+  defp no_store(conn, _opts), do: put_resp_header(conn, "cache-control", "no-store")
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:moneytrack, :dev_routes) do

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import CryptoKit
 
 enum LedgerSchemaV1: VersionedSchema {
     static var versionIdentifier: Schema.Version { .init(1, 0, 0) }
@@ -65,9 +66,35 @@ enum LedgerSchemaV1: VersionedSchema {
     }
 }
 
+enum LedgerSchemaV2: VersionedSchema {
+    static var versionIdentifier: Schema.Version { .init(2, 0, 0) }
+    static var models: [any PersistentModel.Type] {
+        LedgerSchemaV1.models + [OperationState.self, RemoteState.self, SyncState.self]
+    }
+    @Model final class OperationState {
+        @Attribute(.unique) var id: UUID
+        var baseRevision: Int64?
+        var wireData: Data?
+        var issueData: Data?
+        init(id: UUID, baseRevision: Int64?) { self.id = id; self.baseRevision = baseRevision }
+    }
+    @Model final class RemoteState {
+        @Attribute(.unique) var key: String
+        var revision: Int64
+        var data: Data
+        init(key: String, revision: Int64, data: Data) { self.key = key; self.revision = revision; self.data = data }
+    }
+    @Model final class SyncState {
+        @Attribute(.unique) var key: String
+        var cursor: String?
+        var importedLocal = false
+        init() { key = "main" }
+    }
+}
+
 enum LedgerMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self] }
-    static var stages: [MigrationStage] { [] }
+    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self] }
+    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self)] }
 }
 
 typealias CategoryRecord = LedgerSchemaV1.CategoryRecord
@@ -79,11 +106,14 @@ enum StoreNamespace {
     case localDevice
     case account(UUID)
     case uiTesting
+    case serverAccount(URL, UUID)
     var directoryName: String {
         switch self {
         case .localDevice: "local-device"
         case .account(let id): id.uuidString.lowercased()
         case .uiTesting: "ui-testing"
+        case .serverAccount(let server, let id):
+            "server-" + SHA256.hash(data: Data(server.absoluteString.utf8)).map { String(format: "%02x", $0) }.joined() + "-" + id.uuidString.lowercased()
         }
     }
 }
@@ -97,7 +127,7 @@ enum LedgerPersistence {
         ).appending(path: "MoneyTrack", directoryHint: .isDirectory)
         let directory = base.appending(path: namespace.directoryName, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schema = Schema(versionedSchema: LedgerSchemaV1.self)
+        let schema = Schema(versionedSchema: LedgerSchemaV2.self)
         let configuration = ModelConfiguration(
             "MoneyTrack", schema: schema, url: directory.appending(path: "ledger.store"),
             allowsSave: allowsSave, cloudKitDatabase: .none

@@ -33,3 +33,6 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Keep production password hashing at its normal cost.
+config :bcrypt_elixir, log_rounds: 4

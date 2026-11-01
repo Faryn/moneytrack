@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Create a local server account without putting a password in shell history."""
+import getpass
+import os
+import pathlib
+import subprocess
+import sys
+
+if len(sys.argv) != 2:
+    sys.exit("Usage: scripts/create-user USERNAME")
+password = getpass.getpass("Password (12–72 bytes): ")
+if password != getpass.getpass("Confirm password: "):
+    sys.exit("Passwords did not match; no account created.")
+environment = os.environ.copy()
+environment.pop("PHX_SERVER", None)
+subprocess.run(["mix", "moneytrack.create_user", sys.argv[1]],
+               cwd=pathlib.Path(__file__).resolve().parent.parent / "server",
+               input=password, text=True, check=True, env=environment)

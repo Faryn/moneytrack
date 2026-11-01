@@ -1,25 +1,25 @@
 # Local iOS storage
 
-The first working personal-expense slice uses the versioned SwiftData store selected in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md). It is fully local; account login and network synchronization are not implemented.
+The connected personal ledger uses SwiftData V2, with V1 preserved through a tested lightweight migration. See [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md) and the subsequent [personal sync contract](adr/0009-personal-sync-contract.md).
 
 ## Records and writes
 
-V1 stores flat categories, category/year budget amounts, personal expenses, and pending changes. Expense records keep their purchase amount, personal share, category UUID, description, ISO calendar date, UTC creation timestamp, and optional deletion timestamp. No personal data or default financial records are seeded.
+V1 models remain unchanged: flat categories, category/year budgets, personal expenses, and pending changes. Expenses retain exact cents, category UUID, description, ISO calendar date, UTC client creation time, and optional deletion time. V2 adds operation state (base revision, prepared wire bytes, review issue), cached server revisions/snapshots, and cursor/import state. Balances are derived, never synchronized running totals.
 
-`LedgerStore` owns one context with autosaving disabled. It validates a mutation, changes domain records and inserts the matching pending operations, then explicitly saves once. Errors roll back the context and leave the displayed snapshots unchanged. An operation has a stable UUID, entity UUID/kind, action, local sequence, creation timestamp, and JSON payload. A deleted expense becomes a tombstone; it is removed from budget calculations without deleting its pending operation.
+`LedgerStore` owns one context with autosaving disabled. Domain changes and their pending operations save together, with rollback on failure. Preparation saves a complete immutable HTTP request before sending. Acknowledgment removes its pending operation and records the server result together. Dependent edits use our preceding acknowledged revision; they cannot silently rebase onto another device's edit. A failed acknowledgment retains the original bytes for a harmless retry.
 
-The pending payload is an internal prototype format, not the proposed HTTP sync contract. It lacks expected server revisions and acknowledgment state. Do not transmit it blindly or drop it when adding synchronization; design and test its forward migration first. Budget balances are derived from records rather than stored running totals.
+Each pull page, cached snapshots, domain updates, and cursor save together. Pending records are not overwritten. Conflicts retain local/server versions for user choice. Deletions remain tombstones; retaining an edited item deleted elsewhere creates a new ID. Concurrent category/year budgets resolve to one canonical server record. A cursor reset replays retained history without deleting local work.
 
 ## Locations and identity
 
-Normal stores live in the app container under `Application Support/MoneyTrack/<namespace>/ledger.store`, outside the source checkout. Namespaces are `local-device`, an account UUID, or `ui-testing`. SwiftData may create sidecar files; never copy a live database alone as a backup.
+Normal stores live inside the app container at `Application Support/MoneyTrack/<namespace>/ledger.store`, outside the checkout. Unbound data uses `local-device`; connected data uses a hash of canonical server origin plus account UUID. Debug UI tests use `ui-testing`, isolated account caches, and a separate Keychain service. SwiftData may create sidecars; never copy a live database alone as a backup.
 
-The current app uses `local-device` without a logged-in identity. Account namespaces are tested for isolation but are not connected to login yet. A future account bootstrap must explicitly decide how existing local-device data is assigned/imported. Do not silently upload it to whichever account signs in next.
+Keychain stores the active identity and revocable token with device-only accessibility after first unlock. Passwords are not saved. Session expiry preserves the active cache and queue. Switching accounts recreates the navigation root and cannot apply an old account's in-flight response to the new store. Sign-out retains each account's cached/pending data for its next sign-in.
 
-Store initialization errors produce a visible retry/error screen. There is no automatic reset or destructive recovery fallback. CloudKit is explicitly disabled.
+Unbound entries stay separate by default. A deliberate one-time copy into an empty account remaps IDs and relationships and queues the current categories, budgets, and non-deleted expenses in one local save. Originals and their history remain untouched. Repeating that account copy is harmless. Merging two populated ledgers or repeatedly importing edits to the original copy is not implemented.
 
-## Tests and next requirements
+Store-open/migration failures show a retry screen and never trigger an automatic reset. CloudKit is disabled. Forward migration tests preserve populated V1 expenses, queued IDs/payloads, and tombstones. Before introducing V3, add populated V2 fixtures that include prepared requests, issues, metadata, and cursors.
 
-Unit tests use temporary directories and cover exact-cent budgets, strict dates, save/edit/delete across reopening, stable pending operations, tombstones, namespaces, invalid input, and failed-save rollback against a read-only disk store. UI tests use only an isolated debug `ui-testing` namespace, reset that namespace explicitly, and verify the native creation/edit/relaunch/deletion flow.
+## Verification and remaining work
 
-Before synchronization is ready, implement authenticated ownership, stable server revisions, retry deduplication, acknowledgments, ordered dependent writes, pull cursors, conflict preservation, remote deletions, session expiry recovery, and real account switching. Before changing V1, verify forward migration using populated records and pending work. See the [draft sync design](data-model-and-sync.md).
+Unit tests cover financial examples, strict dates, reopening, rollback, isolation, migration, prepared retries, atomic/idempotent pull, conflict resolution, and copying. `scripts/check-connected` adds real server/API and simulator account checks. Shared-expense permissions/history, invitation onboarding, passkeys, recovery, production backups/restoration, distribution, and released-client API compatibility remain work before the complete MVP release.

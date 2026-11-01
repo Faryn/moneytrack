@@ -29,7 +29,30 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {
+    ...colocatedHooks,
+    LocalMonth: {
+      mounted() {
+        if (!new URL(window.location.href).searchParams.has("month")) {
+          const now = new Date()
+          const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+          this.pushEvent("month", {month})
+        }
+      },
+    },
+    LocalExpenseDay: {
+      mounted() { this.setLocalDefault() },
+      updated() { this.setLocalDefault() },
+      setLocalDefault() {
+        const id = this.el.dataset.entryId
+        if (id === this.lastEntryID) return
+        this.lastEntryID = id
+        if (this.el.dataset.new !== "true") return
+        const now = new Date()
+        this.el.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+      },
+    },
+  },
 })
 
 // Show progress bar on live navigation and form submits

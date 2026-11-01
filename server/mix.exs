@@ -41,6 +41,8 @@ defmodule MoneyTrack.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.8.16"},
+      {:bcrypt_elixir, "~> 3.3"},
+      {:hammer, "~> 7.5"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},
       {:ecto_sqlite3, "~> 0.26.0"},

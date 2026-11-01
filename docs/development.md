@@ -10,7 +10,7 @@ Use the [technical decision backlog](technical-decisions.md) to distinguish acce
 
 ## 1. Establish application foundations
 
-Completed on 2026-11-01: Phoenix 1.8.16 with LiveView/Ecto/SQLite, a SwiftUI Xcode project and shared scheme, recorded toolchains, dependency locking, host-local database configuration, and independent check scripts. Six server tests and asset compilation pass; website/API HTTP smoke checks pass; the iOS app builds and launches on the iOS 26.5 simulator. Ecto initialized its migration tracking, but no domain migration or seed data has been introduced.
+Completed on 2026-11-01: Phoenix 1.8.16 with LiveView/Ecto/SQLite, a SwiftUI Xcode project and shared scheme, recorded toolchains, dependency locking, host-local database configuration, and independent check scripts. At this initial foundation stage, six server tests and asset compilation passed; website/API HTTP smoke checks pass; the iOS app builds and launches on the iOS 26.5 simulator. Ecto initialized its migration tracking, but no domain migration or seed data has been introduced.
 
 Recorded toolchain: Erlang/OTP 29.1.2, Elixir 1.20.4, Xcode 27.2, iOS SDK 27.2 with deployment target 26.5, and SQLite 3.54.1 through locked Exqlite 0.43.0. The deployment target enables launch verification using the installed simulator runtime.
 
@@ -26,14 +26,16 @@ Done when both applications build, the server applies a migration to the intende
 
 Completed locally on 2026-11-01: versioned SwiftData storage, atomic domain/outbox saves, disk reopening, deletion tombstones, namespace isolation, and real failed-save rollback. Eight budget examples run in Swift and Elixir. Nine native unit tests and one simulator UI test pass; the server has 15 tests. See [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md).
 
-- Preserve the tested local guarantees when implementing the actual sync contract. The prototype outbox is not a network API.
+- Preserve the tested domain/outbox guarantees while extending the implemented personal protocol to shared records.
 - Before the first schema change, test forward migration with populated V1 records, tombstones, and pending work.
 - Finalize the minimum API contract for a personal expense, stable IDs, revisions, retries, deletion, and a per-user change cursor.
 - Verify that failed/expired authentication cannot lose or mix local account data.
 
-The local durability criterion is met. The server contract, authenticated account bootstrap/import, and session-expiry integration remain open; this milestone is not complete as a sync design.
+Completed for personal records: the versioned API, explicit account bootstrap/copy, V1-to-V2 migration, stable retries, acknowledgments, cursors, and session-expiry recovery are now implemented and exercised against a real temporary backend. Shared-record synchronization remains draft.
 
 ## 3. Prove the first complete flow
+
+Completed for personal records on 2026-11-01: administrator-created username/password accounts, isolated native stores/Keychain sessions, offline personal entry, explicit account copy, website/API writes through one ledger service, retry deduplication, conflict review, synchronized deletion, and expired-session re-login. The connected check verifies the real native API and simulator account/relaunch flow; server tests verify website changes enter that same feed. No production deployment is included.
 
 - Implement username/password authentication with browser sessions and revocable native device credentials.
 - Create a personal expense offline on iOS, reconnect, and show it on the website.

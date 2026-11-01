@@ -1,6 +1,6 @@
 # Phoenix server
 
-Runnable Phoenix foundation with a LiveView budget empty state, JSON liveness endpoint, Ecto/SQLite configuration, and local/test email adapters. Accounts, financial records, invitations, passkeys, and synchronization are not implemented yet.
+Phoenix application with administrator-created username/password accounts, browser/device sessions, personal categories/yearly budgets/expenses, versioned JSON sync, and a LiveView companion. Website and API mutations share the same owner-scoped transaction/revision/change-feed logic. Passkeys, invitations, shared expenses, and recovery are not implemented yet.
 
 ## Toolchain
 
@@ -22,7 +22,7 @@ mix phx.server
 
 The website is at [localhost:4000](http://localhost:4000). `GET /api/health` returns `{"status":"ok"}` and is a liveness probe, not a database-readiness or authenticated sync endpoint. Set `PORT` to use a different local port.
 
-`mix setup` downloads dependencies, initializes SQLite and its migration tracking, and builds the assets. There are no domain migrations or seed records yet. Subsequent migrations belong in `priv/repo/migrations`.
+`mix setup` downloads dependencies, applies the account/ledger migration, and builds assets. It creates no default account or financial seed records. After setup, run `scripts/create-user USERNAME` from the repository root, using the same database environment as the server. The helper prompts for a password without echoing it and passes it through stdin, keeping it out of command history and arguments. Usernames are 3–32 letters/numbers/._-; passwords are 12–72 bytes. Restarting the server is not required after adding an account.
 
 ## Database location
 
@@ -54,16 +54,16 @@ scripts/check-server
 
 This checks application compilation with warnings as errors, formatting, ExUnit tests, and web asset compilation. Run `mix format` in `server/` when formatting changes are needed. Dependencies may emit their own warnings independently of application compilation.
 
-Current tests cover the LiveView mount, generated error responses, the database's location, and active SQLite durability/foreign-key settings. Database tests run serially because SQLite permits one writer at a time.
+Current tests cover financial examples, owner isolation, password/session boundaries, token hashing/expiry/revocation, login throttling, exact-once retry, conflict handling, deletion, cursor pagination, website writes into the same feed, and retention of form drafts. Database tests run serially because SQLite permits one writer at a time. `scripts/check-connected` runs these checks plus a fresh temporary backend and native integration/UI tests with synthetic identities; it refuses to reuse an occupied port 4004 and stops its server afterward.
 
 ## Implementation boundaries
 
-Both LiveViews and API controllers must call the same application contexts for authorization, financial validation, writes, and sync tracking. A website edit must enter the change feed consumed by iOS. No account or finance routes are exposed by this scaffold.
+Both LiveViews and API controllers call `MoneyTrack.Ledger` for authorization, validation, record revisions, and change tracking. The current `/api/v1` contract is documented in [ADR 0009](../docs/adr/0009-personal-sync-contract.md) and the [API examples](../docs/contracts/personal-sync-v1.md). Personal records only are accepted; shared changes are not simulated.
 
-Authentication must meet username/password plus optional passkey requirements. Review generated authentication before adopting it; web sessions alone do not implement mobile device credentials or passkey verification. Recovery and authentication-library choices remain open.
+Accounts use maintained bcrypt password hashing and Hammer rate limiting. Native device tokens are hashed, expiring, and revocable; encrypted/signed browser cookies are separate, with CSRF protection and secure flags in production. Request/SQL parameter logging is suppressed. HTTPS, server-readable storage, and administrator-created accounts are recorded in [ADR 0008](../docs/adr/0008-connected-accounts-and-transport.md). Password reset/recovery and passkeys remain release requirements.
 
 Development email uses Swoosh's local preview at `/dev/mailbox`; tests use its test adapter. No invitations are sent, and no production delivery provider is configured. Development dashboard and mail preview routes are excluded from production builds.
 
-Before deploying, configure `DATABASE_PATH`, `SECRET_KEY_BASE`, `PHX_HOST`, HTTPS termination, backups, and production email delivery. Deployment is outside this scaffold's scope.
+Before deploying, configure `DATABASE_PATH`, `SECRET_KEY_BASE`, `PHX_HOST`, trusted HTTPS termination, private backend-port access, backups/restoration, and distribution. Production forces HTTPS and secure cookies. Forwarded protocol headers must come only from the trusted proxy. No production deployment, public domain, invitation provider, or release account configuration is included.
 
 See [accepted architecture decisions](../docs/adr/README.md), [sync proposal](../docs/data-model-and-sync.md), and [development plan](../docs/development.md).

@@ -17,7 +17,8 @@ config :moneytrack, MoneyTrack.Repo,
   synchronous: :full,
   foreign_keys: :on,
   busy_timeout: 5_000,
-  pool_size: 1
+  pool_size: 1,
+  log: false
 
 # Configure the endpoint
 config :moneytrack, MoneyTrackWeb.Endpoint,
@@ -77,3 +78,6 @@ config :phoenix, :json_library, Jason
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+# Do not log credentials or financial request fields.
+config :phoenix, :filter_parameters, {:keep, []}

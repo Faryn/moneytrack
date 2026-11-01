@@ -10,6 +10,7 @@ defmodule MoneyTrack.Application do
     children = [
       MoneyTrackWeb.Telemetry,
       MoneyTrack.Repo,
+      MoneyTrack.RateLimit,
       {Ecto.Migrator,
        repos: Application.fetch_env!(:moneytrack, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:moneytrack, :dns_cluster_query) || :ignore},

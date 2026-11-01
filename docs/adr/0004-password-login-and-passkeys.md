@@ -47,3 +47,7 @@ Account creation/invitation policy, username normalization, recovery method, fin
 - [Apple: supporting passkeys](https://developer.apple.com/documentation/authenticationservices/supporting-passkeys)
 - [Apple: connecting to a service with passkeys](https://developer.apple.com/documentation/authenticationservices/connecting-to-a-service-with-passkeys)
 - [W3C WebAuthn](https://www.w3.org/TR/webauthn-3/)
+
+## Subsequent implementation
+
+[ADR 0008](0008-connected-accounts-and-transport.md) selects initial administrator-created accounts, username normalization, password hashing, rate limiting, session lifetimes, and native credentials. [ADR 0009](0009-personal-sync-contract.md) implements private personal synchronization. Recovery and the stable passkey domain/relying party setup remain open; optional passkeys remain a release requirement.

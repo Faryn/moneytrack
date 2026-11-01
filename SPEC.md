@@ -138,6 +138,10 @@ Implement the server in Elixir with Phoenix: LiveView for the online website, a 
 
 ### Login
 
+Accounts are initially created by the administrator, with no public signup. Shared-invitation onboarding follows later. Use HTTPS for transport; ordinary server-readable storage is accepted and end-to-end encryption is not required. Each account can access only its own personal ledger.
+
+Existing on-device data stays separate on sign-in unless the user explicitly chooses a one-time copy into an empty account. Originals remain on the device. Connected stores are isolated by server and account identity; changing accounts never submits another account's pending work.
+
 - Sign in using a username and password on iOS or the website.
 - After signing in, optionally enroll a passkey for future passwordless sign-in to the same account.
 - Allow viewing and revoking enrolled passkey credentials in account settings; retain password login as an alternative.
@@ -183,4 +187,4 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 ## Assumptions to review
 
-The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. Pending invitations, removal of sharing, account creation and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.
+The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. Pending invitations, removal of sharing, invitation onboarding and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.

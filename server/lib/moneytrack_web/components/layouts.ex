@@ -39,6 +39,7 @@ defmodule MoneyTrackWeb.Layouts do
       <div class="flex-1">
         <a href={~p"/"} class="text-lg font-semibold tracking-tight">MoneyTrack</a>
       </div>
+      <.link :if={@current_scope} href={~p"/logout"} method="delete" class="btn btn-ghost mr-3">Sign Out</.link>
       <.theme_toggle />
     </header>
 
