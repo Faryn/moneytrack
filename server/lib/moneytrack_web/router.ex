@@ -47,6 +47,7 @@ defmodule MoneyTrackWeb.Router do
       live "/", BudgetLive, :index
       live "/account/email", EmailLive, :index
       live "/shared", SharedLive, :index
+      live "/plan", PlanLive, :index
     end
   end
 
@@ -67,6 +68,12 @@ defmodule MoneyTrackWeb.Router do
   end
 
   scope "/api/v2", MoneyTrackWeb do
+    pipe_through [:api, :authenticated_api]
+    post "/sync", SessionController, :sync_push
+    get "/sync", SessionController, :sync_pull
+  end
+
+  scope "/api/v3", MoneyTrackWeb do
     pipe_through [:api, :authenticated_api]
     post "/sync", SessionController, :sync_push
     get "/sync", SessionController, :sync_pull

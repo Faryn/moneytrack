@@ -41,6 +41,7 @@ struct MonthSelector: View {
 }
 
 struct RemainingAmount: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let amount: Int64
     var large = false
     var body: some View {
@@ -51,6 +52,7 @@ struct RemainingAmount: View {
                 .foregroundStyle(AmountColors.remaining(amount))
                 .monospacedDigit()
                 .contentTransition(.numericText())
+                .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: amount)
                 .accessibilityIdentifier(large ? "budget.remaining" : "category.remaining")
                 .accessibilityLabel(amount < 0 ? "Over budget" : "Remaining budget")
                 .accessibilityValue(Money.format(abs(amount)))

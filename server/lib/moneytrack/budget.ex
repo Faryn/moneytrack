@@ -40,4 +40,78 @@ defmodule MoneyTrack.Budget do
       "remaining" => allocation + carryover - spent
     }
   end
+
+  def joint_allocations(total, allocations, free_id) do
+    parts =
+      Enum.sort_by(allocations, & &1["categoryID"]) ++
+        [
+          %{
+            "categoryID" => free_id,
+            "amount" => total - Enum.sum(Enum.map(allocations, & &1["amount"]))
+          }
+        ]
+
+    base = Enum.sum(Enum.map(parts, &div(&1["amount"], 12)))
+
+    capacity =
+      Map.new(0..11, fn month ->
+        {month, div(total, 12) + if(month < rem(total, 12), do: 1, else: 0) - base}
+      end)
+
+    {result, _} =
+      Enum.reduce(parts, {%{}, capacity}, fn p, {result, capacity} ->
+        months = Enum.sort_by(0..11, &{-capacity[&1], &1}) |> Enum.take(rem(p["amount"], 12))
+        cells = for m <- 0..11, do: div(p["amount"], 12) + if(m in months, do: 1, else: 0)
+
+        capacity =
+          Enum.reduce(months, capacity, fn m, c ->
+            if c[m] <= 0, do: raise(ArgumentError, "overallocated budget")
+            Map.update!(c, m, &(&1 - 1))
+          end)
+
+        {Map.put(result, p["categoryID"], cells), capacity}
+      end)
+
+    result
+  end
+
+  def for_plan(year, month, total, allocations, free_id, expenses) do
+    monthly = joint_allocations(total, allocations, free_id)
+    allocated_ids = Enum.map(allocations, & &1["categoryID"])
+
+    all_months =
+      for m <- 1..12, do: cumulative_allocation(total, m) - cumulative_allocation(total, m - 1)
+
+    free = Enum.reject(expenses, &(&1["categoryID"] in allocated_ids))
+
+    category_results =
+      Map.new(allocations, fn a ->
+        {a["categoryID"],
+         for_schedule(
+           year,
+           month,
+           monthly[a["categoryID"]],
+           Enum.filter(expenses, &(&1["categoryID"] == a["categoryID"]))
+         )}
+      end)
+
+    %{
+      "total" => for_schedule(year, month, all_months, expenses),
+      "guiltFree" => for_schedule(year, month, monthly[free_id], free),
+      "categories" => category_results
+    }
+  end
+
+  defp for_schedule(year, month, schedule, expenses) do
+    result = for_category(year, month, 0, expenses)
+    carry = Enum.sum(Enum.take(schedule, month - 1)) + result["carryover"]
+    allocation = Enum.at(schedule, month - 1)
+
+    %{
+      "allocation" => allocation,
+      "carryover" => carry,
+      "spent" => result["spent"],
+      "remaining" => allocation + carry - result["spent"]
+    }
+  end
 end

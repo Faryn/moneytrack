@@ -17,21 +17,24 @@ struct AppRootView: View {
             Tab("Budget", systemImage: "chart.pie", value: AppTab.budget) {
                 NavigationStack {
                     BudgetView(month: $month, openYearlyPlan: { sheet = .yearly(month.year) })
-                        .toolbar { EntryToolbar(add: { sheet = .expense }, account: { sheet = .account }) }
+                        .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
+                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
             }
             Tab("Expenses", systemImage: "list.bullet", value: AppTab.expenses) {
                 NavigationStack {
                     ExpenseListView(month: $month)
-                        .toolbar { EntryToolbar(add: { sheet = .expense }, account: { sheet = .account }) }
+                        .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
+                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
             }
             Tab("Shared", systemImage: "person.2", value: AppTab.shared) {
                 NavigationStack {
                     SharedHomeView()
                     .navigationTitle("Shared")
-                    .toolbar { EntryToolbar(add: { sheet = .expense }, account: { sheet = .account }) }
+                    .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
+                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
             }
         }
         .sheet(item: $sheet) { destination in
@@ -64,7 +67,6 @@ private enum RootSheet: Identifiable {
 
 struct EntryToolbar: ToolbarContent {
     @Environment(AppSession.self) private var app
-    let add: () -> Void
     let account: () -> Void
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
@@ -72,9 +74,27 @@ struct EntryToolbar: ToolbarContent {
                 .accessibilityIdentifier("account.open")
                 .accessibilityLabel(app.credential.map { "Account, signed in as \($0.username)" } ?? "Account")
         }
-        ToolbarItem(placement: .primaryAction) {
-            Button("Add Expense", systemImage: "plus", action: add)
-                .accessibilityIdentifier("expense.add")
+    }
+}
+
+struct ReachableExpenseButton: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var activations = 0
+    let action: () -> Void
+    var body: some View {
+        Button {
+            activations += 1
+            action()
+        } label: {
+            Label("Add Expense", systemImage: "plus")
+                .font(.headline).frame(maxWidth: .infinity)
+                .symbolEffect(.bounce, value: activations)
+                .symbolEffectsRemoved(reduceMotion)
         }
+        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
+        .accessibilityIdentifier("expense.add")
+        .padding(.horizontal, 20).padding(.vertical, 8)
+        .background(.bar)
+        .sensoryFeedback(.selection, trigger: activations)
     }
 }

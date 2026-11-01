@@ -29,3 +29,5 @@ Use record property names that avoid underlying Core Data reserved names, such a
 ## Subsequent implementation
 
 [ADR 0009](0009-personal-sync-contract.md) implements personal synchronization and a tested V1-to-V2 lightweight migration. V1 model definitions remain frozen; the migration adds separate operation/server/cursor state while preserving records, queued IDs/payloads, and tombstones. The original local-only prototype boundaries above describe the initial decision, not the current feature set.
+
+[ADR 0012](0012-sharing-defaults-and-connected-flow.md) subsequently adds V3 shared records. [ADR 0013](0013-whole-year-budget-and-guilt-free-spending.md) adds V4 annual plans; populated forward-migration fixtures preserve earlier records and prepared bytes.

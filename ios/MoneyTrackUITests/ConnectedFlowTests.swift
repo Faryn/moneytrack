@@ -18,6 +18,8 @@ final class ConnectedFlowTests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["budget.setup"].waitForExistence(timeout: 10))
         app.buttons["budget.setup"].tap()
+        app.textFields["budget.annual"].tap(); app.textFields["budget.annual"].typeText("1200")
+        app.buttons["budget.save"].tap()
         app.buttons["category.add"].tap()
         app.textFields["category.name"].tap(); app.textFields["category.name"].typeText("Restaurants")
         app.textFields["category.annual"].tap(); app.textFields["category.annual"].typeText("1200")

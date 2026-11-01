@@ -2,6 +2,42 @@ defmodule MoneyTrackWeb.SessionControllerTest do
   use MoneyTrackWeb.ConnCase
   import MoneyTrack.Fixtures
 
+  test "whole-year plans require v3 without dropping prepared personal operations", %{conn: conn} do
+    user = user()
+    {free, _} = category(user, "Uncategorized")
+    {:ok, token, _} = MoneyTrack.Accounts.create_session(user, "device", "test")
+    authorized = fn -> put_req_header(recycle(conn), "authorization", "Bearer " <> token) end
+
+    plan =
+      operation("budget_plan", %{
+        "id" => Ecto.UUID.generate(),
+        "year" => 2026,
+        "total" => 120_000,
+        "freeCategoryID" => free["entityID"],
+        "allocations" => []
+      })
+
+    for version <- ["v1", "v2"] do
+      assert json_response(post(authorized.(), "/api/#{version}/sync", plan), 426)["error"] ==
+               "upgrade_required"
+    end
+
+    assert json_response(post(authorized.(), "/api/v3/sync", plan), 200)["record"]["entity"] ==
+             "budget_plan"
+
+    for version <- ["v1", "v2"] do
+      assert json_response(get(authorized.(), "/api/#{version}/sync"), 426)["error"] ==
+               "upgrade_required"
+    end
+
+    prepared = operation("expense", expense(free["entityID"], 2000))
+    response = json_response(post(authorized.(), "/api/v3/sync", prepared), 200)
+    assert response == json_response(post(authorized.(), "/api/v3/sync", prepared), 200)
+
+    assert json_response(get(authorized.(), "/api/v3/sync"), 200)["changes"]
+           |> Enum.any?(&(&1["entity"] == "budget_plan"))
+  end
+
   test "native login, authentication boundary and revocation", %{conn: conn} do
     user = user()
     assert json_response(get(conn, "/api/v1/sync"), 401)["error"] == "unauthorized"

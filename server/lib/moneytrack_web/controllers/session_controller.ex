@@ -121,6 +121,26 @@ defmodule MoneyTrackWeb.SessionController do
   end
 
   defp compatible_sync(conn, _opts) do
+    old_budget =
+      (String.starts_with?(conn.request_path, "/api/v1/") ||
+         String.starts_with?(conn.request_path, "/api/v2/")) &&
+        (Ledger.has_budget_plan?(conn.assigns.current_user) ||
+           conn.params["entity"] == "budget_plan")
+
+    if old_budget do
+      conn
+      |> failure(
+        426,
+        "upgrade_required",
+        "Update MoneyTrack for whole-year budgets. Your pending changes are preserved."
+      )
+      |> halt()
+    else
+      compatible_sharing(conn)
+    end
+  end
+
+  defp compatible_sharing(conn) do
     if String.starts_with?(conn.request_path, "/api/v1/") &&
          (MoneyTrack.Sharing.has_data?(conn.assigns.current_user) ||
             conn.params["entity"] in ["shared_expense", "shared_assignment", "repayment"]) do

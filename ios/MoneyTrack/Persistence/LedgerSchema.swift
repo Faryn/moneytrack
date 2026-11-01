@@ -108,9 +108,23 @@ enum LedgerSchemaV3: VersionedSchema {
     }
 }
 
+enum LedgerSchemaV4: VersionedSchema {
+    static var versionIdentifier: Schema.Version { .init(4, 0, 0) }
+    static var models: [any PersistentModel.Type] { LedgerSchemaV3.models + [AnnualPlanRecord.self] }
+    @Model final class AnnualPlanRecord {
+        @Attribute(.unique) var id: UUID
+        var year: Int
+        var data: Data
+        init(_ value: AnnualBudgetPlan) throws {
+            id = value.id; year = value.year; data = try JSONEncoder().encode(value)
+        }
+        func value() throws -> AnnualBudgetPlan { try JSONDecoder().decode(AnnualBudgetPlan.self, from: data) }
+    }
+}
+
 enum LedgerMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self] }
-    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self), .lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self)] }
+    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self, LedgerSchemaV4.self] }
+    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self), .lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self), .lightweight(fromVersion: LedgerSchemaV3.self, toVersion: LedgerSchemaV4.self)] }
 }
 
 typealias CategoryRecord = LedgerSchemaV1.CategoryRecord
@@ -143,7 +157,7 @@ enum LedgerPersistence {
         ).appending(path: "MoneyTrack", directoryHint: .isDirectory)
         let directory = base.appending(path: namespace.directoryName, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schema = Schema(versionedSchema: LedgerSchemaV3.self)
+        let schema = Schema(versionedSchema: LedgerSchemaV4.self)
         let configuration = ModelConfiguration(
             "MoneyTrack", schema: schema, url: directory.appending(path: "ledger.store"),
             allowsSave: allowsSave, cloudKitDatabase: .none

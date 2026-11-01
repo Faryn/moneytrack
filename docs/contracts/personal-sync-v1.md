@@ -71,3 +71,7 @@ Cursors are signed, account-bound, and based on a private per-user sequence. Pag
 - `429`: login throttling; respect `Retry-After`.
 
 Server errors and transport failures leave the exact prepared request pending. A lost success response may have committed; retrying must return its original result without a second financial effect. Future API migrations must preserve and route existing prepared v1 requests rather than treating them as a new protocol.
+
+## Subsequent API versions
+
+[API v2](shared-sync-v2.md) adds shared records; [API v3](annual-budget-v3.md) adds whole-year budgets and guilt-free spending. Current native clients use v3. V1/V2 sync returns 426 when an account has a whole-year plan, preserving pending work for upgrade. The original personal payloads remain accepted through v3 subject to the new per-year legacy-budget guard.

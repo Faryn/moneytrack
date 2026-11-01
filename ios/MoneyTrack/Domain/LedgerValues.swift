@@ -2,10 +2,11 @@ import Foundation
 
 enum LedgerError: LocalizedError {
     case invalidAmount, invalidDate, missingCategory, emptyCategory, duplicateCategory, missingExpense
-    case sharedEditingUnavailable, categoryTooLong, descriptionTooLong
+    case sharedEditingUnavailable, categoryTooLong, descriptionTooLong, allocationsExceedTotal
 
     var errorDescription: String? {
         switch self {
+        case .allocationsExceedTotal: "Category allocations exceed the yearly budget. Reduce them or increase the total."
         case .invalidAmount: "Enter a valid amount with at most two decimal places."
         case .invalidDate: "Choose a valid calendar date."
         case .missingCategory: "Choose a category for this expense."

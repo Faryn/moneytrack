@@ -20,3 +20,7 @@ A pending invitation exposes only sender/recipient identity until accepted. Its 
 The initial Settle Up form supports amounts up to the currently confirmed outstanding balance. Server validation rejects stale balance confirmations so two simultaneous records cannot silently settle the same displayed debt twice. Overpayment and repayment edit/delete flows are outside this implementation. Recorded repayments remain distinct from the underlying expense; shared deletion removes expense spending and its obligation without silently rewriting recorded payments. Its confirmation must show the resulting balance.
 
 Pending invitation cancellation/decline and removal of accepted sharing are not introduced by this milestone. Common expense deletion remains available to its authorized participants, including the creator while pending.
+
+## Subsequent budgeting extension
+
+[ADR 0013](0013-whole-year-budget-and-guilt-free-spending.md) changes budgeting to whole-year totals and a guilt-free pool. Incoming Uncategorized shares draw from that pool unless the user allocates budget to the category; the legacy zero-budget bootstrap adds no money. New clients use [API v3](../contracts/annual-budget-v3.md), which retains these sharing operations unchanged.

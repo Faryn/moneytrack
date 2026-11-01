@@ -23,3 +23,7 @@ The user confirmed both previously proposed rules: overspending reduces the foll
 For a €1,200 yearly budget, January allocates €100. Spending €150 leaves −€50, so February starts with €50 available. Changing the yearly amount to €2,400 makes January's allocation €200 and February's available budget €250, with the same €150 expense.
 
 Use the same [synthetic examples](../contracts/budget-examples.json) in Swift and Elixir tests. The fixture covers carryover, overspending, personal shares, January reset, exact-cent rounding, future expenses, and yearly edits. It is a calculation contract, not a sync API.
+
+## Subsequent decision
+
+[ADR 0013](0013-whole-year-budget-and-guilt-free-spending.md) changes setup to a whole-year total followed by category allocations and guilt-free spending. It supersedes independent rounding for whole-year plans with joint allocation so the monthly parts equal the total. Carryover, calendar-year recalculation, and January reset remain. Legacy category-only records retain the calculation above until explicit conversion.

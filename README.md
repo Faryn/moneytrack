@@ -6,15 +6,15 @@ A personal expense and budget tracker for a small user base, primarily on iPhone
 
 The native SwiftUI app supports personal expenses and budgets offline, with exact monthly/category calculations, standard navigation/forms, and adaptive green/red amounts. The Phoenix/SQLite website and API use administrator-created username/password accounts, native Keychain sessions, and revision-based synchronization.
 
-Shared expenses support verified email invitations, immediate proposed-share budgeting, connection reuse, private categories, common edit/delete history, and record-only Settle Up. SwiftData preserves pending requests and conflicts through V1/V2-to-V3 migration. Normal stores receive no sample data.
+Shared expenses support verified email invitations, immediate proposed-share budgeting, connection reuse, private categories, common edit/delete history, and record-only Settle Up. SwiftData preserves pending requests and conflicts through forward migrations to V4. Normal stores receive no sample data.
 
 Passkeys, password recovery, production email/hosting, and TestFlight distribution remain unfinished. Invitation mail uses local/test delivery; no production deployment or payment provider is configured.
 
 ## Agreed product direction
 
 - Native SwiftUI with standard iOS components, targeting the latest stable iOS release selected at implementation time.
-- Fast form entry with suggested categories, today's date by default, and offline saving followed by synchronization.
-- Flat categories with yearly budgets, one twelfth allocated monthly, unused and overspent amounts carried forward, and a January 1 carryover reset. Editing a yearly amount recalculates the whole year.
+- A large, reachable bottom Add Expense action opens fast form entry with suggested categories, today's date, and offline saving followed by synchronization. Native animation/haptics respect Reduce Motion.
+- Set the whole yearly budget, then allocate parts to flat categories. The remainder is one guilt-free pool for unallocated/uncategorized spending. Exact monthly amounts carry unused and overspent balances within the year, with a January reset; yearly edits recalculate the whole year.
 - Category budgets are visible on Budget home. Green/red amounts distinguish available budget, overspending, and the direction of shared balances, alongside text labels and signs.
 - Personal expenses first. Share a saved expense afterward with one other user through a direct email invitation.
 - Splits of all, half, or none; only each participant's own share counts against their budget.
@@ -69,9 +69,9 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Verified on 2026-11-01: 74 server tests and 31 native tests pass, including two-account sharing, private categories, partial settlement, shared conflicts/deletion, populated V1/V2 migrations, immutable retries, and native sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
+Verified on 2026-11-01: 89 server tests and 40 native tests pass across the connected suite and focused follow-up checks. Coverage includes whole-year plans, guilt-free pooling, exact-cent conservation, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
 
-The shared implementation and its compatibility boundaries are documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md).
+Sharing is documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md). Whole-year plans and guilt-free spending extend it through [ADR 0013](docs/adr/0013-whole-year-budget-and-guilt-free-spending.md) and the [v3 contract](docs/contracts/annual-budget-v3.md).
 
 ## Next implementation milestone
 

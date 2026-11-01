@@ -30,3 +30,7 @@ Sign-in leaves unbound on-device data separate by default. An explicit, one-time
 ## Verification
 
 Server tests cover account isolation, retry deduplication, revision conflicts, tombstones, frozen pagination, and website writes through the same feed. Native tests cover populated V1 migration, exact retry persistence, failed acknowledgment rollback, atomic/idempotent pull, conflict resolution, and explicit import isolation. `scripts/check-connected` uses a temporary database and synthetic accounts to run real native API and simulator sign-in/relaunch checks; it refuses to reuse a server already occupying its test port.
+
+## Subsequent whole-year plans
+
+[ADR 0013](0013-whole-year-budget-and-guilt-free-spending.md) adds the private budget_plan entity and SwiftData V4. New clients use [API v3](../contracts/annual-budget-v3.md), retaining the six-field operation envelope, deduplication, frozen retries, and owner-scoped feed. Total and allocations share one revision; older category budgets remain legacy data.

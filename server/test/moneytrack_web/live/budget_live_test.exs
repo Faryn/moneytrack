@@ -76,7 +76,7 @@ defmodule MoneyTrackWeb.BudgetLiveTest do
     user = MoneyTrack.Fixtures.user()
     {:ok, token, _} = MoneyTrack.Accounts.create_session(user, "browser", "Test browser")
     {:ok, view, _} = live(init_test_session(conn, %{session_token: token}), "/?month=2027-01")
-    assert has_element?(view, "input[name='budget[year]'][value='2027']")
+    assert has_element?(view, "a[href='/plan?year=2027']")
   end
 
   test "saving a budget preserves an expense draft in the other form", %{conn: conn} do

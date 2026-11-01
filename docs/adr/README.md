@@ -16,3 +16,4 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0010](0010-pending-share-budget-treatment.md) | Accepted | Apply the creator's proposed personal share to budgets immediately, including while an invitation is pending |
 | [0011](0011-record-only-settle-up.md) | Accepted | Settle Up asks for a full/partial repayment amount and records it against shared balances; no in-app payments or budget impact |
 | [0012](0012-sharing-defaults-and-connected-flow.md) | Accepted | Private Uncategorized fallback, reuse accepted connections, and immediate repayment recording by either participant; connected shared flow |
+| [0013](0013-whole-year-budget-and-guilt-free-spending.md) | Accepted | Whole yearly total before category allocations; one guilt-free pool; joint exact-cent allocation; reachable bottom expense entry |

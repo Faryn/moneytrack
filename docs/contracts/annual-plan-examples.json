@@ -1,0 +1,600 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "total-before-any-allocations",
+      "year": 2026,
+      "month": 1,
+      "total": 120000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [],
+      "expenses": [
+        {
+          "day": "2026-01-15",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 5000,
+          "personalShare": 5000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 5000,
+          "remaining": 5000
+        },
+        "guiltFree": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 5000,
+          "remaining": 5000
+        },
+        "categories": {}
+      }
+    },
+    {
+      "id": "reserved-and-guilt-free",
+      "year": 2026,
+      "month": 1,
+      "total": 1200000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 600000
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 240000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 45000,
+          "personalShare": 45000
+        },
+        {
+          "day": "2026-01-15",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 10000,
+          "personalShare": 10000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 100000,
+          "carryover": 0,
+          "spent": 55000,
+          "remaining": 45000
+        },
+        "guiltFree": {
+          "allocation": 30000,
+          "carryover": 0,
+          "spent": 10000,
+          "remaining": 20000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 50000,
+            "carryover": 0,
+            "spent": 45000,
+            "remaining": 5000
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 20000,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 20000
+          }
+        }
+      }
+    },
+    {
+      "id": "overspending-stays-in-category",
+      "year": 2026,
+      "month": 1,
+      "total": 1200000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 600000
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 240000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 60000,
+          "personalShare": 60000
+        },
+        {
+          "day": "2026-01-15",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 10000,
+          "personalShare": 10000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 100000,
+          "carryover": 0,
+          "spent": 70000,
+          "remaining": 30000
+        },
+        "guiltFree": {
+          "allocation": 30000,
+          "carryover": 0,
+          "spent": 10000,
+          "remaining": 20000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 50000,
+            "carryover": 0,
+            "spent": 60000,
+            "remaining": -10000
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 20000,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 20000
+          }
+        }
+      }
+    },
+    {
+      "id": "both-pools-carry-forward",
+      "year": 2026,
+      "month": 2,
+      "total": 1200000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 600000
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 240000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 60000,
+          "personalShare": 60000
+        },
+        {
+          "day": "2026-01-15",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 10000,
+          "personalShare": 10000
+        },
+        {
+          "day": "2026-02-01",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 40000,
+          "personalShare": 40000
+        },
+        {
+          "day": "2026-02-10",
+          "categoryID": "00000000-0000-0000-0000-000000000003",
+          "amount": 15000,
+          "personalShare": 15000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 100000,
+          "carryover": 30000,
+          "spent": 55000,
+          "remaining": 75000
+        },
+        "guiltFree": {
+          "allocation": 30000,
+          "carryover": 20000,
+          "spent": 15000,
+          "remaining": 35000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 50000,
+            "carryover": -10000,
+            "spent": 40000,
+            "remaining": 0
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 20000,
+            "carryover": 20000,
+            "spent": 0,
+            "remaining": 40000
+          }
+        }
+      }
+    },
+    {
+      "id": "all-unallocated-categories-share-pool",
+      "year": 2026,
+      "month": 1,
+      "total": 120000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 1000,
+          "personalShare": 1000
+        },
+        {
+          "day": "2026-01-03",
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 2000,
+          "personalShare": 2000
+        },
+        {
+          "day": "2026-01-04",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 3000,
+          "personalShare": 3000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 6000,
+          "remaining": 4000
+        },
+        "guiltFree": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 6000,
+          "remaining": 4000
+        },
+        "categories": {}
+      }
+    },
+    {
+      "id": "personal-shares-only-and-ignore-future",
+      "year": 2026,
+      "month": 1,
+      "total": 120000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 60000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 7800,
+          "personalShare": 3900
+        },
+        {
+          "day": "2026-01-03",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 4000,
+          "personalShare": 2000
+        },
+        {
+          "day": "2026-02-01",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 10000,
+          "personalShare": 10000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 5900,
+          "remaining": 4100
+        },
+        "guiltFree": {
+          "allocation": 5000,
+          "carryover": 0,
+          "spent": 2000,
+          "remaining": 3000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 5000,
+            "carryover": 0,
+            "spent": 3900,
+            "remaining": 1100
+          }
+        }
+      }
+    },
+    {
+      "id": "january-reset",
+      "year": 2026,
+      "month": 1,
+      "total": 120000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 60000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2025-12-31",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 15000,
+          "personalShare": 15000
+        },
+        {
+          "day": "2026-01-01",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 1000,
+          "personalShare": 1000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 10000,
+          "carryover": 0,
+          "spent": 1000,
+          "remaining": 9000
+        },
+        "guiltFree": {
+          "allocation": 5000,
+          "carryover": 0,
+          "spent": 1000,
+          "remaining": 4000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 5000,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 5000
+          }
+        }
+      }
+    },
+    {
+      "id": "zero-budget-still-counts-spending",
+      "year": 2026,
+      "month": 1,
+      "total": 0,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 100,
+          "personalShare": 100
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 0,
+          "carryover": 0,
+          "spent": 100,
+          "remaining": -100
+        },
+        "guiltFree": {
+          "allocation": 0,
+          "carryover": 0,
+          "spent": 100,
+          "remaining": -100
+        },
+        "categories": {}
+      }
+    },
+    {
+      "id": "tiny-total-conserves-monthly-cents",
+      "year": 2026,
+      "month": 1,
+      "total": 12,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 6
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 6
+        }
+      ],
+      "expenses": [],
+      "expected": {
+        "total": {
+          "allocation": 1,
+          "carryover": 0,
+          "spent": 0,
+          "remaining": 1
+        },
+        "guiltFree": {
+          "allocation": 0,
+          "carryover": 0,
+          "spent": 0,
+          "remaining": 0
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 1,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 1
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 0,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "balanced-remainders-not-greedy-first-fit",
+      "year": 2026,
+      "month": 5,
+      "total": 24,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 8
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 8
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000003",
+          "amount": 8
+        }
+      ],
+      "expenses": [],
+      "expected": {
+        "total": {
+          "allocation": 2,
+          "carryover": 8,
+          "spent": 0,
+          "remaining": 10
+        },
+        "guiltFree": {
+          "allocation": 0,
+          "carryover": 0,
+          "spent": 0,
+          "remaining": 0
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 1,
+            "carryover": 4,
+            "spent": 0,
+            "remaining": 5
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 0,
+            "carryover": 4,
+            "spent": 0,
+            "remaining": 4
+          },
+          "00000000-0000-0000-0000-000000000003": {
+            "allocation": 1,
+            "carryover": 0,
+            "spent": 0,
+            "remaining": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "one-guilt-free-cent",
+      "year": 2026,
+      "month": 12,
+      "total": 13,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 6
+        },
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000002",
+          "amount": 6
+        }
+      ],
+      "expenses": [],
+      "expected": {
+        "total": {
+          "allocation": 1,
+          "carryover": 12,
+          "spent": 0,
+          "remaining": 13
+        },
+        "guiltFree": {
+          "allocation": 1,
+          "carryover": 0,
+          "spent": 0,
+          "remaining": 1
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 0,
+            "carryover": 6,
+            "spent": 0,
+            "remaining": 6
+          },
+          "00000000-0000-0000-0000-000000000002": {
+            "allocation": 0,
+            "carryover": 6,
+            "spent": 0,
+            "remaining": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "larger-total-same-reserved-amount",
+      "year": 2026,
+      "month": 1,
+      "total": 240000,
+      "freeCategoryID": "00000000-0000-0000-0000-000000000004",
+      "allocations": [
+        {
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 60000
+        }
+      ],
+      "expenses": [
+        {
+          "day": "2026-01-02",
+          "categoryID": "00000000-0000-0000-0000-000000000001",
+          "amount": 4000,
+          "personalShare": 4000
+        },
+        {
+          "day": "2026-01-03",
+          "categoryID": "00000000-0000-0000-0000-000000000004",
+          "amount": 3000,
+          "personalShare": 3000
+        }
+      ],
+      "expected": {
+        "total": {
+          "allocation": 20000,
+          "carryover": 0,
+          "spent": 7000,
+          "remaining": 13000
+        },
+        "guiltFree": {
+          "allocation": 15000,
+          "carryover": 0,
+          "spent": 3000,
+          "remaining": 12000
+        },
+        "categories": {
+          "00000000-0000-0000-0000-000000000001": {
+            "allocation": 5000,
+            "carryover": 0,
+            "spent": 4000,
+            "remaining": 1000
+          }
+        }
+      }
+    }
+  ]
+}

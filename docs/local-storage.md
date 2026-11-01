@@ -1,6 +1,6 @@
 # Local iOS storage
 
-The connected personal ledger uses SwiftData V2, with V1 preserved through a tested lightweight migration. See [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md) and the subsequent [personal sync contract](adr/0009-personal-sync-contract.md).
+The connected ledger uses SwiftData V4, preserving V1/V2/V3 through tested lightweight forward migrations. See [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md) and the subsequent [personal sync contract](adr/0009-personal-sync-contract.md).
 
 ## Records and writes
 
@@ -18,12 +18,16 @@ Keychain stores the active identity and revocable token with device-only accessi
 
 Unbound entries stay separate by default. A deliberate one-time copy into an empty account remaps IDs and relationships and queues the current categories, budgets, and non-deleted expenses in one local save. Originals and their history remain untouched. Repeating that account copy is harmless. Merging two populated ledgers or repeatedly importing edits to the original copy is not implemented.
 
-Store-open/migration failures show a retry screen and never trigger an automatic reset. CloudKit is disabled. Forward migration tests preserve populated V1 expenses, queued IDs/payloads, and tombstones. Before introducing V3, add populated V2 fixtures that include prepared requests, issues, metadata, and cursors.
+Store-open/migration failures show a retry screen and never trigger an automatic reset. CloudKit is disabled. Forward migration tests preserve populated V1 expenses, queued IDs/payloads, and tombstones. Populated V2-to-V3 and V3-to-V4 fixtures include prepared requests and metadata; later schema changes must preserve the same guarantees.
 
 ## Verification and remaining work
 
-Unit tests cover financial examples, strict dates, reopening, rollback, isolation, migration, prepared retries, atomic/idempotent pull, conflict resolution, and copying. `scripts/check-connected` adds real server/API and simulator account checks. Shared-expense permissions/history, invitation onboarding, passkeys, recovery, production backups/restoration, distribution, and released-client API compatibility remain work before the complete MVP release.
+Unit tests cover financial examples, strict dates, reopening, rollback, isolation, migration, prepared retries, atomic/idempotent pull, conflict resolution, and copying. `scripts/check-connected` adds real server/API and simulator account checks. Shared permissions/history are implemented. Invitation onboarding beyond administrator-created accounts, passkeys, recovery, production backups/restoration, distribution, and released-client API compatibility remain work before the complete MVP release.
 
 ## Shared records in V3
 
 V3 adds shared expense/invitation/assignment/repayment projections and source-acknowledgment dependencies without modifying V1/V2 model definitions. Personal and shared domain changes still commit with their outbox operations. Populated V2 migration, exact prepared bytes, failed shared saves, queued source revisions, and open-editor conflicts are covered by native tests. Source IDs are suppressed by their shared projection even after shared deletion, so replay cannot double-count or resurrect the original personal expense. See the [shared sync contract](contracts/shared-sync-v2.md).
+
+## Whole-year plans in V4
+
+V4 adds AnnualPlanRecord with a complete annual total, reserved private default-category UUID, and category allocations. It leaves V1/V2/V3 definitions frozen. Plan mutations, any new category, and pending operations commit together. Legacy category budgets remain intact until an explicit plan save; they are prefilled without inventing extra budget. Copying into an empty account remaps both default and allocated category references. Concurrent plans for the same year resolve to the canonical server ID without duplicate financial plans. See [API v3](contracts/annual-budget-v3.md).

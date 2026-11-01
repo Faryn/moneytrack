@@ -16,7 +16,8 @@ for username <- [
       "ui-connected-fixture",
       "shared-a-fixture",
       "shared-b-fixture",
-      "shared-outsider-fixture"
+      "shared-outsider-fixture",
+      "plan-fixture"
     ] do
   {:ok, _} =
     MoneyTrack.Accounts.create_user(%{username: username, password: "fixture-passphrase-2026"})

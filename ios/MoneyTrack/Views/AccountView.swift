@@ -168,10 +168,10 @@ private struct SyncReviewDetail: View {
                 Section { Button("Use Server Version") { resolve(keep: false) } }
             }
             Section {
-                if !isSharingProposal && (issue.current != nil || !["shared_expense", "shared_assignment", "repayment"].contains(issue.entity)) && (issue.current?.deleted != true || issue.entity == "expense") {
+                if !isSharingProposal && (issue.current != nil || !["shared_expense", "shared_assignment", "repayment", "budget_plan", "year_budget"].contains(issue.entity)) && (issue.current?.deleted != true || issue.entity == "expense") {
                     Button(issue.current?.deleted == true ? "Save as New Expense" : "Keep My Current Changes") { confirmKeep = true }
                 }
-                if ["shared_expense", "shared_assignment", "repayment"].contains(issue.entity) && issue.current == nil {
+                if ["shared_expense", "shared_assignment", "repayment", "budget_plan", "year_budget"].contains(issue.entity) && issue.current == nil {
                     Button("Discard This Draft", role: .destructive) { resolve(keep: false) }
                 }
             } footer: {
@@ -197,7 +197,14 @@ private struct RecordSummary: View {
     let entity: String
     let payload: JSONValue
     var body: some View {
-        if entity == "shared_expense", case .object(let fields) = payload {
+        if entity == "budget_plan", let value = try? payload.decoded(AnnualBudgetPlan.self) {
+            LabeledContent("Year", value: String(value.year))
+            LabeledContent("Whole yearly budget", value: Money.format(value.total))
+            LabeledContent("Guilt-free spending", value: Money.format(value.guiltFree))
+            ForEach(value.allocations, id: \.categoryID) { allocation in
+                LabeledContent(store.categories.first { $0.id == allocation.categoryID }?.name ?? "Category", value: Money.format(allocation.amount))
+            }
+        } else if entity == "shared_expense", case .object(let fields) = payload {
             if case .integer(let amount) = fields["amount"] { LabeledContent("Total purchase", value: Money.format(amount)) }
             if case .string(let description) = fields["description"] { LabeledContent("Description", value: description) }
             if let day = fields["day"], let date = try? day.decoded(ExpenseDay.self) { LabeledContent("Date", value: date.date.formatted(date: .abbreviated, time: .omitted)) }

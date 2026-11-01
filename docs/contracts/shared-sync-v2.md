@@ -76,3 +76,7 @@ Responses/feeds contain actual payer, recipient, actor, calendar date, audit tim
 ## Verification
 
 Common [split](shared-expense-examples.json) and [repayment](settlement-examples.json) fixtures run in Swift/Elixir. Context/website tests cover verified acceptance, immediate pending budgets, account isolation, private categories, common conflicts, reuse, partial/full repayment, duplicate operations, shared deletion, and rollback. Native migration/persistence tests cover populated V2 upgrade, exact prepared bytes, failed saves, frozen source dependencies, and stale editors. The isolated connected check exercises two accounts through the actual native transport, plus native sharing/partial-repayment UI.
+
+## Whole-year budget extension
+
+Current native clients use [API v3](annual-budget-v3.md). Shared payloads remain unchanged. V1/V2 accounts with a whole-year plan require upgrade so old clients cannot omit or double-count the new budget model. Uncategorized incoming shares use the private guilt-free pool unless explicitly allocated; a legacy zero-budget bootstrap does not increase the plan total.

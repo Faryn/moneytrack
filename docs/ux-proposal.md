@@ -1,6 +1,6 @@
 # App UX proposal
 
-Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Sharing/account flows below remain design proposals except for the explicitly confirmed choices. ADR 0011 confirms record-only Settle Up; outstanding invitation and repayment permission policies remain open.
+Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Connected sharing/account flows are implemented under ADR 0012. ADR 0013 adds total-first budgeting, guilt-free spending, and the reachable bottom expense action. Remaining release assumptions stay marked in SPEC.
 
 ## Main structure
 
@@ -10,7 +10,7 @@ Use three persistent native tabs, each with its own navigation stack:
 2. **Expenses**: a chronological, searchable log of personal and shared expenses, with the user's own-share spending total for the selected month. Tapping an expense opens its details and actions.
 3. **Shared**: balances with accepted sharing partners, pending invitations where needed, and navigation to each person's shared expenses and repayments. Do not net amounts owed by different people into the spendable budget.
 
-Provide Add Expense as a consistent toolbar action, not a navigation tab. Put account, passkeys, security, and sync status under a profile button. Keep Yearly Plan accessible from Budget home rather than burying it in account settings.
+Provide Add Expense as a large bottom button above the native tab bar on all three destinations. Use the system sheet, subtle symbol bounce and haptics; remove motion when Reduce Motion is enabled. Put account, passkeys, security, and sync status under a profile button. Keep Yearly Plan accessible from Budget home rather than burying it in account settings.
 
 ## Budget home
 
@@ -18,7 +18,7 @@ Lead with remaining budget and a compact explanation: monthly allocation + carry
 
 Keep the total and each category's status independent: total remaining may be positive while one category is overspent. The overspent category must be visibly red and explicitly labeled. Use small progress indicators as supporting information; numbers and labels carry the meaning.
 
-A category detail shows its allocation, carryover, spending, remaining amount, and matching expenses. The yearly plan edits flat category/year amounts and shows the resulting monthly allocations. Both unused and overspent balances carry within the year; yearly amount edits recalculate all twelve months with confirmation, as confirmed in ADR 0006.
+A category detail shows its allocation, carryover, spending, remaining amount, and matching expenses. Yearly Plan first sets the whole annual budget, then assigns parts to flat categories, showing Assigned and Guilt-free amounts. Reject allocations above the total. Budget home also shows the guilt-free pool with direct detail navigation. All unallocated categories share that pool; an allocated category's overspending stays with that category while reducing the overall total. Both unused and overspent balances carry within the year; yearly amount edits recalculate all twelve months with confirmation, as confirmed in ADR 0006.
 
 Recent expenses are optional on Budget home once category budgets are present. Recommend leaving the full log in Expenses to keep the home screen focused.
 
@@ -61,7 +61,7 @@ Use native semantic colors with sufficient contrast in light and dark appearance
 
 ## Setup and exceptional states
 
-Recommend short account setup followed by category/yearly-budget setup, with passkey enrollment optional. Let users start capturing expenses before completing their full yearly plan; the exact uncategorized fallback remains an open proposal. Before a budget exists, show setup guidance rather than a misleading zero-remaining success state.
+Account setup is followed by whole-year total and optional category allocation, with passkey enrollment deferred. Expense capture also works before setup: Guilt-free spending uses a private default category, created with the expense in the same local save. Before a budget exists, show setup guidance rather than a misleading zero-remaining success state.
 
 Offline saves should be immediate. Show pending sync state unobtrusively and avoid blocking entry on network availability. A financial conflict should preserve both versions and ask for resolution, rather than silently changing a number. Use a confirmation for shared deletion that explains the effect on both budgets and the debt; personal deletion can offer Undo where feasible.
 

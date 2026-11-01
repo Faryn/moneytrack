@@ -71,3 +71,7 @@ Record-only Settle Up is now a confirmed requirement (ADR 0011). Full/partial re
 ## Source data and credentials
 
 Use synthetic expenses and identities in fixtures. Keep personal financial exports, credentials, live databases, backups, and signing material out of Git. Keep local dependency/build output ignored, while committing dependency lockfiles and shared project configuration when generated.
+
+## 6. Whole-year budgeting and reachable entry
+
+ADR 0013 replaces category-first setup with a yearly total followed by category allocations. Native and web overview show overall remaining, one guilt-free pool, and category details. Unallocated categories share the pool; allocated overspending stays with its category and reduces the total. API v3 saves the complete private plan as one revision, with explicit conflicts and immutable retries. SwiftData V4 preserves populated earlier stores and legacy budgets until explicit conversion. Common exact-cent examples run in Swift and Elixir. The native Add Expense action sits above the tab bar with system animation/haptics and Reduce Motion support.

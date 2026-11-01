@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0182EB647EF86879038BD811 /* AnnualPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8772A2841E9AD4151718891 /* AnnualPlanTests.swift */; };
 		0BCE47B17211EBCC7BB20C56 /* SharedMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6DAE23BCFCA94BD81136303 /* SharedMath.swift */; };
 		2110A9837CFCD07F1E92173A /* ExpenseForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B0E354554D241BF5331A44 /* ExpenseForm.swift */; };
 		308597FAE8876655016E85F2 /* SharingValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C23CA899AFFF0B094BF437 /* SharingValues.swift */; };
@@ -23,10 +24,12 @@
 		52E560CEC49274EEFC319C26 /* MoneyTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64906528A1DEEAF020322EA3 /* MoneyTrackApp.swift */; };
 		59D973ABFECEC2514D1B0C41 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB617EAC96EAD0DD1CFE1986 /* SharedViews.swift */; };
 		59D9D7EC03659AD061BF78DE /* shared-expense-examples.json in Resources */ = {isa = PBXBuildFile; fileRef = 869AAC4D1A22038D1783F9DC /* shared-expense-examples.json */; };
+		5DE798C3F70BB6A960F710B8 /* AnnualPlanPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A830856AA3F9EBCBE4AB60 /* AnnualPlanPersistenceTests.swift */; };
 		6684CBD514F8B4D314FC14AB /* YearlyPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7650D0867D479AFF6C90DF /* YearlyPlanView.swift */; };
 		6BDCD6237C0FF4FCDE289A4E /* ExpenseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C8CE548411A8C2DDC495B5 /* ExpenseListView.swift */; };
 		6F0FE8ACB6FF1C72B447FDE9 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB61FBFB0CCD5A5AE4AC4C5C /* CommonViews.swift */; };
 		7122735FACEF859E97B3A79F /* SharedMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9667DE09961404D75034861B /* SharedMathTests.swift */; };
+		72C890A304B28C3A53B11AA2 /* WholeBudgetFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D57CBC197CC618034684B4 /* WholeBudgetFlowTests.swift */; };
 		7A29A568BBACCC7D855E7D2F /* SyncPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DCB7C239F1C83B90810CF8 /* SyncPersistenceTests.swift */; };
 		7D37E06BB8998321F91A329B /* BudgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966B1D2A2ED6816929970A42 /* BudgetTests.swift */; };
 		7F8C9D4AAAF022D759A605B0 /* CredentialVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4127D011EC119EA1EBB327B3 /* CredentialVault.swift */; };
@@ -34,8 +37,11 @@
 		8E6083FAB95321EC821FB16F /* LedgerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB3DBB58CFB035F1A22C4887 /* LedgerStore.swift */; };
 		94541605735E44498DB9AD79 /* LedgerValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F0A34BFCEEC6C012AD747B /* LedgerValues.swift */; };
 		98056B9C5BC4442C7805F808 /* budget-examples.json in Resources */ = {isa = PBXBuildFile; fileRef = F48E8F12AF696B8FF4F4234D /* budget-examples.json */; };
+		AA4459096F3C1407C1867DFC /* AnnualBudgetPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DD7AD655C4FE3DB9E50748 /* AnnualBudgetPlan.swift */; };
 		AF1784E383A92F8969187EA9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B6F2F352DD962FC3C21B32A4 /* Assets.xcassets */; };
 		B28F3D650BB1E90AFEFB6A5F /* SyncTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56C78BDF7FD9A13906203B9 /* SyncTransport.swift */; };
+		B6C633B5479A95CD3BFEA79C /* annual-plan-examples.json in Resources */ = {isa = PBXBuildFile; fileRef = 500D37D9CEFB6BBE3C5FEE92 /* annual-plan-examples.json */; };
+		D466982FAE4384163079F8DD /* ConnectedAnnualPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4D5B03080AADC747AE19DD /* ConnectedAnnualPlanTests.swift */; };
 		DADF884E74CAE602AEFDBB85 /* ConnectedAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ADE1C3ED4594CCB2D2C27B /* ConnectedAPITests.swift */; };
 		E6730DC05E75C8778A10FB27 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31DDEAA93AA6C770826752F3 /* AppSession.swift */; };
 		EAE34C99F7D32C190F7F7789 /* LedgerStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF794362D27F683845B0EE6 /* LedgerStoreTests.swift */; };
@@ -67,15 +73,19 @@
 		11B8551EDB7D3F4AF810A542 /* AccountView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
 		16D63668F40F5C9630BD53CF /* BudgetView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
 		1D7650D0867D479AFF6C90DF /* YearlyPlanView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YearlyPlanView.swift; sourceTree = "<group>"; };
+		23DD7AD655C4FE3DB9E50748 /* AnnualBudgetPlan.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnnualBudgetPlan.swift; sourceTree = "<group>"; };
 		23F0A34BFCEEC6C012AD747B /* LedgerValues.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LedgerValues.swift; sourceTree = "<group>"; };
 		2BCBC1AEE42C96167005F0B9 /* LedgerSchema.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LedgerSchema.swift; sourceTree = "<group>"; };
 		31DDEAA93AA6C770826752F3 /* AppSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
 		4127D011EC119EA1EBB327B3 /* CredentialVault.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CredentialVault.swift; sourceTree = "<group>"; };
 		41C8CE548411A8C2DDC495B5 /* ExpenseListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExpenseListView.swift; sourceTree = "<group>"; };
 		45C23CA899AFFF0B094BF437 /* SharingValues.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharingValues.swift; sourceTree = "<group>"; };
+		500D37D9CEFB6BBE3C5FEE92 /* annual-plan-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; name = "annual-plan-examples.json"; path = "../../docs/contracts/annual-plan-examples.json"; sourceTree = "<group>"; };
 		51ADE1C3ED4594CCB2D2C27B /* ConnectedAPITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectedAPITests.swift; sourceTree = "<group>"; };
 		61AE06257053A5A51EFB23B8 /* SharedPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedPersistenceTests.swift; sourceTree = "<group>"; };
 		64906528A1DEEAF020322EA3 /* MoneyTrackApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoneyTrackApp.swift; sourceTree = "<group>"; };
+		69D57CBC197CC618034684B4 /* WholeBudgetFlowTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WholeBudgetFlowTests.swift; sourceTree = "<group>"; };
+		76A830856AA3F9EBCBE4AB60 /* AnnualPlanPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnnualPlanPersistenceTests.swift; sourceTree = "<group>"; };
 		76B0E354554D241BF5331A44 /* ExpenseForm.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExpenseForm.swift; sourceTree = "<group>"; };
 		7951503ED8168BBA31DE9ED4 /* settlement-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "settlement-examples.json"; path = "../../docs/contracts/settlement-examples.json"; sourceTree = "<group>"; };
 		869AAC4D1A22038D1783F9DC /* shared-expense-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "shared-expense-examples.json"; path = "../../docs/contracts/shared-expense-examples.json"; sourceTree = "<group>"; };
@@ -85,6 +95,7 @@
 		A4ACE58908FC563FA416D46F /* PersonalExpenseFlowTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PersonalExpenseFlowTests.swift; sourceTree = "<group>"; };
 		AB3DBB58CFB035F1A22C4887 /* LedgerStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LedgerStore.swift; sourceTree = "<group>"; };
 		AB61FBFB0CCD5A5AE4AC4C5C /* CommonViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
+		AF4D5B03080AADC747AE19DD /* ConnectedAnnualPlanTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectedAnnualPlanTests.swift; sourceTree = "<group>"; };
 		B5B3A8FC69DCE767A96B7E82 /* MoneyTrackTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoneyTrackTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6F2F352DD962FC3C21B32A4 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C15E6DDD095941FB1843F0D6 /* ConnectedFlowTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectedFlowTests.swift; sourceTree = "<group>"; };
@@ -95,6 +106,7 @@
 		DEF794362D27F683845B0EE6 /* LedgerStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LedgerStoreTests.swift; sourceTree = "<group>"; };
 		E6DAE23BCFCA94BD81136303 /* SharedMath.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedMath.swift; sourceTree = "<group>"; };
 		E726AE11D6CD5B274E2FA4C8 /* EmailVerificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EmailVerificationView.swift; sourceTree = "<group>"; };
+		E8772A2841E9AD4151718891 /* AnnualPlanTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnnualPlanTests.swift; sourceTree = "<group>"; };
 		EB617EAC96EAD0DD1CFE1986 /* SharedViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedViews.swift; sourceTree = "<group>"; };
 		EE33FB971431EA0B2DFF753D /* MoneyTrackUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoneyTrackUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F339E784417E84D1A2DBC14E /* MoneyTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoneyTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -203,6 +215,10 @@
 				7951503ED8168BBA31DE9ED4 /* settlement-examples.json */,
 				C73FD87EBE355DF88477A0F5 /* ConnectedSharingTests.swift */,
 				61AE06257053A5A51EFB23B8 /* SharedPersistenceTests.swift */,
+				E8772A2841E9AD4151718891 /* AnnualPlanTests.swift */,
+				500D37D9CEFB6BBE3C5FEE92 /* annual-plan-examples.json */,
+				76A830856AA3F9EBCBE4AB60 /* AnnualPlanPersistenceTests.swift */,
+				AF4D5B03080AADC747AE19DD /* ConnectedAnnualPlanTests.swift */,
 			);
 			path = MoneyTrackTests;
 			sourceTree = "<group>";
@@ -213,6 +229,7 @@
 				23F0A34BFCEEC6C012AD747B /* LedgerValues.swift */,
 				E6DAE23BCFCA94BD81136303 /* SharedMath.swift */,
 				45C23CA899AFFF0B094BF437 /* SharingValues.swift */,
+				23DD7AD655C4FE3DB9E50748 /* AnnualBudgetPlan.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -230,6 +247,7 @@
 			children = (
 				A4ACE58908FC563FA416D46F /* PersonalExpenseFlowTests.swift */,
 				C15E6DDD095941FB1843F0D6 /* ConnectedFlowTests.swift */,
+				69D57CBC197CC618034684B4 /* WholeBudgetFlowTests.swift */,
 			);
 			path = MoneyTrackUITests;
 			sourceTree = "<group>";
@@ -364,6 +382,7 @@
 				98056B9C5BC4442C7805F808 /* budget-examples.json in Resources */,
 				59D9D7EC03659AD061BF78DE /* shared-expense-examples.json in Resources */,
 				312F47ECE0B4D6D64E6A0228 /* settlement-examples.json in Resources */,
+				B6C633B5479A95CD3BFEA79C /* annual-plan-examples.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +402,7 @@
 			files = (
 				85026299E02422F36EB1169D /* PersonalExpenseFlowTests.swift in Sources */,
 				41A7EFE6357681F2055A8A9D /* ConnectedFlowTests.swift in Sources */,
+				72C890A304B28C3A53B11AA2 /* WholeBudgetFlowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,6 +417,9 @@
 				7122735FACEF859E97B3A79F /* SharedMathTests.swift in Sources */,
 				F1D8FFBA666CE1A6A91E4FEB /* ConnectedSharingTests.swift in Sources */,
 				3BD141D76056A93B8592B3C1 /* SharedPersistenceTests.swift in Sources */,
+				0182EB647EF86879038BD811 /* AnnualPlanTests.swift in Sources */,
+				5DE798C3F70BB6A960F710B8 /* AnnualPlanPersistenceTests.swift in Sources */,
+				D466982FAE4384163079F8DD /* ConnectedAnnualPlanTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,6 +446,7 @@
 				4360258144CF8C7CCEA477BD /* EmailVerificationView.swift in Sources */,
 				308597FAE8876655016E85F2 /* SharingValues.swift in Sources */,
 				59D973ABFECEC2514D1B0C41 /* SharedViews.swift in Sources */,
+				AA4459096F3C1407C1867DFC /* AnnualBudgetPlan.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

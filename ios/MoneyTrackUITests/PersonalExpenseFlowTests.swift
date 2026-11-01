@@ -9,6 +9,8 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["budget.setup"].waitForExistence(timeout: 10))
         app.buttons["budget.setup"].tap()
+        app.textFields["budget.annual"].tap(); app.textFields["budget.annual"].typeText("1200")
+        app.buttons["budget.save"].tap()
         app.buttons["category.add"].tap()
         app.textFields["category.name"].tap()
         app.textFields["category.name"].typeText("Restaurants")
@@ -53,6 +55,10 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.tabBars.buttons["Budget"].tap()
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€100.00")
         app.buttons["budget.yearly-plan"].tap()
+        let total = app.textFields["budget.annual"]
+        let oldTotal = total.value as? String ?? ""
+        total.tap(); total.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldTotal.count) + "3600")
+        app.buttons["budget.save"].tap(); app.buttons["Update Yearly Budget"].tap()
         app.buttons["category.add"].tap()
         app.textFields["category.name"].tap()
         app.textFields["category.name"].typeText("Groceries")

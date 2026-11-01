@@ -25,7 +25,7 @@ struct ExpenseForm: View {
         _date = State(initialValue: expense?.day.date ?? today)
     }
     private var canSave: Bool {
-        (try? Money.parse(amount)) != nil && categoryID != nil
+        (try? Money.parse(amount)) != nil
             && (1900...9999).contains(ExpenseDay(date: date).year)
     }
     private var dirty: Bool {
@@ -55,7 +55,7 @@ struct ExpenseForm: View {
                     get: { categoryID },
                     set: { categoryID = $0; selectedCategoryManually = true; suggested = false }
                 )) {
-                    Text("Choose a category").tag(UUID?.none)
+                    Text("Guilt-free spending").tag(UUID?.none)
                     ForEach(store.categories) { category in
                         Text(category.name).tag(Optional(category.id))
                     }
@@ -98,7 +98,8 @@ struct ExpenseForm: View {
         .interactiveDismissDisabled(dirty)
         .onAppear {
             if let expense, expectedRevision == nil { expectedRevision = (try? store.recordRevision("expense", expense.id)) ?? 0 }
-            if categoryID == nil { categoryID = store.expenses.first?.categoryID ?? store.categories.first?.id }
+            if categoryID == nil, let recent = store.expenses.first?.categoryID,
+               recent != store.annualPlan(year: ExpenseDay(date: date).year)?.freeCategoryID { categoryID = recent }
         }
         .task { if expense == nil { amountFocused = true } }
         .onChange(of: description) {
@@ -118,7 +119,6 @@ struct ExpenseForm: View {
     }
     private func save() {
         do {
-            guard let categoryID else { throw LedgerError.missingCategory }
             try store.saveExpense(id: expense?.id, amount: Money.parse(amount), description: description,
                                   categoryID: categoryID, day: ExpenseDay(date: date), expectedRevision: expectedRevision)
             dismiss()

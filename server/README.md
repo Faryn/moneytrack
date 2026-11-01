@@ -1,6 +1,6 @@
 # Phoenix server
 
-Phoenix application with administrator-created username/password accounts, browser/device sessions, personal categories/yearly budgets/expenses, versioned JSON sync, and a LiveView companion. Website and API mutations share the same owner-scoped transaction/revision/change-feed logic. Passkeys, invitations, shared expenses, and recovery are not implemented yet.
+Phoenix application with administrator-created username/password accounts, browser/device sessions, personal categories/yearly budgets/expenses, versioned JSON sync, and a LiveView companion. Website and API mutations share the same owner-scoped transaction/revision/change-feed logic. Verified invitations, shared expenses, record-only repayments, and whole-year plans are implemented. Passkeys and recovery remain unfinished.
 
 ## Toolchain
 
@@ -22,7 +22,7 @@ mix phx.server
 
 The website is at [localhost:4000](http://localhost:4000). `GET /api/health` returns `{"status":"ok"}` and is a liveness probe, not a database-readiness or authenticated sync endpoint. Set `PORT` to use a different local port.
 
-`mix setup` downloads dependencies, applies the account/ledger, email-verification, and shared-ledger migrations, and builds assets. It creates no default account or financial seed records. After setup, run `scripts/create-user USERNAME` from the repository root, using the same database environment as the server. The helper prompts for a password without echoing it and passes it through stdin, keeping it out of command history and arguments. Usernames are 3–32 letters/numbers/._-; passwords are 12–72 bytes. Restarting the server is not required after adding an account.
+`mix setup` downloads dependencies, applies the account/ledger, email-verification, shared-ledger, and whole-year-plan migrations, and builds assets. It creates no default account or financial seed records. After setup, run `scripts/create-user USERNAME` from the repository root, using the same database environment as the server. The helper prompts for a password without echoing it and passes it through stdin, keeping it out of command history and arguments. Usernames are 3–32 letters/numbers/._-; passwords are 12–72 bytes. Restarting the server is not required after adding an account.
 
 ## Database location
 
@@ -58,7 +58,7 @@ Current tests also cover verified sharing acceptance, pending-share budgets, con
 
 ## Implementation boundaries
 
-Both LiveViews and API controllers call `MoneyTrack.Ledger` for authorization, validation, record revisions, and change tracking. The current `/api/v1` contract is documented in [ADR 0009](../docs/adr/0009-personal-sync-contract.md) and the [API examples](../docs/contracts/personal-sync-v1.md). Authenticated `/api/v2/sync` supports personal/shared expenses, invitations, private assignments, and repayments; see the [v2 contract](../docs/contracts/shared-sync-v2.md). V1 accounts with shared activity receive an explicit upgrade response. Financial changes, history, deduplication, and affected feeds commit together.
+Both LiveViews and API controllers call `MoneyTrack.Ledger` for authorization, validation, record revisions, and change tracking. The original `/api/v1` contract is documented in [ADR 0009](../docs/adr/0009-personal-sync-contract.md) and the [API examples](../docs/contracts/personal-sync-v1.md). Authenticated `/api/v2/sync` supports personal/shared expenses, invitations, private assignments, and repayments; see the [v2 contract](../docs/contracts/shared-sync-v2.md). API v3 adds one private whole-year plan per account/year; the [v3 contract](../docs/contracts/annual-budget-v3.md) covers atomic allocations, migration, and conflict review. V1 accounts with shared activity, and V1/V2 accounts with whole-year plans, receive an explicit upgrade response. The website uses total-first setup at /plan. Financial changes, history, deduplication, and affected feeds commit together.
 
 Accounts use maintained bcrypt password hashing and Hammer rate limiting. Native device tokens are hashed, expiring, and revocable; encrypted/signed browser cookies are separate, with CSRF protection and secure flags in production. Request/SQL parameter logging is suppressed. HTTPS, server-readable storage, and administrator-created accounts are recorded in [ADR 0008](../docs/adr/0008-connected-accounts-and-transport.md). Password reset/recovery and passkeys remain release requirements.
 

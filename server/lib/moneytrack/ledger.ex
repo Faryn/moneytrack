@@ -4,7 +4,16 @@ defmodule MoneyTrack.Ledger do
   import Ecto.Changeset
   alias MoneyTrack.Repo
   alias MoneyTrack.Accounts.User
-  alias MoneyTrack.Ledger.{Category, YearBudget, Expense, ProcessedOperation, UserChange}
+
+  alias MoneyTrack.Ledger.{
+    Category,
+    YearBudget,
+    Expense,
+    ProcessedOperation,
+    UserChange,
+    BudgetPlan
+  }
+
   @maximum 99_999_999_999
   @operation_fields ~w(operationID entity entityID action expectedRevision payload)
 
@@ -16,6 +25,7 @@ defmodule MoneyTrack.Ledger do
            operation["entity"] in [
              "category",
              "year_budget",
+             "budget_plan",
              "expense",
              "shared_expense",
              "shared_assignment",
@@ -114,6 +124,7 @@ defmodule MoneyTrack.Ledger do
         %{
           categories:
             Repo.all(from c in Category, where: c.user_id == ^user.id, order_by: c.name_key),
+          plans: Repo.all(from p in BudgetPlan, where: p.user_id == ^user.id),
           budgets: Repo.all(from b in YearBudget, where: b.user_id == ^user.id),
           expenses:
             Repo.all(
@@ -138,6 +149,16 @@ defmodule MoneyTrack.Ledger do
         "amount" => b.amount
       })
 
+  def envelope(%BudgetPlan{} = p),
+    do:
+      record("budget_plan", p, %{
+        "id" => p.id,
+        "year" => p.year,
+        "total" => p.total,
+        "freeCategoryID" => p.free_category_id,
+        "allocations" => p.allocations["items"]
+      })
+
   def envelope(%Expense{} = e) do
     record("expense", e, %{
       "id" => e.id,
@@ -153,6 +174,8 @@ defmodule MoneyTrack.Ledger do
       "createdAt" => DateTime.to_iso8601(e.client_created_at)
     })
   end
+
+  def has_budget_plan?(user), do: Repo.exists?(from p in BudgetPlan, where: p.user_id == ^user.id)
 
   defp record(entity, value, payload),
     do: %{
@@ -181,8 +204,19 @@ defmodule MoneyTrack.Ledger do
       case op["entity"] do
         "category" -> Category
         "year_budget" -> YearBudget
+        "budget_plan" -> BudgetPlan
         "expense" -> Expense
       end
+
+    if schema == YearBudget && is_integer(op["payload"]["year"]) &&
+         Repo.exists?(
+           from p in BudgetPlan, where: p.user_id == ^user.id and p.year == ^op["payload"]["year"]
+         ) do
+      Repo.rollback(
+        {:validation,
+         "This year now has a whole budget. Review Yearly Plan and discard the old category-only update."}
+      )
+    end
 
     existing = Repo.get(schema, id)
     if existing && existing.user_id != user.id, do: Repo.rollback(:not_found)
@@ -221,6 +255,14 @@ defmodule MoneyTrack.Ledger do
           if !existing && other, do: Repo.rollback({:conflict, envelope(other)})
         end
 
+        if schema == BudgetPlan do
+          if existing && existing.year != attrs.year,
+            do: Repo.rollback({:validation, "A plan belongs to one calendar year."})
+
+          other = Repo.get_by(BudgetPlan, user_id: user.id, year: attrs.year)
+          if !existing && other, do: Repo.rollback({:conflict, envelope(other)})
+        end
+
         base = existing || struct(schema, id: id, user_id: user.id)
 
         if existing && schema == Expense && attrs.client_created_at != existing.client_created_at,
@@ -237,6 +279,12 @@ defmodule MoneyTrack.Ledger do
             |> unique_constraint(:year, name: :year_budgets_user_id_category_id_year_index)
             |> foreign_key_constraint(:category_id)
             |> check_constraint(:amount, name: :valid_budget)
+
+          BudgetPlan ->
+            changeset
+            |> unique_constraint(:year, name: :budget_plans_user_id_year_index)
+            |> foreign_key_constraint(:free_category_id)
+            |> check_constraint(:total, name: :valid_budget_plan)
 
           Expense ->
             changeset
@@ -288,6 +336,44 @@ defmodule MoneyTrack.Ledger do
       category_id: owned_category!(user, payload["categoryID"]),
       year: payload["year"],
       amount: payload["amount"]
+    }
+  end
+
+  defp attributes(user, "budget_plan", payload) do
+    unless keys?(payload, ~w(id year total freeCategoryID allocations)) &&
+             is_integer(payload["year"]) &&
+             payload["year"] in 1900..9999 && valid_money?(payload["total"], true) &&
+             is_list(payload["allocations"]),
+           do:
+             Repo.rollback({:validation, "Enter a yearly total and valid category allocations."})
+
+    free = owned_category!(user, payload["freeCategoryID"])
+
+    allocations =
+      Enum.map(payload["allocations"], fn item ->
+        unless is_map(item) && keys?(item, ~w(categoryID amount)) &&
+                 valid_money?(item["amount"], false),
+               do: Repo.rollback({:validation, "Category allocations must be positive amounts."})
+
+        %{"categoryID" => owned_category!(user, item["categoryID"]), "amount" => item["amount"]}
+      end)
+      |> Enum.sort_by(& &1["categoryID"])
+
+    ids = Enum.map(allocations, & &1["categoryID"])
+
+    unless length(Enum.uniq(ids)) == length(ids) && free not in ids &&
+             Enum.sum(Enum.map(allocations, & &1["amount"])) <= payload["total"],
+           do:
+             Repo.rollback(
+               {:validation,
+                "Allocations must fit within the yearly total. Leave the default category for guilt-free spending."}
+             )
+
+    %{
+      year: payload["year"],
+      total: payload["total"],
+      free_category_id: free,
+      allocations: %{"items" => allocations}
     }
   end
 

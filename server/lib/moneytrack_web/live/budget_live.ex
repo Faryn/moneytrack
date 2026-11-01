@@ -361,6 +361,54 @@ defmodule MoneyTrackWeb.BudgetLive do
       )
 
   defp overview(ledger, month) do
+    if plan = Enum.find(ledger.plans, &(&1.year == month.year)) do
+      whole = whole_budget(ledger, month, plan)
+
+      Enum.map(ledger.categories, fn c ->
+        allocation = Enum.find(plan.allocations["items"], &(&1["categoryID"] == c.id))
+
+        spent =
+          ledger.expenses
+          |> Enum.filter(
+            &(&1.category_id == c.id && &1.expense_date.year == month.year &&
+                &1.expense_date.month == month.month)
+          )
+          |> Enum.map(& &1.personal_share)
+          |> Enum.sum()
+
+        result =
+          whole["categories"][c.id] ||
+            %{"allocation" => 0, "carryover" => 0, "spent" => spent, "remaining" => 0}
+
+        %{category: c, budget: allocation, result: result}
+      end)
+    else
+      legacy_overview(ledger, month)
+    end
+  end
+
+  defp whole_budget(ledger, month, plan) do
+    expenses =
+      Enum.map(ledger.expenses, fn e ->
+        %{
+          "day" => Date.to_iso8601(e.expense_date),
+          "amount" => e.amount,
+          "personalShare" => e.personal_share,
+          "categoryID" => e.category_id
+        }
+      end)
+
+    MoneyTrack.Budget.for_plan(
+      month.year,
+      month.month,
+      plan.total,
+      plan.allocations["items"],
+      plan.free_category_id,
+      expenses
+    )
+  end
+
+  defp legacy_overview(ledger, month) do
     Enum.map(ledger.categories, fn category ->
       budget =
         Enum.find(ledger.budgets, &(&1.category_id == category.id && &1.year == month.year))
@@ -422,6 +470,15 @@ defmodule MoneyTrackWeb.BudgetLive do
   @impl true
   def render(assigns) do
     assigns = assign(assigns, :overview, overview(assigns.ledger, assigns.month))
+    plan = Enum.find(assigns.ledger.plans, &(&1.year == assigns.month.year))
+    whole = if plan, do: whole_budget(assigns.ledger, assigns.month, plan)
+
+    remaining =
+      if whole,
+        do: whole["total"]["remaining"],
+        else: Enum.sum(Enum.map(assigns.overview, & &1.result["remaining"]))
+
+    assigns = assign(assigns, plan: plan, whole: whole, total_remaining: remaining)
 
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
@@ -437,41 +494,64 @@ defmodule MoneyTrackWeb.BudgetLive do
             value={Calendar.strftime(@month, "%Y-%m")}
           />
         </form>
-        <div :if={Enum.any?(@overview, & &1.budget)} class="rounded-box bg-base-200 p-6 space-y-2">
+        <div
+          :if={@plan != nil || Enum.any?(@overview, & &1.budget)}
+          class="rounded-box bg-base-200 p-6 space-y-2"
+        >
           <p>Remaining budget · {Calendar.strftime(@month, "%B %Y")}</p>
           <p
             id="total-remaining"
             class={[
               "text-4xl font-semibold",
-              color(Enum.sum(Enum.map(@overview, & &1.result["remaining"])))
+              color(@total_remaining)
             ]}
           >
-            {money(Enum.sum(Enum.map(@overview, & &1.result["remaining"])))}
+            {money(@total_remaining)}
           </p>
           <p class="text-sm">
             Includes positive and negative carryover since January. Only your share counts.
           </p>
         </div>
-        <p :if={!Enum.any?(@overview, & &1.budget)}>
-          No budget yet. Add a category and yearly amount below.
+        <p :if={!(@plan != nil || Enum.any?(@overview, & &1.budget))}>
+          No budget yet. Pick your whole yearly budget, then allocate parts to categories.
         </p>
+        <.link navigate={~p"/plan?#{%{year: @month.year}}"} class="btn">Yearly Plan</.link>
+        <div :if={@whole} id="guilt-free" class="card border p-5 space-y-2">
+          <h2 class="text-xl font-semibold">Guilt-free Spending</h2>
+          <p id="guilt-free-remaining" class={color(@whole["guiltFree"]["remaining"])}>
+            {money(@whole["guiltFree"]["remaining"])} left
+          </p>
+          <p>
+            {money(@whole["guiltFree"]["spent"])} spent from the unassigned pool. Category overspending stays with its category.
+          </p>
+        </div>
         <ul class="divide-y divide-base-300">
-          <li :for={item <- @overview} class="py-4 flex flex-wrap justify-between gap-3">
+          <li
+            :for={
+              item <-
+                Enum.reject(@overview, fn item ->
+                  @plan && item.category.id == @plan.free_category_id
+                end)
+            }
+            class="py-4 flex flex-wrap justify-between gap-3"
+          >
             <div>
               <h2 class="font-semibold">{item.category.name}</h2>
               <p class="text-sm">
-                {money(item.result["spent"])} spent · {money(
-                  item.result["allocation"] + item.result["carryover"]
-                )} available
+                {money(item.result["spent"])} spent · {if @plan && !item.budget,
+                  do: "Guilt-free pool",
+                  else: money(item.result["allocation"] + item.result["carryover"]) <> " available"}
               </p>
+              <.link :if={@plan} navigate={~p"/plan?#{%{year: @month.year}}"} class="link">Edit allocation</.link>
               <button
+                :if={!@plan}
                 type="button"
                 phx-click="edit_budget"
                 phx-value-id={item.category.id}
                 class="link"
               >Edit yearly budget</button>
             </div>
-            <p class={color(item.result["remaining"])}>
+            <p :if={!@plan || item.budget} class={color(item.result["remaining"])}>
               {money(abs(item.result["remaining"]))} {if item.result["remaining"] < 0,
                 do: "over budget",
                 else: "left"}
@@ -512,7 +592,11 @@ defmodule MoneyTrackWeb.BudgetLive do
             else: "Keep My Changes"}
         </button>
       </section>
-      <section class="space-y-4 pt-8" id="yearly-plan">
+      <section
+        :if={!@plan && Enum.any?(@ledger.budgets, &(&1.amount > 0))}
+        class="space-y-4 pt-8"
+        id="yearly-plan"
+      >
         <h2 class="text-xl font-semibold">Yearly Plan</h2>
         <p class="text-sm">
           Changing a yearly amount recalculates that entire year. Carryover resets on January 1.

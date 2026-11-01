@@ -39,12 +39,12 @@ struct HTTPTransport: SyncTransport {
     func push(_ data: Data, credential: SessionCredential) async throws -> RemoteRecord {
         struct Response: Decodable { let record: RemoteRecord }
         return try JSONDecoder().decode(Response.self, from: await request(server: credential.server,
-            path: "api/v2/sync", method: "POST", body: data, token: credential.token)).record
+            path: "api/v3/sync", method: "POST", body: data, token: credential.token)).record
     }
     func pull(cursor: String?, credential: SessionCredential) async throws -> ChangePage {
         let query = cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []
         return try JSONDecoder().decode(ChangePage.self, from: await request(server: credential.server,
-            path: "api/v2/sync", method: "GET", query: query, token: credential.token))
+            path: "api/v3/sync", method: "GET", query: query, token: credential.token))
     }
     func signOut(_ credential: SessionCredential) async throws {
         _ = try await request(server: credential.server, path: "api/v1/session", method: "DELETE", token: credential.token)

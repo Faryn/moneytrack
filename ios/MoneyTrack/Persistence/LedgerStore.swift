@@ -10,6 +10,7 @@ final class LedgerStore {
     private(set) var expenses: [ExpenseValue]
     private(set) var pendingChanges: [PendingChangeValue]
     private(set) var issues: [SyncIssue] = []
+    private(set) var annualPlans: [AnnualBudgetPlan] = []
     private(set) var sharedExpenses: [SharedExpenseValue] = []
     private(set) var invitations: [SharingInvitation] = []
     private(set) var repayments: [RepaymentValue] = []
@@ -36,11 +37,15 @@ final class LedgerStore {
     }
 
     func budget(for categoryID: UUID, year: Int) -> YearBudgetValue? {
-        budgets.first { $0.categoryID == categoryID && $0.year == year }
+        if let plan = annualPlan(year: year) {
+            return plan.allocations.first { $0.categoryID == categoryID }.map { YearBudgetValue(id: categoryID, categoryID: categoryID, year: year, amount: $0.amount) }
+        }
+        return budgets.first { $0.categoryID == categoryID && $0.year == year }
     }
 
     func overview(month: BudgetMonth) -> [CategoryBudget] {
-        categories.map {
+        if let plan = annualPlan(year: month.year) { return (try? AnnualBudgetCalculator.overview(plan, month: month, categories: categories, expenses: expenses).categories) ?? [] }
+        return categories.map {
             BudgetCalculator.category($0, month: month, annual: budget(for: $0.id, year: month.year)?.amount, expenses: expenses)
         }
     }
@@ -52,7 +57,7 @@ final class LedgerStore {
     }
 
     @discardableResult
-    func saveCategory(id: UUID? = nil, name: String, year: Int, annualAmount: Int64?) throws -> UUID {
+    func saveCategory(id: UUID? = nil, name: String, year: Int, annualAmount: Int64?, planSnapshot: AnnualBudgetPlan? = nil, expectedPlanRevision: Int64? = nil) throws -> UUID {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { throw LedgerError.emptyCategory }
         guard name.count <= 100 else { throw LedgerError.categoryTooLong }
@@ -62,13 +67,33 @@ final class LedgerStore {
         guard !categories.contains(where: { $0.id != id && $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame })
         else { throw LedgerError.duplicateCategory }
         let category = CategoryValue(id: id, name: name)
-        let annual = annualAmount.map { YearBudgetValue(id: budget(for: id, year: year)?.id ?? UUID(), categoryID: id, year: year, amount: $0) }
+        let existingPlan = planSnapshot ?? annualPlan(year: year)
+        if let planSnapshot, let current = annualPlan(year: year), current.id != planSnapshot.id {
+            throw ConnectionError.rejected("This year's plan changed. Reopen it before assigning money.")
+        }
+        let allocationBase = try effectivePlanRevision(snapshot: planSnapshot, expected: expectedPlanRevision)
+        var updatedPlan = existingPlan
+        if let amount = annualAmount, var plan = updatedPlan {
+            guard id != plan.freeCategoryID else { throw ConnectionError.rejected("The default category uses guilt-free spending.") }
+            plan.allocations.removeAll { $0.categoryID == id }
+            if amount > 0 { plan.allocations.append(CategoryAllocation(categoryID: id, amount: amount)) }
+            plan.allocations.sort { $0.categoryID.uuidString < $1.categoryID.uuidString }
+            try plan.validate(); updatedPlan = plan
+        }
+        let annual = (existingPlan == nil ? annualAmount : nil).map { YearBudgetValue(id: budget(for: id, year: year)?.id ?? UUID(), categoryID: id, year: year, amount: $0) }
         var changes: [PendingChangeValue] = []
         try commit {
             if let record = try context.fetch(FetchDescriptor<CategoryRecord>()).first(where: { $0.id == id }) {
                 record.name = name
             } else { context.insert(CategoryRecord(category)) }
             changes.append(try enqueue(entity: "category", id: id, action: "upsert", payload: category, offset: changes.count))
+            if let updatedPlan, updatedPlan != existingPlan {
+                try putAnnualPlan(updatedPlan)
+                let prior = pendingChanges.contains { $0.entity == "budget_plan" && $0.entityID == updatedPlan.id }
+                let change = try enqueue(entity: "budget_plan", id: updatedPlan.id, action: "upsert", payload: updatedPlan, offset: changes.count)
+                if let allocationBase, !prior { try operationState(change.id)?.baseRevision = allocationBase }
+                changes.append(change)
+            }
             if let annual {
                 if let record = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == annual.id }) {
                     record.amount = annual.amount
@@ -80,12 +105,14 @@ final class LedgerStore {
         categories.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         if let annual { budgets.removeAll { $0.id == annual.id }; budgets.append(annual) }
         pendingChanges.append(contentsOf: changes)
+        if updatedPlan != existingPlan { try reloadAll() }
         return id
     }
 
     @discardableResult
-    func saveExpense(id: UUID? = nil, amount: Int64, description: String, categoryID: UUID, day: ExpenseDay, expectedRevision: Int64? = nil) throws -> UUID {
+    func saveExpense(id: UUID? = nil, amount: Int64, description: String, categoryID: UUID?, day: ExpenseDay, expectedRevision: Int64? = nil) throws -> UUID {
         if let id, let shared = sharedExpenses.first(where: { $0.id == id }) {
+            guard let categoryID else { throw LedgerError.missingCategory }
             if expectedRevision != nil { throw LedgerError.sharedEditingUnavailable }
             try editSharedExpense(shared, amount: amount, description: description, categoryID: categoryID,
                                   day: day, paidByUser: shared.paidByUser, ownSplit: shared.ownSplit)
@@ -93,7 +120,9 @@ final class LedgerStore {
         }
         guard (1...Money.maximum).contains(amount) else { throw LedgerError.invalidAmount }
         guard description.count <= 500 else { throw LedgerError.descriptionTooLong }
-        guard categories.contains(where: { $0.id == categoryID }) else { throw LedgerError.missingCategory }
+        let fallback = categoryID == nil ? defaultSpendingCategory(year: day.year) : nil
+        let categoryID = categoryID ?? fallback!.id
+        guard categories.contains(where: { $0.id == categoryID }) || fallback != nil else { throw LedgerError.missingCategory }
         let existing = id.flatMap { identifier in expenses.first { $0.id == identifier } }
         if id != nil && existing == nil { throw LedgerError.missingExpense }
         guard existing == nil || existing!.personalShare == existing!.amount else { throw LedgerError.sharedEditingUnavailable }
@@ -103,17 +132,23 @@ final class LedgerStore {
         var pending: PendingChangeValue!
         let priorPending = pendingChanges.contains { $0.entity == "expense" && $0.entityID == value.id }
         try commit {
+            var offset = 0
+            if let fallback, !categories.contains(where: { $0.id == fallback.id }) {
+                context.insert(CategoryRecord(fallback))
+                _ = try enqueue(entity: "category", id: fallback.id, action: "upsert", payload: fallback)
+                offset = 1
+            }
             if let record = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == value.id }) {
                 guard record.deletedAt == nil else { throw LedgerError.missingExpense }
                 record.amount = amount; record.personalShare = amount; record.categoryID = categoryID
                 record.descriptionText = value.description; record.calendarDay = day.iso
             } else { context.insert(ExpenseRecord(value)) }
-            pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value)
+            pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value, offset: offset)
             if let expectedRevision, !priorPending { try operationState(pending.id)?.baseRevision = expectedRevision }
         }
         expenses.removeAll { $0.id == value.id }; expenses.append(value)
         expenses.sort { $0.day == $1.day ? $0.createdAt > $1.createdAt : $0.day > $1.day }
-        pendingChanges.append(pending)
+        if fallback != nil { try reloadAll() } else { pendingChanges.append(pending) }
         return value.id
     }
 
@@ -231,6 +266,17 @@ extension LedgerStore {
         try syncCommit {
             for record in page.changes {
                 try remember(record)
+                if record.entity == "budget_plan" {
+                    let value = try record.payload.decoded(AnnualBudgetPlan.self)
+                    if let old = annualPlans.first(where: { $0.year == value.year && $0.id != value.id }),
+                       let pending = pendingChanges.first(where: { $0.entity == "budget_plan" && $0.entityID == old.id }) {
+                        let state = try operationState(pending.id) ?? LedgerSchemaV2.OperationState(id: pending.id, baseRevision: 0)
+                        if try operationState(pending.id) == nil { context.insert(state) }
+                        state.issueData = try JSONEncoder().encode(SyncIssue(id: pending.id, entity: "budget_plan", entityID: old.id,
+                            message: "Another device created this year's budget. Review both plans.", current: record))
+                        continue
+                    }
+                }
                 if record.entity == "year_budget" {
                     let remote = try record.payload.decoded(YearBudgetValue.self)
                     let pendingRecords = try context.fetch(FetchDescriptor<PendingChangeRecord>())
@@ -273,6 +319,15 @@ extension LedgerStore {
     }
 
     func resolve(_ issue: SyncIssue, keepLocal: Bool) throws {
+        if issue.entity == "budget_plan" { try resolvePlan(issue, keepLocal: keepLocal); return }
+        if issue.entity == "year_budget", issue.current == nil, !keepLocal {
+            try syncCommit {
+                for pending in pendingChanges.filter({ $0.entity == issue.entity && $0.entityID == issue.entityID }) { try removeOperation(pending.id) }
+                if let cached = try remoteState(issue.entity, issue.entityID) { try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data)) }
+                else if let row = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == issue.entityID }) { context.delete(row) }
+            }
+            try reloadAll(); saveCount += 1; return
+        }
         if ["shared_expense", "shared_assignment", "repayment"].contains(issue.entity) {
             try resolveShared(issue, keepLocal: keepLocal); return
         }
@@ -321,7 +376,7 @@ extension LedgerStore {
     // A deliberate, one-time copy into an empty account. The original store stays intact.
     func importLocal(_ source: LedgerStore) throws {
         if try syncState().importedLocal { return }
-        guard categories.isEmpty, budgets.isEmpty, expenses.isEmpty, pendingChanges.isEmpty else { throw ConnectionError.notEmpty }
+        guard categories.isEmpty, budgets.isEmpty, annualPlans.isEmpty, expenses.isEmpty, pendingChanges.isEmpty else { throw ConnectionError.notEmpty }
         var categoryIDs: [UUID: UUID] = [:]
         try syncCommit {
             var offset = 0
@@ -337,6 +392,17 @@ extension LedgerStore {
                 let value = YearBudgetValue(id: UUID(), categoryID: category, year: original.year, amount: original.amount)
                 context.insert(YearBudgetRecord(value))
                 _ = try enqueue(entity: "year_budget", id: value.id, action: "upsert", payload: value, offset: offset)
+                offset += 1
+            }
+            for original in source.annualPlans {
+                guard let free = categoryIDs[original.freeCategoryID] else { throw ConnectionError.invalidData }
+                let value = AnnualBudgetPlan(id: UUID(), year: original.year, total: original.total, freeCategoryID: free,
+                    allocations: try original.allocations.map { item in
+                        guard let category = categoryIDs[item.categoryID] else { throw ConnectionError.invalidData }
+                        return CategoryAllocation(categoryID: category, amount: item.amount)
+                    })
+                try putAnnualPlan(value)
+                _ = try enqueue(entity: "budget_plan", id: value.id, action: "upsert", payload: value, offset: offset)
                 offset += 1
             }
             for original in source.expenses {
@@ -359,6 +425,9 @@ extension LedgerStore {
             return ("upsert", try .value(value))
         case "year_budget":
             guard let value = budgets.first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
+            return ("upsert", try .value(value))
+        case "budget_plan":
+            guard let value = annualPlans.first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
             return ("upsert", try .value(value))
         case "expense":
             guard let value = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
@@ -413,6 +482,11 @@ extension LedgerStore {
                   (1900...9999).contains(value.year) else { throw ConnectionError.invalidData }
             if let saved = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == value.id }) { saved.amount = value.amount }
             else { context.insert(YearBudgetRecord(value)) }
+        case "budget_plan":
+            let value = try record.payload.decoded(AnnualBudgetPlan.self)
+            try value.validate()
+            guard value.id == record.entityID, !record.deleted else { throw ConnectionError.invalidData }
+            try putAnnualPlan(value)
         case "expense":
             let value = try record.payload.decoded(ExpenseValue.self)
             guard value.id == record.entityID, (1...Money.maximum).contains(value.amount), value.personalShare == value.amount else { throw ConnectionError.invalidData }
@@ -433,6 +507,7 @@ extension LedgerStore {
         catch { context.rollback(); throw error }
     }
     private func reloadAll() throws {
+        annualPlans = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).map { try $0.value() }
         categories = try context.fetch(FetchDescriptor<CategoryRecord>()).map(\.value)
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         budgets = try context.fetch(FetchDescriptor<YearBudgetRecord>()).map(\.value)
@@ -632,6 +707,93 @@ extension LedgerStore {
             } else {
                 let key = RemoteRecord.key(issue.entity, issue.entityID)
                 if let row = try context.fetch(FetchDescriptor<LedgerSchemaV3.SharedRecord>()).first(where: { $0.key == key }) { context.delete(row) }
+            }
+        }
+        try reloadAll(); saveCount += 1
+    }
+}
+
+extension LedgerStore {
+    func annualPlan(year: Int) -> AnnualBudgetPlan? { annualPlans.first { $0.year == year } }
+    func wholeBudget(month: BudgetMonth) throws -> AnnualBudgetOverview? {
+        try annualPlan(year: month.year).map { try AnnualBudgetCalculator.overview($0, month: month, categories: categories, expenses: expenses) }
+    }
+    func legacyAllocations(year: Int) -> [CategoryAllocation] {
+        budgets.filter { $0.year == year && $0.amount > 0 }.map { CategoryAllocation(categoryID: $0.categoryID, amount: $0.amount) }
+    }
+    func defaultSpendingCategory(year: Int) -> CategoryValue {
+        if let id = annualPlan(year: year)?.freeCategoryID, let category = categories.first(where: { $0.id == id }) { return category }
+        return categories.first { $0.name.compare("Uncategorized", options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame } ?? CategoryValue(id: UUID(), name: "Uncategorized")
+    }
+    func saveAnnualPlan(year: Int, total: Int64, allocations: [CategoryAllocation], expectedRevision: Int64? = nil, confirmedPlan: AnnualBudgetPlan? = nil) throws {
+        let existing = annualPlan(year: year)
+        let confirmedBase = try effectivePlanRevision(snapshot: confirmedPlan, expected: expectedRevision)
+        let ids = Set(allocations.map(\.categoryID))
+        var free = existing.flatMap { p in categories.first { $0.id == p.freeCategoryID } } ?? defaultSpendingCategory(year: year)
+        if ids.contains(free.id) {
+            guard existing == nil else { throw ConnectionError.rejected("Leave the default category for guilt-free spending.") }
+            if let candidate = categories.first(where: { $0.name == "Guilt-free spending" && !ids.contains($0.id) }) { free = candidate }
+            else {
+                var name = "Guilt-free spending", suffix = 2
+                while categories.contains(where: { $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }) {
+                    name = "Guilt-free spending \(suffix)"; suffix += 1
+                }
+                free = CategoryValue(id: UUID(), name: name)
+            }
+        }
+        let value = AnnualBudgetPlan(id: existing?.id ?? UUID(), year: year, total: total, freeCategoryID: free.id,
+            allocations: allocations.sorted { $0.categoryID.uuidString < $1.categoryID.uuidString })
+        try value.validate()
+        guard allocations.allSatisfy({ a in categories.contains { $0.id == a.categoryID } }) else { throw LedgerError.missingCategory }
+        let prior = pendingChanges.contains { $0.entity == "budget_plan" && $0.entityID == value.id }
+        try commit {
+            var offset = 0
+            if !categories.contains(where: { $0.id == free.id }) {
+                context.insert(CategoryRecord(free))
+                _ = try enqueue(entity: "category", id: free.id, action: "upsert", payload: free)
+                offset = 1
+            }
+            try putAnnualPlan(value)
+            let pending = try enqueue(entity: "budget_plan", id: value.id, action: "upsert", payload: value, offset: offset)
+            if let confirmedBase, !prior { try operationState(pending.id)?.baseRevision = confirmedBase }
+        }
+        try reloadAll()
+    }
+    private func effectivePlanRevision(snapshot: AnnualBudgetPlan?, expected: Int64?) throws -> Int64? {
+        guard let snapshot, let cached = try remoteState("budget_plan", snapshot.id),
+              try JSONDecoder().decode(RemoteRecord.self, from: cached.data).payload.decoded(AnnualBudgetPlan.self) == snapshot else { return expected }
+        return cached.revision
+    }
+    private func putAnnualPlan(_ original: AnnualBudgetPlan) throws {
+        var value = original
+        value.allocations.sort { $0.categoryID.uuidString < $1.categoryID.uuidString }
+        if let saved = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).first(where: { $0.id == value.id }) {
+            saved.data = try JSONEncoder().encode(value)
+        } else { context.insert(try LedgerSchemaV4.AnnualPlanRecord(value)) }
+    }
+}
+
+extension LedgerStore {
+    private func resolvePlan(_ issue: SyncIssue, keepLocal: Bool) throws {
+        let selected = pendingChanges.filter { $0.entity == "budget_plan" && $0.entityID == issue.entityID }
+        guard let first = selected.first, let local = annualPlans.first(where: { $0.id == issue.entityID }) else { throw ConnectionError.invalidData }
+        try syncCommit {
+            for change in selected { try removeOperation(change.id) }
+            if keepLocal {
+                let canonical = issue.current?.entityID ?? local.id
+                let value = AnnualBudgetPlan(id: canonical, year: local.year, total: local.total, freeCategoryID: local.freeCategoryID, allocations: local.allocations)
+                if canonical != local.id, let row = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).first(where: { $0.id == local.id }) { context.delete(row) }
+                try putAnnualPlan(value)
+                let pending = try enqueue(entity: "budget_plan", id: canonical, action: "upsert", payload: value)
+                try replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
+            } else {
+                if let row = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).first(where: { $0.id == local.id }) { context.delete(row) }
+                if let current = issue.current {
+                    let latest = try remoteState(current.entity, current.entityID).flatMap { try JSONDecoder().decode(RemoteRecord.self, from: $0.data) }
+                    try applyRemote(latest ?? current)
+                } else if let cached = try remoteState("budget_plan", local.id) {
+                    try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data))
+                }
             }
         }
         try reloadAll(); saveCount += 1

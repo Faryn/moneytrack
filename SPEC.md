@@ -20,11 +20,12 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Settle Up asks for an amount and records a full or partial repayment made outside the app. Repayments affect shared balances only; MoneyTrack never initiates a payment.
 - Shared expenses are visible to both participating users after accepting a direct email invitation. A separate contact list is not required.
 - Either participant can edit or delete a shared expense; both can see its change history. Personal category assignments can be edited only by their owner.
-- Categories are a flat list with yearly budget amounts.
-- Each category receives one twelfth of its yearly budget each month.
+- Set the whole yearly budget first, then allocate parts of it to a flat list of categories. Allocations cannot exceed the total.
+- The unallocated amount is one guilt-free spending pool. Expenses in any category without a positive allocation, including uncategorized expenses, use that pool.
+- Divide the yearly total and its parts into twelve monthly allocations, preserving exact cents and making the monthly parts equal the total.
 - Unspent budget carries into the next month within the same calendar year.
 - Overspending reduces the next month's available budget within the same year.
-- Editing a category's yearly amount recalculates all twelve months of that calendar year.
+- Editing the yearly total or a category allocation recalculates all twelve months of that calendar year.
 - Carryover resets on January 1. Historical expenses and shared balances remain.
 - The Budget home screen emphasizes the total remaining monthly budget and shows category budgets broken down at a glance. Tapping a category opens its details and expenses.
 - Use semantic amount colors: green for available budget and money owed to the user; red for overspending, spending outflows, and money the user owes. Pair colors with signs and clear labels.
@@ -41,7 +42,8 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Display the selected month's total remaining budget prominently.
 - Show the monthly allocation, carryover, and personal spending as supporting figures.
 - Allow moving between months.
-- Provide an obvious Add Expense action.
+- Provide a large Add Expense action near the bottom, above the native tab bar, with subtle system animation and haptics that respect Reduce Motion.
+- Show the guilt-free pool's remaining amount and allow opening its spending details.
 - Show category names, their monthly available budget (including carryover), personal spending, and remaining/overspent amounts directly on Budget home.
 - Make each category row or tile a navigation target for its budget details and expenses.
 - Keep the complete expense list in Expenses; whether to include recent expenses on Budget home remains a design choice.
@@ -56,7 +58,7 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 
 The date is today by default and can be changed through an additional control. An example expense is amount `78 €`, description `Theodor`, category `Restaurants`. The description must not automatically be interpreted as a participant.
 
-Category selection is visible and editable. The first local implementation suggests exact previously categorized descriptions, otherwise prefilling the most recent category or the first existing category. Users can override it or create a category. A category is required to save; no hidden Uncategorized category is created. Suggestions do not require cloud services. More sophisticated matching remains deferred.
+Category selection is visible and editable. Suggest exact previously categorized descriptions, otherwise the most recent category when available. Users can override it, create a category, or leave the selection as Guilt-free spending. Saving without a category uses a private default category, creating it atomically with the expense and pending sync changes when necessary. Expense capture works before budget setup. Suggestions do not require cloud services. More sophisticated matching remains deferred.
 
 ### Make an expense shared
 
@@ -68,7 +70,7 @@ From a saved expense's action menu:
 4. Choose the current user's share: all, half, or none.
 5. Confirm the personal budget impact and resulting debt.
 
-An accepted shared expense is one common record visible to both participants. Only each participant's own share counts against their budget. Each user selects a private category for their own share; the other participant cannot see their categories or budgets. Incoming shares initially use a private Uncategorized category with an initial zero yearly budget, which the user can change. Existing owner budget choices are preserved. Invitation acceptance and delivery need connectivity, while invitation requests and edits can be queued offline. Applying a sharing proposal immediately changes the creator's budget consumption to their proposed personal share, even while the invitation is pending or waiting for synchronization; see [ADR 0010](docs/adr/0010-pending-share-budget-treatment.md). Recipient access still requires acceptance. Cancellation/decline effects and removal of an already accepted share remain open in the [data model and sync draft](docs/data-model-and-sync.md).
+An accepted shared expense is one common record visible to both participants. Only each participant's own share counts against their budget. Each user selects a private category for their own share; the other participant cannot see their categories or budgets. Incoming shares initially use a private Uncategorized category, drawing from guilt-free spending unless explicitly allocated. The legacy zero-budget bootstrap adds no money to a whole-year plan. Existing owner budget choices are preserved. Invitation acceptance and delivery need connectivity, while invitation requests and edits can be queued offline. Applying a sharing proposal immediately changes the creator's budget consumption to their proposed personal share, even while the invitation is pending or waiting for synchronization; see [ADR 0010](docs/adr/0010-pending-share-budget-treatment.md). Recipient access still requires acceptance. Cancellation/decline effects and removal of an already accepted share remain open in the [data model and sync draft](docs/data-model-and-sync.md).
 
 Either participant can edit the common description, amount, date, payer, and split, or delete the shared expense. A history visible to both records the actor, time, and shared changes, including deletion. Private category changes are not exposed to the other participant. Financial changes update each person's budget and their shared balance consistently; concurrent changes use the conflict handling described below.
 
@@ -99,29 +101,30 @@ Either participant can record a repayment immediately, visible to both without a
 
 ### Categories and budgets
 
-Allow creating and renaming categories and setting each category's yearly amount for a selected calendar year. Calculate the total yearly and monthly budgets from the categories. Categories with historical expenses can be archived without losing history.
+Choose the total for a selected calendar year first. Then create or rename flat categories and allocate parts of the total to them. Show Assigned and Guilt-free amounts during setup; reject allocations above the total without changing financial data. A zero allocation means that category uses the shared guilt-free pool. Existing category-only budgets remain readable until explicitly converted by saving the prefilled whole-year plan. Categories with historical expenses can be archived without losing history.
 
 The category breakdown shows monthly allocation, carryover, spending, and remaining budget. Opening a category shows its expenses. Provide a yearly view of budget versus personal spending.
 
 ## Budget rules
 
-For each category and month:
+For the whole budget, each allocated category, and the guilt-free pool in each month:
 
 `remaining = monthly allocation + carryover from previous month - personal spending`
 
 - January starts with zero carryover.
 - The next month's carryover equals the previous month's remaining budget.
 - Negative balances carry forward too, so overspending reduces the next month's available budget.
-- The home total is the sum of the categories' remaining amounts.
+- The home total uses the whole monthly allocation and all personal-share spending. It equals allocated-category remaining amounts plus the guilt-free pool. Unallocated category rows label pool spending and are not added again.
+- Overspending in an allocated category remains against that category and reduces the overall total. It does not automatically consume the guilt-free pool.
 - Use the expense date to assign spending to a calendar month.
 - Making an expense shared adjusts budget usage in its original month, regardless of when sharing was configured.
 - Editing, deleting, or recategorizing an expense recomputes affected balances through the rest of that year.
-- Store money exactly in minor currency units. Each month gets the integer quotient of yearly cents divided by twelve; give one extra cent to each of the first remainder months. The twelve allocations equal the yearly amount exactly.
+- Store money exactly in minor currency units. Divide the whole yearly amount by twelve, giving one extra cent to the first remainder months. Allocate category remainder cents jointly within those monthly totals, using the deterministic capacity rule in ADR 0013; the guilt-free pool takes the remaining capacity. Each part retains its exact annual amount, with monthly allocations differing by at most one cent. Legacy category-only budgets retain their original independent rounding.
 - For an odd-cent equal split, assign the extra cent to the payer's share and show the exact amounts before confirmation.
-- Changing a category's yearly budget redistributes it across all twelve months of that year and recalculates that year's remaining balances. The confirmation must make this effect clear.
+- Changing the yearly total or a category allocation redistributes the plan across all twelve months of that year and recalculates remaining balances. The confirmation must make this effect clear.
 - Resetting yearly budget carryover does not clear outstanding debts between people.
 
-The confirmed carryover and yearly-edit rules are recorded in [ADR 0006](docs/adr/0006-calendar-year-budget-calculation.md). Common financial examples run against both implementations using [the fixture](docs/contracts/budget-examples.json).
+The carryover and yearly-edit rules are recorded in [ADR 0006](docs/adr/0006-calendar-year-budget-calculation.md). [ADR 0013](docs/adr/0013-whole-year-budget-and-guilt-free-spending.md) supersedes category-first setup and independent rounding for whole-year plans. Both implementations run the [whole-plan examples](docs/contracts/annual-plan-examples.json) and retain the [legacy calculation examples](docs/contracts/budget-examples.json).
 
 ## Offline operation and synchronization
 
@@ -131,7 +134,7 @@ The confirmed carryover and yearly-edit rules are recorded in [ADR 0006](docs/ad
 - Repeating synchronization must never duplicate an expense, repayment, or sharing action.
 - Synchronize deletions so an item does not reappear from another device.
 - Keep an expense's payer and split consistent when syncing; budget usage and debts must derive from the same saved version.
-- Preserve conflicting edits for review rather than silently discarding financial changes. The conflict interaction needs a separate design before implementation.
+- Preserve conflicting edits for review rather than silently discarding financial changes. Show the local draft and server version for explicit review; a whole-year plan is resolved as one record.
 
 ## Website and backend
 
@@ -171,7 +174,7 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 ## Acceptance examples
 
-1. A €6,000 yearly category budget allocates €500 per month. Spending €400 in January leaves €100. February starts with €600 available.
+1. A €12,000 yearly total allocates €1,000 per month. Assigning €6,000 to a category gives it €500 per month and leaves €500 guilt-free. Spending €100 in an unallocated category leaves €400 guilt-free and €900 overall. Spending €400 in the allocated category in January leaves it €100; February starts with €600 available in that category.
 2. Spending €550 against January's €500 leaves −€50. February starts with €450.
 3. With a €500 allocation, saving a personal €78 expense leaves €422. Applying an equal split paid by the user changes remaining budget to €461 immediately, including while an invitation is pending. After acceptance both participants see the common expense and the other participant owes €39.
 4. Settle Up suggests that €39 and allows editing the amount. Recording €15 received leaves €24 owed to the user; recording the remaining €24 clears the balance. The remaining budget stays €461 after each record, and no money is moved by the app.
