@@ -23,7 +23,8 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Each category receives one twelfth of its yearly budget each month.
 - Unspent budget carries into the next month within the same calendar year.
 - Carryover resets on January 1. Historical expenses and shared balances remain.
-- The home screen emphasizes the total remaining monthly budget. Categories appear when drilling down.
+- The Budget home screen emphasizes the total remaining monthly budget and shows category budgets broken down at a glance. Tapping a category opens its details and expenses.
+- Use semantic amount colors: green for available budget and money owed to the user; red for overspending, spending outflows, and money the user owes. Pair colors with signs and clear labels.
 - New expenses use a short form initially. Category suggestions assist entry.
 - Natural-language entry is a later enhancement, supporting German and English using built-in iOS capabilities only. No cloud AI.
 - The date defaults to today; entering a different date is a secondary action.
@@ -37,8 +38,10 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Display the selected month's total remaining budget prominently.
 - Show the monthly allocation, carryover, and personal spending as supporting figures.
 - Allow moving between months.
-- Provide an obvious Add Expense action and a recent expense list.
-- Open the category breakdown from the budget summary.
+- Provide an obvious Add Expense action.
+- Show category names, their monthly available budget (including carryover), personal spending, and remaining/overspent amounts directly on Budget home.
+- Make each category row or tile a navigation target for its budget details and expenses.
+- Keep the complete expense list in Expenses; whether to include recent expenses on Budget home remains a design choice.
 - Provide access to balances owed to or by people without competing with the budget headline.
 
 ### Add expense
@@ -148,6 +151,7 @@ No bank connections or income tracking are required. Shared balance tracking doe
 - Target the latest stable iOS version available when implementation starts; older-device support is not a priority.
 - Prefer native SwiftUI navigation, forms, sheets, menus, lists, and accessibility behavior.
 - Support standard Dynamic Type and light/dark appearance.
+- Use green/red amount styling consistently in light and dark appearance, with sufficient contrast. Retain signed amounts and labels such as Left, Over budget, Owes you, and You owe so color is not the only signal.
 - Assumption: EUR is the only currency in the MVP.
 - Assumption: provide German and English interface text; future natural-language entry must understand both languages.
 - Built-in iOS parsing must remain optional: the manual entry form always works without AI availability or connectivity.

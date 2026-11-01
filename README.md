@@ -1,6 +1,6 @@
 # MoneyTrack
 
-A personal expense and budget tracker for a small user base, primarily on iPhone. The main screen answers **how much budget is left this month**, with category details one level deeper.
+A personal expense and budget tracker for a small user base, primarily on iPhone. The main screen answers **how much budget is left this month**, shows category budgets at a glance, and opens category details with a tap.
 
 ## Project status
 
@@ -13,6 +13,7 @@ Both apps currently show a budget empty state. Authentication, financial records
 - Native SwiftUI with standard iOS components, targeting the latest stable iOS release selected at implementation time.
 - Fast form entry with suggested categories, today's date by default, and offline saving followed by synchronization.
 - Flat categories with yearly budgets, one twelfth allocated monthly, unused amounts carried forward, and a January 1 carryover reset.
+- Category budgets are visible on Budget home. Green/red amounts distinguish available budget, overspending, and the direction of shared balances, alongside text labels and signs.
 - Personal expenses first. Share a saved expense afterward with one other user through a direct email invitation.
 - Splits of all, half, or none; only each participant's own share counts against their budget.
 - Both participants see the shared expense and may edit or delete it, with shared change history. Categories and budgets remain private.
@@ -47,6 +48,7 @@ The server uses Elixir/Phoenix, LiveView, and Ecto with SQLite. Both website and
 - [Data model and sync proposal](docs/data-model-and-sync.md): proposed records, invitation lifecycle, and offline sync behavior. This is a draft, not an accepted protocol.
 - [Technical decision backlog](docs/technical-decisions.md): remaining choices and recommended defaults awaiting confirmation.
 - [Development plan](docs/development.md): component boundaries, setup expectations, and the first implementation milestones.
+- [UX proposal](docs/ux-proposal.md): proposed navigation and flows, including the confirmed category overview and amount-color requirements.
 - [iOS component](ios/README.md) and [server component](server/README.md).
 
 ## Run and check

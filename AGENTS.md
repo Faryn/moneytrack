@@ -11,6 +11,7 @@
 - One repository: native SwiftUI in `ios/`, one Phoenix website/API application in `server/`, supporting material in `docs/`.
 - Use Ecto with server-side SQLite. Do not introduce PostgreSQL, CloudKit, a separate frontend application, or additional services without a requirement that justifies a new decision.
 - Prefer standard SwiftUI components. Form-based expense entry precedes natural-language parsing; any later parsing stays on-device and supports German and English.
+- Budget home must show category budgets at a glance, with direct category-detail navigation. Use accessible green/red amount semantics with labels/signs; do not hide all category budgets behind another overview screen.
 - Login is username/password with optional passkeys. Do not silently replace username login with email-only or magic-link-only authentication.
 - Shared expenses have two participating accounts, email invitations, shared edit/delete access and history, and private per-user category assignments. No contact management feature.
 
