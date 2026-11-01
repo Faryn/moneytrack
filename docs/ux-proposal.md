@@ -1,6 +1,6 @@
 # App UX proposal
 
-Status: navigation and interaction proposal. The user has confirmed that category budgets belong directly on Budget home, with detail navigation, and that amounts should use green/red semantic colors. Other recommendations below are design proposals, not new accepted architecture decisions.
+Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Sharing/account flows below remain design proposals; they do not approve outstanding invitation or repayment behavior.
 
 ## Main structure
 
@@ -14,17 +14,17 @@ Provide Add Expense as a consistent toolbar action, not a navigation tab. Put ac
 
 ## Budget home
 
-Lead with remaining budget and a compact explanation: monthly allocation + carryover − personal spending. Display a category list underneath; category tiles are an alternative to evaluate. Favor the list for standard iOS behavior, longer names, and larger text settings.
+Lead with remaining budget and a compact explanation: monthly allocation + carryover − personal spending. Display a native category list underneath with disclosure navigation. This selected variant supports standard iOS behavior, longer names, and larger text settings.
 
 Keep the total and each category's status independent: total remaining may be positive while one category is overspent. The overspent category must be visibly red and explicitly labeled. Use small progress indicators as supporting information; numbers and labels carry the meaning.
 
-A category detail shows its allocation, carryover, spending, remaining amount, and matching expenses. The yearly plan edits flat category/year amounts and shows the resulting monthly allocations. Budget edit behavior remains subject to the existing open financial-rule decisions.
+A category detail shows its allocation, carryover, spending, remaining amount, and matching expenses. The yearly plan edits flat category/year amounts and shows the resulting monthly allocations. Both unused and overspent balances carry within the year; yearly amount edits recalculate all twelve months with confirmation, as confirmed in ADR 0006.
 
 Recent expenses are optional on Budget home once category budgets are present. Recommend leaving the full log in Expenses to keep the home screen focused.
 
 ## Quick entry
 
-Open a native sheet with amount first, optional description, and a suggested editable category. Default the date to today with an additional date control for older entries. Saving returns immediately to the previous screen with a short saved indication and optional View action; no mandatory sharing step.
+Open a native sheet with amount first, optional description, and a suggested editable category. Default the date to today with an additional date control for older entries. Saving returns immediately to the previous screen with updated balances and native success feedback. A View action remains an optional refinement; no mandatory sharing step.
 
 Category suggestions should be easy to accept and override. Do not interpret a description such as Theodor as a person. Future on-device German/English parsing fills this same editable form rather than adding a separate chat interface.
 
@@ -56,3 +56,11 @@ Recommend short account setup followed by category/yearly-budget setup, with pas
 Offline saves should be immediate. Show pending sync state unobtrusively and avoid blocking entry on network availability. A financial conflict should preserve both versions and ask for resolution, rather than silently changing a number. Use a confirmation for shared deletion that explains the effect on both budgets and the debt; personal deletion can offer Undo where feasible.
 
 Use standard SwiftUI navigation, lists, forms, sheets, menus, search, and accessibility behavior. A web companion can use the same three conceptual destinations with layouts adapted to wider screens.
+
+## First native implementation
+
+Budget, Expenses, and Shared use system tabs and independent navigation stacks. Personal expenses support creation, detail, editing, deletion, and local persistence. Yearly Plan uses a native sheet and category editor; budget edits confirm year-wide recalculation. Entry offers exact comma/dot decimal amounts, visible validation, editable local-history suggestions, and an expandable native date picker. The initial interface is English with locale-formatted EUR amounts.
+
+Shared currently has an honest empty state. Account explains that data is on this iPhone and is not connected to a MoneyTrack account. Login, passkeys, sharing actions, invitations, and sync are not simulated. Accessibility sizes stack category balances and expense amounts vertically; green/red colors adapt to light/dark appearance and retain text/signs.
+
+Follow Apple's guidance on [tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars), [lists](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables), [sheets](https://developer.apple.com/design/human-interface-guidelines/sheets), [data entry](https://developer.apple.com/design/human-interface-guidelines/entering-data), and [color](https://developer.apple.com/design/human-interface-guidelines/color). Use system materials and controls. Cancel/Save belong on opposite sides of entry sheets; read-only root sheets have Close actions.

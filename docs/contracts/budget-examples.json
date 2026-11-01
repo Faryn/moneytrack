@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "unused-budget-carries",
+      "year": 2026, "month": 2, "annual": 600000,
+      "expenses": [{"day": "2026-01-10", "amount": 40000, "personalShare": 40000}],
+      "expected": {"allocation": 50000, "carryover": 10000, "spent": 0, "remaining": 60000}
+    },
+    {
+      "id": "overspending-carries",
+      "year": 2026, "month": 2, "annual": 600000,
+      "expenses": [{"day": "2026-01-10", "amount": 55000, "personalShare": 55000}],
+      "expected": {"allocation": 50000, "carryover": -5000, "spent": 0, "remaining": 45000}
+    },
+    {
+      "id": "only-personal-share-counts",
+      "year": 2026, "month": 1, "annual": 600000,
+      "expenses": [{"day": "2026-01-10", "amount": 7800, "personalShare": 3900}],
+      "expected": {"allocation": 50000, "carryover": 0, "spent": 3900, "remaining": 46100}
+    },
+    {
+      "id": "january-resets",
+      "year": 2026, "month": 1, "annual": 600000,
+      "expenses": [{"day": "2025-12-10", "amount": 55000, "personalShare": 55000}],
+      "expected": {"allocation": 50000, "carryover": 0, "spent": 0, "remaining": 50000}
+    },
+    {
+      "id": "first-month-rounding",
+      "year": 2026, "month": 1, "annual": 100,
+      "expenses": [],
+      "expected": {"allocation": 9, "carryover": 0, "spent": 0, "remaining": 9}
+    },
+    {
+      "id": "year-end-rounding-preserves-total",
+      "year": 2026, "month": 12, "annual": 100,
+      "expenses": [],
+      "expected": {"allocation": 8, "carryover": 92, "spent": 0, "remaining": 100}
+    },
+    {
+      "id": "future-expenses-do-not-count-yet",
+      "year": 2026, "month": 2, "annual": 600000,
+      "expenses": [{"day": "2026-03-10", "amount": 7800, "personalShare": 7800}],
+      "expected": {"allocation": 50000, "carryover": 50000, "spent": 0, "remaining": 100000}
+    },
+    {
+      "id": "revised-yearly-budget-recalculates",
+      "year": 2026, "month": 2, "annual": 1200000,
+      "expenses": [{"day": "2026-01-10", "amount": 55000, "personalShare": 55000}],
+      "expected": {"allocation": 100000, "carryover": 45000, "spent": 0, "remaining": 145000}
+    }
+  ]
+}

@@ -37,6 +37,26 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "628238D6F72DDA75278F8E3C"
+               BuildableName = "MoneyTrackTests.xctest"
+               BlueprintName = "MoneyTrackTests"
+               ReferencedContainer = "container:MoneyTrack.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "704B5DF0E893E53353E3684B"
+               BuildableName = "MoneyTrackUITests.xctest"
+               BlueprintName = "MoneyTrackUITests"
+               ReferencedContainer = "container:MoneyTrack.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

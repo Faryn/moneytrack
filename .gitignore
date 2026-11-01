@@ -37,6 +37,7 @@ DerivedData/
 *.xcarchive
 *.ipa
 *.dSYM/
+*.xcresult/
 
 # Runtime databases and sidecars
 *.db
@@ -45,6 +46,8 @@ DerivedData/
 *.sqlite-*
 *.sqlite3
 *.sqlite3-*
+*.store
+*.store-*
 
 # Local application data, backups, and logs
 /data/

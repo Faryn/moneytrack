@@ -53,7 +53,7 @@ When an expense becomes shared, each participant's personal spending uses their 
 
 For example, a €78 restaurant expense paid by Alice and split equally uses €39 of Alice's budget, €39 of Bob's budget, and creates a €39 obligation from Bob to Alice. Alice may categorize it as Restaurants while Bob chooses Leisure; neither sees the other's choice. A €39 repayment clears that obligation and changes neither budget.
 
-Use the existing budget rounding and yearly reset rules from the specification. Negative carryover and behavior after editing a yearly budget remain product assumptions, not resolved by this proposal.
+Use the confirmed budget rounding, positive/negative carryover, whole-year recalculation after yearly edits, and January reset rules in [ADR 0006](adr/0006-calendar-year-budget-calculation.md). These financial rules are settled independently of this draft sync protocol.
 
 ## Editing and access policy
 
@@ -66,7 +66,7 @@ Use the existing budget rounding and yearly reset rules from the specification. 
 
 ## Proposed sync contract
 
-Use a versioned JSON API and a durable local outbox. Keep local storage selection open until its save/migration/outbox behavior has been prototyped.
+Use a versioned JSON API and a durable local outbox. SwiftData is selected in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md), with domain/outbox saves and rollback tested. Its current pending payload is an internal prototype format, not this wire contract. Forward migration, account bootstrap, revisions, and acknowledgments need implementation before it can synchronize.
 
 ### Push
 

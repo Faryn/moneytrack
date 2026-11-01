@@ -22,6 +22,8 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Categories are a flat list with yearly budget amounts.
 - Each category receives one twelfth of its yearly budget each month.
 - Unspent budget carries into the next month within the same calendar year.
+- Overspending reduces the next month's available budget within the same year.
+- Editing a category's yearly amount recalculates all twelve months of that calendar year.
 - Carryover resets on January 1. Historical expenses and shared balances remain.
 - The Budget home screen emphasizes the total remaining monthly budget and shows category budgets broken down at a glance. Tapping a category opens its details and expenses.
 - Use semantic amount colors: green for available budget and money owed to the user; red for overspending, spending outflows, and money the user owes. Pair colors with signs and clear labels.
@@ -53,7 +55,7 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 
 The date is today by default and can be changed through an additional control. An example expense is amount `78 €`, description `Theodor`, category `Restaurants`. The description must not automatically be interpreted as a participant.
 
-Category selection is explicit and editable. Assumption: suggestions initially use previously categorized descriptions and a remembered last category; new or ambiguous descriptions require the user to choose a category. Suggestions do not require cloud services.
+Category selection is visible and editable. The first local implementation suggests exact previously categorized descriptions, otherwise prefilling the most recent category or the first existing category. Users can override it or create a category. A category is required to save; no hidden Uncategorized category is created. Suggestions do not require cloud services. More sophisticated matching remains deferred.
 
 ### Make an expense shared
 
@@ -104,15 +106,17 @@ For each category and month:
 
 - January starts with zero carryover.
 - The next month's carryover equals the previous month's remaining budget.
-- Assumption: negative balances carry forward too, so overspending reduces the next month's available budget.
+- Negative balances carry forward too, so overspending reduces the next month's available budget.
 - The home total is the sum of the categories' remaining amounts.
 - Use the expense date to assign spending to a calendar month.
 - Making an expense shared adjusts budget usage in its original month, regardless of when sharing was configured.
 - Editing, deleting, or recategorizing an expense recomputes affected balances through the rest of that year.
-- Store money exactly in minor currency units. Distribute rounding remainders deterministically so the twelve monthly allocations equal the yearly amount exactly.
+- Store money exactly in minor currency units. Each month gets the integer quotient of yearly cents divided by twelve; give one extra cent to each of the first remainder months. The twelve allocations equal the yearly amount exactly.
 - For an odd-cent equal split, assign the extra cent to the payer's share and show the exact amounts before confirmation.
-- Assumption: changing a category's yearly budget redistributes it across all twelve months of that year and recalculates that year's remaining balances. The confirmation must make this effect clear.
+- Changing a category's yearly budget redistributes it across all twelve months of that year and recalculates that year's remaining balances. The confirmation must make this effect clear.
 - Resetting yearly budget carryover does not clear outstanding debts between people.
+
+The confirmed carryover and yearly-edit rules are recorded in [ADR 0006](docs/adr/0006-calendar-year-budget-calculation.md). Common financial examples run against both implementations using [the fixture](docs/contracts/budget-examples.json).
 
 ## Offline operation and synchronization
 
@@ -149,7 +153,7 @@ No bank connections or income tracking are required. Shared balance tracking doe
 ## Platform and language
 
 - Target the latest stable iOS version available when implementation starts; older-device support is not a priority.
-- Prefer native SwiftUI navigation, forms, sheets, menus, lists, and accessibility behavior.
+- iOS leads the UX. Follow Apple's Human Interface Guidelines and prefer native SwiftUI navigation, forms, sheets, menus, lists, and accessibility behavior. The website adapts these flows to the web.
 - Support standard Dynamic Type and light/dark appearance.
 - Use green/red amount styling consistently in light and dark appearance, with sufficient contrast. Retain signed amounts and labels such as Left, Over budget, Owes you, and You owe so color is not the only signal.
 - Assumption: EUR is the only currency in the MVP.
@@ -159,7 +163,7 @@ No bank connections or income tracking are required. Shared balance tracking doe
 ## Acceptance examples
 
 1. A €6,000 yearly category budget allocates €500 per month. Spending €400 in January leaves €100. February starts with €600 available.
-2. Spending €550 against January's €500 leaves −€50. Under the proposed overspending rule, February starts with €450.
+2. Spending €550 against January's €500 leaves −€50. February starts with €450.
 3. With a €500 allocation, saving a personal €78 expense leaves €422. Once sharing is accepted, making it an equal split paid by the user changes remaining budget to €461 and creates a €39 receivable.
 4. Recording repayment of that €39 clears the receivable and leaves the remaining budget at €461.
 5. An expense created offline appears immediately and reaches another signed-in device once synchronization completes, exactly once.
@@ -179,4 +183,4 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 ## Assumptions to review
 
-The main unconfirmed choices are negative rollover, full-year budget recalculation after a budget edit, EUR-only operation, repayment recording, the website's initial scope, and interface languages. Pending invitations, removal of sharing, account creation and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.
+The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. Pending invitations, removal of sharing, account creation and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.

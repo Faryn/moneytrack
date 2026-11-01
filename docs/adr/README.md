@@ -9,3 +9,5 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0003](0003-phoenix-server.md) | Accepted | Phoenix/Elixir server, LiveView website, JSON API, and Ecto with SQLite |
 | [0004](0004-password-login-and-passkeys.md) | Accepted | Username/password login with optional passkeys on iOS and web |
 | [0005](0005-shared-expenses-and-email-invitations.md) | Accepted | Email-invited shared expenses with edit/delete access and history for both users; private categories; no contact list |
+| [0006](0006-calendar-year-budget-calculation.md) | Accepted | Positive and negative carryover within a year; yearly amount edits recalculate the whole year; exact-cent monthly allocation |
+| [0007](0007-swiftdata-local-store-and-outbox.md) | Accepted | Versioned SwiftData local store; domain mutations and pending changes saved together; no CloudKit |

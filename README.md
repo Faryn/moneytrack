@@ -4,15 +4,15 @@ A personal expense and budget tracker for a small user base, primarily on iPhone
 
 ## Project status
 
-Runnable application foundations are in place: a native SwiftUI iPhone app, Phoenix LiveView website, JSON liveness endpoint, and Ecto/SQLite configuration. Toolchain versions are recorded, server dependencies are locked, and independent build/check scripts are included. The specification, accepted architecture decisions, and draft data/sync design remain included.
+The native iOS app now supports local personal expenses, flat categories, yearly budget editing, monthly totals and category breakdowns, category details, and searchable expense history. Entries can be created, edited, and deleted offline and survive relaunch. Standard SwiftUI tabs, navigation, forms, sheets, menus, and adaptive green/red amount colors lead the UX.
 
-Both apps currently show a budget empty state. Authentication, financial records, local persistence, invitations, and actual sync are the next implementation stages; no domain tables or seed data have been added yet.
+SwiftData saves each local mutation and its pending change together. The Phoenix server still provides the LiveView empty state, liveness endpoint, Ecto/SQLite foundation, and a tested budget calculator. Authentication, passkeys, invitations, shared expenses, and network synchronization are not implemented yet. No real financial data or sample records are seeded into normal stores.
 
 ## Agreed product direction
 
 - Native SwiftUI with standard iOS components, targeting the latest stable iOS release selected at implementation time.
 - Fast form entry with suggested categories, today's date by default, and offline saving followed by synchronization.
-- Flat categories with yearly budgets, one twelfth allocated monthly, unused amounts carried forward, and a January 1 carryover reset.
+- Flat categories with yearly budgets, one twelfth allocated monthly, unused and overspent amounts carried forward, and a January 1 carryover reset. Editing a yearly amount recalculates the whole year.
 - Category budgets are visible on Budget home. Green/red amounts distinguish available budget, overspending, and the direction of shared balances, alongside text labels and signs.
 - Personal expenses first. Share a saved expense afterward with one other user through a direct email invitation.
 - Splits of all, half, or none; only each participant's own share counts against their budget.
@@ -44,8 +44,9 @@ The server uses Elixir/Phoenix, LiveView, and Ecto with SQLite. Both website and
 ## Start here
 
 - [Product specification](SPEC.md): confirmed requirements, examples, and marked assumptions.
-- [Architecture decision records](docs/adr/README.md): the five accepted decisions.
+- [Architecture decision records](docs/adr/README.md): accepted architecture, budget rules, and local persistence choices.
 - [Data model and sync proposal](docs/data-model-and-sync.md): proposed records, invitation lifecycle, and offline sync behavior. This is a draft, not an accepted protocol.
+- [Local storage](docs/local-storage.md): saving guarantees, store isolation, and the boundary between the local outbox and future sync.
 - [Technical decision backlog](docs/technical-decisions.md): remaining choices and recommended defaults awaiting confirmation.
 - [Development plan](docs/development.md): component boundaries, setup expectations, and the first implementation milestones.
 - [UX proposal](docs/ux-proposal.md): proposed navigation and flows, including the confirmed category overview and amount-color requirements.
@@ -60,9 +61,10 @@ After initial setup, run checks from the repository root:
 ```sh
 scripts/check-server
 scripts/check-ios
+scripts/test-ios
 ```
 
-Verified on 2026-11-01: six server tests pass, assets compile, the website and JSON endpoint return HTTP 200, and the SwiftUI app builds and launches on an iOS 26.5 simulator using Xcode 27.2. Neither app has been deployed.
+Verified on 2026-11-01: 15 server tests and 10 native tests pass, including shared calculation examples, disk reopening, failed-save rollback, and a simulator flow covering setup, entry, relaunch, editing, deletion, and an overspent category. The native app runs on iOS 26.5 using Xcode 27.2. Server assets and website/liveness smoke checks were verified during scaffolding. Neither app has been deployed.
 
 ## Next implementation milestone
 

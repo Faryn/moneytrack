@@ -4,7 +4,7 @@ Status: implementation plan. It does not approve the remaining product assumptio
 
 ## Repository baseline
 
-The repository includes the agreed product specification, five accepted architecture decisions, a draft data model/sync protocol, and runnable Phoenix/SwiftUI application foundations. Verified setup commands and component boundaries are described in [ios/README.md](../ios/README.md) and [server/README.md](../server/README.md).
+The repository includes the agreed product specification, accepted architecture decisions, a draft data model/sync protocol, and runnable Phoenix foundations plus a working local SwiftUI personal ledger. iOS leads UX implementation; the website will adapt its flows. Verified setup commands and component boundaries are described in [ios/README.md](../ios/README.md) and [server/README.md](../server/README.md).
 
 Use the [technical decision backlog](technical-decisions.md) to distinguish accepted choices from recommendations. The [product specification](../SPEC.md) remains the source for required behavior; the [sync proposal](data-model-and-sync.md) is an implementation draft.
 
@@ -24,12 +24,14 @@ Done when both applications build, the server applies a migration to the intende
 
 ## 2. Define the common contract and local persistence
 
-- Prototype durable local saving of an expense and its pending operation. Evaluate SwiftData against save, migration, and queue requirements.
+Completed locally on 2026-11-01: versioned SwiftData storage, atomic domain/outbox saves, disk reopening, deletion tombstones, namespace isolation, and real failed-save rollback. Eight budget examples run in Swift and Elixir. Nine native unit tests and one simulator UI test pass; the server has 15 tests. See [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md).
+
+- Preserve the tested local guarantees when implementing the actual sync contract. The prototype outbox is not a network API.
+- Before the first schema change, test forward migration with populated V1 records, tombstones, and pending work.
 - Finalize the minimum API contract for a personal expense, stable IDs, revisions, retries, deletion, and a per-user change cursor.
-- Add synthetic, language-neutral financial examples and run the applicable cases in Swift and Elixir.
 - Verify that failed/expired authentication cannot lose or mix local account data.
 
-Done when a local expense survives app termination and its pending sync work survives restart.
+The local durability criterion is met. The server contract, authenticated account bootstrap/import, and session-expiry integration remain open; this milestone is not complete as a sync design.
 
 ## 3. Prove the first complete flow
 
@@ -43,8 +45,10 @@ Done when the flow works through real application storage and API boundaries. Th
 
 ## 4. Complete budgets and sharing
 
-- Add category/year budgets, monthly carryover, January reset, and the home budget summary.
-- Resolve the marked budget and invitation assumptions before implementing affected behavior.
+The local iOS budget flow is implemented: yearly category amounts, positive/negative carryover, January reset, whole-year recalculation after budget edits, total remaining, category breakdown, detail navigation, and native expense forms/history. Entry uses local history suggestions; no NLP is included.
+
+- Connect the tested budget calculation and editing flows to authenticated server storage and the website.
+- Resolve remaining invitation and repayment assumptions before implementing affected behavior. Budget rules are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md).
 - Add email invitation onboarding and verified recipient acceptance using fake/test mail during development.
 - Show one shared expense to both participants, with private category assignments and personal-share budget calculations.
 - Implement shared edit/delete history and agreed repayment behavior.

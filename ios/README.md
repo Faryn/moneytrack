@@ -1,34 +1,46 @@
 # iOS client
 
-Native SwiftUI application with a shared `MoneyTrack` scheme and a standard navigation/empty-budget screen. There are no financial records, account screens, local persistence, or sync calls yet.
+Working native SwiftUI personal ledger with offline storage. iOS leads the UX using standard tabs, navigation, lists, forms, sheets, menus, search, and date/category pickers.
 
-## Toolchain and project
+## Current functionality
+
+- Budget home: month selection, total remaining, allocation, positive/negative carryover, personal spending, and category budgets at a glance.
+- Category detail: remaining amount, budget breakdown, matching expenses, and yearly amount editing.
+- Yearly Plan: create/rename flat categories and enter yearly budgets. Edits recalculate the whole calendar year after confirmation; January resets carryover.
+- Expense form: amount first, optional description, editable local-history category suggestions, today's date, and a secondary date picker. Comma/dot decimal amounts are exact, without thousands separators or silent rounding.
+- Expense history: monthly spending, chronological rows, search, detail, edit, and confirmed deletion.
+- Durable SwiftData saves with deletion tombstones and pending changes committed together. No connection is needed.
+- Adaptive green/red amounts with labels/signs, system light/dark appearance, and vertically stacked layouts at accessibility sizes.
+
+Shared and Account show their disconnected state. Authentication, passkeys, shared expenses, invitations, and network sync are not implemented. No financial seed data is added. The first interface is English with locale-formatted EUR amounts; full language/currency scope remains a release decision.
+
+## Toolchain and run
 
 - Xcode 27.2, recorded in [`.xcode-version`](../.xcode-version), with iOS SDK 27.2.
-- Swift 6 language mode with complete concurrency checking.
-- iPhone deployment target: iOS 26.5. This uses the available modern simulator runtime while building with the installed SDK. No older-device compatibility work is included.
+- Swift 6 with complete concurrency checking; minimum iOS 26.5 using the installed modern simulator runtime.
 - No external Swift packages or CloudKit configuration.
-- `local.moneytrack.ios` is a provisional development bundle identifier; choose the final identifier, development team, and associated domain before device distribution and passkey setup.
-- The app icon catalog is a placeholder; release branding is not included.
+- `local.moneytrack.ios` is a provisional bundle identifier. Choose the final identifier, team, and associated domain before device distribution and passkey setup.
+- App icons are placeholders; release branding is not included.
 
-Open `MoneyTrack.xcodeproj` in Xcode, select the shared `MoneyTrack` scheme and an iPhone simulator, and run. Complete Xcode's license/first-run setup and install an appropriate simulator runtime first.
+Open `MoneyTrack.xcodeproj`, select the shared `MoneyTrack` scheme and an iPhone simulator, and run. Complete Xcode's license/first-run setup and install a supported runtime first. Budget setup guidance appears until you create categories and amounts.
 
-## Build check
+## Build and tests
 
 From the repository root:
 
 ```sh
 scripts/check-ios
+scripts/test-ios
 ```
 
-The script uses `/Applications/Xcode.app` when `DEVELOPER_DIR` is not already set, without changing system developer settings. It builds for a generic iOS simulator, disables signing, and places derived data in a temporary directory. Set `MONEYTRACK_DERIVED_DATA` to reuse a chosen build directory outside the checkout.
+Both scripts select `/Applications/Xcode.app` when `DEVELOPER_DIR` is not set, without changing system developer settings. The build check uses a generic simulator; tests select an available iPhone with iOS 26.5 or later, preferring a booted device. Set `MONEYTRACK_SIMULATOR_UDID` to choose one explicitly. Signing is disabled; derived data goes to a temporary directory. Set `MONEYTRACK_DERIVED_DATA` to reuse a host-local directory and `MONEYTRACK_TEST_RESULTS` to select a new `.xcresult` path, which must not already exist.
 
-The build was verified and the app was installed and launched on an iPhone 17 Pro simulator running iOS 26.5. The initial screen was visually checked. There is no iOS test target yet because no domain logic has been implemented; shared financial and persistence tests belong with that implementation.
+Verified on 2026-11-01: nine unit tests and one UI test pass on iPhone 17 Pro / iOS 26.5. Tests cover shared Swift/Elixir financial examples, exact amounts/dates, disk reopening, stable queued operations, tombstones, namespace isolation, and rollback when a read-only store refuses saving. The UI test creates budgets and an expense, relaunches, edits, deletes, and verifies an overspent category with a positive total.
 
-## Next implementation
+UI tests use the debug-only `--ui-testing` namespace, `--reset-ui-testing-data`, and `MONEYTRACK_TEST_TODAY`. Reset affects only that isolated test store. Normal local-device and account namespaces are untouched. Unit tests use temporary directories.
 
-Prototype durable saving of an expense and its pending sync operation; SwiftData remains a candidate rather than an accepted persistence choice. Preserve pending work through restarts/session expiry and isolate stores by account.
+## Persistence and next milestone
 
-The client will use the Phoenix API for username/password login, optional passkeys, expenses, budgets, shared history, and synchronization. Never connect to the server's SQLite file. On-device German/English parsing follows form-based entry and must not require cloud AI.
+See [local storage](../docs/local-storage.md) and [ADR 0007](../docs/adr/0007-swiftdata-local-store-and-outbox.md). The versioned store does not reset on failure. The outbox is durable local groundwork, without a network sender, server revisions, acknowledgments, or conflict UI. A future account connection needs an explicit ownership/import flow and migrations that preserve queued work.
 
-See [product specification](../SPEC.md), [sync proposal](../docs/data-model-and-sync.md), and [development plan](../docs/development.md).
+The next milestone is username/password authentication and personal-expense sync through the Phoenix API and website. Optional passkeys and shared expenses follow. Never connect to the server SQLite file. German/English on-device NLP follows reliable form entry and synchronization.

@@ -4,14 +4,14 @@ Status: open decisions and proposed recommendations, with accepted choices ident
 
 Username/password with optional passkeys is accepted in [ADR 0004](adr/0004-password-login-and-passkeys.md). Shared visibility, email invitations, mutual expense edit/delete access, and private categories are accepted in [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md).
 
+Negative carryover and whole-year recalculation after budget edits are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md). SwiftData is selected after the local prototype in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md). iOS leads the UX using Apple HIG and standard SwiftUI components.
+
 ## Proposed MVP defaults awaiting confirmation
 
 These recommendations were discussed but have not been explicitly accepted. Repository preparation does not promote them into requirements.
 
 | Choice | Proposed default |
 | --- | --- |
-| Overspending | Carry negative category balances into the next month within the same year. |
-| Yearly budget edits | Recalculate the whole affected year, showing the effect before saving. |
 | Pending sharing | Keep the expense personal until the first invitation is accepted. |
 | Subsequent sharing | Reuse an accepted sharing connection without another email invitation. |
 | Incoming category | Assign the user's share to a private zero-budget Uncategorized category until they choose another. Count it immediately in total spending. |
@@ -30,7 +30,7 @@ Accepted: either participant can edit common expense fields or delete the shared
 
 ### 2. Financial data and calendar contract
 
-Agree on expense, split, repayment, category, and yearly-budget representations. Decide budget edits, negative rollover, odd-cent splits, and the effect of deleting a settled shared expense.
+Personal budget calculation, negative rollover, yearly edits, and deterministic monthly cent allocation are defined in ADR 0006 and exercised in Swift/Elixir with the same fixture. Finalize server expense, split, repayment, and private-assignment representations, including the effect of deleting a settled shared expense.
 
 Recommendation: integer minor currency units, explicit currency, client-generated UUIDs, and an explicit calendar expense date separate from UTC creation/modification timestamps. Travel and server timezones must not move an expense into another month. Calculate remaining budgets and debts from underlying records rather than syncing editable running totals.
 
@@ -38,9 +38,9 @@ Publish language-neutral JSON examples for budget rollover, splits, repayments, 
 
 ### 3. Offline storage and sync protocol
 
-Choose local persistence and prove it can commit an expense change and its pending sync operation together.
+Selected: a versioned SwiftData store explicitly saves a domain mutation and its pending operations together. Disk reopening, edit/delete tombstones, profile isolation, and rollback after a read-only store refuses a save are tested. See [local storage](local-storage.md).
 
-Recommendation: evaluate SwiftData first because it fits the native SwiftUI preference. Verify explicit saving, schema migrations, and a durable pending-change queue with a small prototype before committing. SQLite with an explicit persistence layer remains an alternative if the prototype exposes a concrete limitation.
+The local outbox has no network sender or acknowledgment/revision state yet. Before the first schema change, test forward migration with populated V1 data and pending work. Account bootstrap must explicitly decide how unbound local-device data is imported; it must not be sent automatically to an arbitrary signed-in account.
 
 Use the custom backend as the shared sync service. The [draft protocol](data-model-and-sync.md) proposes client-generated operation IDs for safe retries, server-issued record revisions, per-user resumable change cursors, deletion/access-removal markers, and a full resync path that preserves pending local work. An offline device that returns after deletion-marker cleanup must not recreate deleted records. Shared writes must update both participants' feeds while exposing private assignments only to their owner.
 

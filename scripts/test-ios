@@ -1,0 +1,39 @@
+#!/bin/sh
+set -eu
+
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -z "${DEVELOPER_DIR:-}" ] && [ -d /Applications/Xcode.app/Contents/Developer ]; then
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
+
+simulator_id=${MONEYTRACK_SIMULATOR_UDID:-}
+if [ -z "$simulator_id" ]; then
+  simulator_id=$(xcrun simctl list devices available --json | python3 -c '
+import json, re, sys
+candidates = []
+for runtime, devices in json.load(sys.stdin)["devices"].items():
+    match = re.search(r"\.iOS-(\d+)-(\d+)", runtime)
+    if not match or tuple(map(int, match.groups())) < (26, 5):
+        continue
+    for device in devices:
+        if device.get("isAvailable") and device["name"].startswith("iPhone"):
+            candidates.append((device["state"] == "Booted", tuple(map(int, match.groups())), device["udid"]))
+if not candidates:
+    sys.exit("Install an iPhone simulator running iOS 26.5 or later, or set MONEYTRACK_SIMULATOR_UDID.")
+print(max(candidates)[2])
+')
+fi
+
+derived_data=${MONEYTRACK_DERIVED_DATA:-$(mktemp -d "${TMPDIR:-/tmp}/moneytrack-ios-tests.XXXXXX")}
+results=${MONEYTRACK_TEST_RESULTS:-$derived_data/MoneyTrack.xcresult}
+
+xcodebuild \
+  -project "$repo_dir/ios/MoneyTrack.xcodeproj" \
+  -scheme MoneyTrack \
+  -configuration Debug \
+  -destination "platform=iOS Simulator,id=$simulator_id" \
+  -derivedDataPath "$derived_data" \
+  -resultBundlePath "$results" \
+  -parallel-testing-enabled NO \
+  CODE_SIGNING_ALLOWED=NO \
+  test
