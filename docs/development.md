@@ -4,11 +4,15 @@ Status: implementation plan. It does not approve the remaining product assumptio
 
 ## Repository baseline
 
-The repository includes the agreed product specification, five accepted architecture decisions, and a draft data model/sync protocol. Application projects have not been generated. Component responsibilities are described in [ios/README.md](../ios/README.md) and [server/README.md](../server/README.md).
+The repository includes the agreed product specification, five accepted architecture decisions, a draft data model/sync protocol, and runnable Phoenix/SwiftUI application foundations. Verified setup commands and component boundaries are described in [ios/README.md](../ios/README.md) and [server/README.md](../server/README.md).
 
 Use the [technical decision backlog](technical-decisions.md) to distinguish accepted choices from recommendations. The [product specification](../SPEC.md) remains the source for required behavior; the [sync proposal](data-model-and-sync.md) is an implementation draft.
 
 ## 1. Establish application foundations
+
+Completed on 2026-11-01: Phoenix 1.8.16 with LiveView/Ecto/SQLite, a SwiftUI Xcode project and shared scheme, recorded toolchains, dependency locking, host-local database configuration, and independent check scripts. Six server tests and asset compilation pass; website/API HTTP smoke checks pass; the iOS app builds and launches on the iOS 26.5 simulator. Ecto initialized its migration tracking, but no domain migration or seed data has been introduced.
+
+Recorded toolchain: Erlang/OTP 29.1.2, Elixir 1.20.4, Xcode 27.2, iOS SDK 27.2 with deployment target 26.5, and SQLite 3.54.1 through locked Exqlite 0.43.0. The deployment target enables launch verification using the installed simulator runtime.
 
 - Select supported toolchain and dependency versions and record them in the repository.
 - Generate one Phoenix application in `server/` with LiveView, Ecto, and SQLite.

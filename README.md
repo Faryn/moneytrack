@@ -4,7 +4,9 @@ A personal expense and budget tracker for a small user base, primarily on iPhone
 
 ## Project status
 
-Repository foundation and product planning. The specification, accepted architecture decisions, and draft data/sync design are included. Application code, database migrations, dependency versions, and build workflows have not been generated yet.
+Runnable application foundations are in place: a native SwiftUI iPhone app, Phoenix LiveView website, JSON liveness endpoint, and Ecto/SQLite configuration. Toolchain versions are recorded, server dependencies are locked, and independent build/check scripts are included. The specification, accepted architecture decisions, and draft data/sync design remain included.
+
+Both apps currently show a budget empty state. Authentication, financial records, local persistence, invitations, and actual sync are the next implementation stages; no domain tables or seed data have been added yet.
 
 ## Agreed product direction
 
@@ -26,8 +28,9 @@ MoneyTrack/
 ├── README.md
 ├── AGENTS.md
 ├── SPEC.md
-├── ios/                 Native SwiftUI client and local persistence
+├── ios/                 Native SwiftUI client
 ├── server/              Phoenix application: LiveView website and JSON API
+├── scripts/             Independent server and iOS checks
 └── docs/
     ├── adr/             Accepted architecture decisions
     ├── data-model-and-sync.md
@@ -46,8 +49,21 @@ The server uses Elixir/Phoenix, LiveView, and Ecto with SQLite. Both website and
 - [Development plan](docs/development.md): component boundaries, setup expectations, and the first implementation milestones.
 - [iOS component](ios/README.md) and [server component](server/README.md).
 
-## First implementation milestone
+## Run and check
+
+Follow [server setup](server/README.md) to start the website, or open `ios/MoneyTrack.xcodeproj` and run the shared `MoneyTrack` scheme on an iPhone simulator. The server uses host-local SQLite files outside the OneDrive checkout.
+
+After initial setup, run checks from the repository root:
+
+```sh
+scripts/check-server
+scripts/check-ios
+```
+
+Verified on 2026-11-01: six server tests pass, assets compile, the website and JSON endpoint return HTTP 200, and the SwiftUI app builds and launches on an iOS 26.5 simulator using Xcode 27.2. Neither app has been deployed.
+
+## Next implementation milestone
 
 Prove one complete flow: sign in, create an expense offline on iOS, reconnect, see it on the website, edit it there, and receive the update on iOS without duplication or silent loss.
 
-There are no runnable app setup commands yet. Pin the actual toolchains and dependencies when scaffolding, then add verified build/test instructions for each component. No hosting provider, domain, or public release has been configured.
+Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). No hosting provider, domain, production account configuration, or public release has been configured.
