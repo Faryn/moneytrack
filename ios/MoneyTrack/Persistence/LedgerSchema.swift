@@ -92,9 +92,25 @@ enum LedgerSchemaV2: VersionedSchema {
     }
 }
 
+enum LedgerSchemaV3: VersionedSchema {
+    static var versionIdentifier: Schema.Version { .init(3, 0, 0) }
+    static var models: [any PersistentModel.Type] { LedgerSchemaV2.models + [SharedRecord.self] }
+    @Model final class SharedRecord {
+        @Attribute(.unique) var key: String
+        var entityKind: String
+        var entityID: UUID
+        var data: Data
+        var deleted: Bool
+        init(entity: String, id: UUID, data: Data, deleted: Bool) {
+            key = RemoteRecord.key(entity, id); entityKind = entity; entityID = id
+            self.data = data; self.deleted = deleted
+        }
+    }
+}
+
 enum LedgerMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self] }
-    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self)] }
+    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self] }
+    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self), .lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self)] }
 }
 
 typealias CategoryRecord = LedgerSchemaV1.CategoryRecord
@@ -127,7 +143,7 @@ enum LedgerPersistence {
         ).appending(path: "MoneyTrack", directoryHint: .isDirectory)
         let directory = base.appending(path: namespace.directoryName, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schema = Schema(versionedSchema: LedgerSchemaV2.self)
+        let schema = Schema(versionedSchema: LedgerSchemaV3.self)
         let configuration = ModelConfiguration(
             "MoneyTrack", schema: schema, url: directory.appending(path: "ledger.store"),
             allowsSave: allowsSave, cloudKitDatabase: .none

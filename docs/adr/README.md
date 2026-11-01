@@ -15,3 +15,4 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0009](0009-personal-sync-contract.md) | Accepted for personal expenses | Versioned per-operation sync, stable retries, revision conflicts, private cursors, explicit local import, and SwiftData V2 migration |
 | [0010](0010-pending-share-budget-treatment.md) | Accepted | Apply the creator's proposed personal share to budgets immediately, including while an invitation is pending |
 | [0011](0011-record-only-settle-up.md) | Accepted | Settle Up asks for a full/partial repayment amount and records it against shared balances; no in-app payments or budget impact |
+| [0012](0012-sharing-defaults-and-connected-flow.md) | Accepted | Private Uncategorized fallback, reuse accepted connections, and immediate repayment recording by either participant; connected shared flow |

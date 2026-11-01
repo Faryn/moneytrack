@@ -12,7 +12,15 @@ defmodule MoneyTrack.Ledger do
     with true <- Enum.sort(Map.keys(operation)) == Enum.sort(@operation_fields),
          {:ok, operation_id} <- Ecto.UUID.cast(operation["operationID"]),
          {:ok, entity_id} <- Ecto.UUID.cast(operation["entityID"]),
-         true <- operation["entity"] in ["category", "year_budget", "expense"],
+         true <-
+           operation["entity"] in [
+             "category",
+             "year_budget",
+             "expense",
+             "shared_expense",
+             "shared_assignment",
+             "repayment"
+           ],
          true <- operation["action"] in ["upsert", "delete"],
          true <- is_integer(operation["expectedRevision"]) and operation["expectedRevision"] >= 0,
          true <- is_map(operation["payload"]),
@@ -31,12 +39,7 @@ defmodule MoneyTrack.Ledger do
             nil ->
               record = mutate(user, entity_id, operation)
 
-              sequence =
-                (Repo.one(
-                   from c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence)
-                 ) || 0) + 1
-
-              Repo.insert!(%UserChange{user_id: user.id, sequence: sequence, record: record})
+              append_change(user, record)
 
               Repo.insert!(%ProcessedOperation{
                 user_id: user.id,
@@ -51,8 +54,10 @@ defmodule MoneyTrack.Ledger do
 
       case result do
         {:ok, {record, changed}} ->
-          if changed,
-            do: Phoenix.PubSub.broadcast(MoneyTrack.PubSub, "ledger:#{user.id}", :ledger_changed)
+          if changed do
+            for id <- MoneyTrack.Sharing.listeners(user, operation["entity"], entity_id),
+                do: Phoenix.PubSub.broadcast(MoneyTrack.PubSub, "ledger:#{id}", :ledger_changed)
+          end
 
           {:ok, record}
 
@@ -115,7 +120,7 @@ defmodule MoneyTrack.Ledger do
               from e in Expense,
                 where: e.user_id == ^user.id and is_nil(e.deleted_at),
                 order_by: [desc: e.expense_date, desc: e.inserted_at]
-            )
+            ) ++ MoneyTrack.Sharing.projected_expenses(user)
         }
       end)
 
@@ -157,6 +162,19 @@ defmodule MoneyTrack.Ledger do
       "deleted" => not is_nil(Map.get(value, :deleted_at)),
       "payload" => payload
     }
+
+  @doc false
+  def append_change(user, record) do
+    sequence =
+      (Repo.one(from c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence)) || 0) +
+        1
+
+    Repo.insert!(%UserChange{user_id: user.id, sequence: sequence, record: record})
+  end
+
+  defp mutate(user, id, %{"entity" => kind} = op)
+       when kind in ["shared_expense", "shared_assignment", "repayment"],
+       do: MoneyTrack.Sharing.mutate(user, id, op)
 
   defp mutate(user, id, op) do
     schema =

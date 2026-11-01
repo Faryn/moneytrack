@@ -12,7 +12,7 @@ Use the [technical decision backlog](technical-decisions.md) to distinguish acce
 
 Completed on 2026-11-01: Phoenix 1.8.16 with LiveView/Ecto/SQLite, a SwiftUI Xcode project and shared scheme, recorded toolchains, dependency locking, host-local database configuration, and independent check scripts. At this initial foundation stage, six server tests and asset compilation passed; website/API HTTP smoke checks pass; the iOS app builds and launches on the iOS 26.5 simulator. Ecto initialized its migration tracking, but no domain migration or seed data has been introduced.
 
-Recorded toolchain: Erlang/OTP 29.1.2, Elixir 1.20.4, Xcode 27.2, iOS SDK 27.2 with deployment target 26.5, and SQLite 3.54.1 through locked Exqlite 0.43.0. The deployment target enables launch verification using the installed simulator runtime.
+Recorded toolchain: Erlang/OTP 29.1.2, Elixir 1.20.4, Xcode 27.2, iOS SDK 27.2; the initial deployment target was 26.5 and the current app/test target is 27.0, and SQLite 3.54.1 through locked Exqlite 0.43.0. The deployment target enables launch verification using the installed simulator runtime.
 
 - Select supported toolchain and dependency versions and record them in the repository.
 - Generate one Phoenix application in `server/` with LiveView, Ecto, and SQLite.
@@ -49,7 +49,7 @@ Done when the flow works through real application storage and API boundaries. Th
 
 The local iOS budget flow is implemented: yearly category amounts, positive/negative carryover, January reset, whole-year recalculation after budget edits, total remaining, category breakdown, detail navigation, and native expense forms/history. Entry uses local history suggestions; no NLP is included.
 
-Sharing preparation on 2026-11-01 adds exact split math with common Swift/Elixir fixtures and account-bound email verification on iOS/web. Verification mail survives restarts and retries in an encrypted SQLite queue; development/test mail stays local. Shared records, invitations, and the pending recipient-category and connection-reuse choices remain unimplemented. See the [verification contract](contracts/email-verification-v1.md).
+Sharing preparation on 2026-11-01 adds exact split math with common Swift/Elixir fixtures and account-bound email verification on iOS/web. Verification mail survives restarts and retries in an encrypted SQLite queue; development/test mail stays local. That preparation is followed by the connected implementation in ADR 0012, which accepts recipient Uncategorized, connection reuse, and immediate repayment recording. See the [verification contract](contracts/email-verification-v1.md).
 
 - Connect the tested budget calculation and editing flows to authenticated server storage and the website.
 - Resolve remaining invitation and repayment assumptions before implementing affected behavior. Budget rules are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md).
@@ -58,7 +58,7 @@ Sharing preparation on 2026-11-01 adds exact split math with common Swift/Elixir
 - Implement shared edit/delete history and the record-only Settle Up flow in ADR 0011, asking for an editable amount. Resolve acknowledgment/correction policies before connecting its save action.
 - Verify the financial and authorization examples across both users, the website, and offline iOS devices.
 
-Record-only Settle Up is now a confirmed requirement (ADR 0011). Full/partial repayment calculations run against the same fixtures in Swift and Elixir, including both directions, unchanged expense spending, exact cents, and aggregate overflow. Recording screens, shared persistence, and synchronization are still pending.
+Record-only Settle Up is now a confirmed requirement (ADR 0011). Full/partial repayment calculations run against the same fixtures in Swift and Elixir, including both directions, unchanged expense spending, exact cents, and aggregate overflow. Recording screens, shared persistence, and synchronization are now implemented under ADR 0012. SwiftData V3 preserves earlier stores and prepared bytes. Native/website flows use the same transactional ledger context.
 
 ## 5. Finish authentication and prepare a release
 

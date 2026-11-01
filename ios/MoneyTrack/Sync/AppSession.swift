@@ -167,7 +167,9 @@ extension AppSession {
         try await emailOperation { try await self.transport.requestEmail(address, requestID: requestID, credential: $0) }
     }
     func verifyEmail(id: UUID, code: String) async throws -> AccountEmailStatus {
-        try await emailOperation { try await self.transport.verifyEmail(id: id, code: code, credential: $0) }
+        let value = try await emailOperation { try await self.transport.verifyEmail(id: id, code: code, credential: $0) }
+        Task { await self.synchronize() }
+        return value
     }
     private func emailOperation(_ operation: (SessionCredential) async throws -> AccountEmailStatus) async throws -> AccountEmailStatus {
         guard let credential, !needsAuthentication else { throw ConnectionError.unauthorized }

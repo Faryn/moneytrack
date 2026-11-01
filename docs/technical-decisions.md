@@ -6,9 +6,11 @@ Username/password with optional passkeys is accepted in [ADR 0004](adr/0004-pass
 
 Negative carryover and whole-year recalculation after budget edits are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md). SwiftData is selected after the local prototype in [ADR 0007](adr/0007-swiftdata-local-store-and-outbox.md). iOS leads the UX using Apple HIG and standard SwiftUI components.
 
-Administrator-created accounts and ordinary server-readable storage with HTTPS are now confirmed in [ADR 0008](adr/0008-connected-accounts-and-transport.md). The first personal sync implementation is selected in [ADR 0009](adr/0009-personal-sync-contract.md); sharing details remain draft.
+Administrator-created accounts and ordinary server-readable storage with HTTPS are now confirmed in [ADR 0008](adr/0008-connected-accounts-and-transport.md). The first personal sync implementation is selected in [ADR 0009](adr/0009-personal-sync-contract.md); the shared subset is now implemented in ADR 0012 and the v2 contract.
 
 Settle Up is confirmed in [ADR 0011](adr/0011-record-only-settle-up.md): ask for an editable full/partial amount and record a repayment without moving money or changing budgets. ADR 0010 already confirms immediate application of a proposed personal share while an invitation is pending.
+
+The three sharing defaults are now accepted in [ADR 0012](adr/0012-sharing-defaults-and-connected-flow.md): incoming private Uncategorized, accepted-connection reuse, and immediate repayment recording by either participant. The [shared v2 contract](contracts/shared-sync-v2.md) describes the implementation.
 
 ## Proposed MVP defaults awaiting confirmation
 
@@ -16,9 +18,6 @@ These recommendations were discussed but have not been explicitly accepted. Repo
 
 | Choice | Proposed default |
 | --- | --- |
-| Subsequent sharing | Reuse an accepted sharing connection without another email invitation. |
-| Incoming category | Assign the user's share to a private zero-budget Uncategorized category until they choose another. Count it immediately in total spending. |
-| Repayment acknowledgment/corrections | Recording is confirmed in ADR 0011; acknowledgment by the other participant and edit/delete permissions remain open. |
 | Password recovery | Use verified email for password resets, retaining username login. |
 
 EUR-only operation, interface languages, the exact online website scope, and removal of an accepted share also remain marked assumptions/open choices. See [implementation milestones](development.md) for the proposed build order.
@@ -29,9 +28,9 @@ EUR-only operation, interface languages, the exact online website scope, and rem
 
 Accepted in [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md): both participating users can see the common shared expense after a direct email invitation is accepted. No contact-management feature or non-account placeholder debtors. Keep personal categories and budgets private; each participant categorizes their own share. Invitation acceptance must bind the intended email identity to an authenticated account, without changing username/password login.
 
-Accepted: either participant can edit common expense fields or delete the shared expense, with history visible to both. Only an assignment's owner can edit it, and private categories and budgets stay out of shared history. The [data model and sync proposal](data-model-and-sync.md) covers records, invitation states, history storage, and per-user change feeds. [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate application of the proposed personal share to the creator's budget, including while an invitation is pending. Reuse of an accepted connection, cancellation/decline effects, removing sharing, and repayment confirmation still need review.
+Accepted: either participant can edit common expense fields or delete the shared expense, with history visible to both. Only an assignment's owner can edit it, and private categories and budgets stay out of shared history. The [data model and sync proposal](data-model-and-sync.md) covers records, invitation states, history storage, and per-user change feeds. [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate application of the proposed personal share to the creator's budget, including while an invitation is pending. ADR 0012 accepts connection reuse and immediate repayment recording. Cancellation/decline effects, removing sharing, and repayment corrections remain outside this version.
 
-Email ownership verification is implemented on iOS and web with expiring account-bound codes, a durable encrypted mail queue, and local/test delivery. See the [verification contract](contracts/email-verification-v1.md). This does not decide account recovery or invitation onboarding. Pending-invitation budgeting is now confirmed in ADR 0010. The recipient's initial private category and reuse of an accepted connection are awaiting user answers before dependent behavior is built.
+Email ownership verification is implemented on iOS and web with expiring account-bound codes, a durable encrypted mail queue, and local/test delivery. See the [verification contract](contracts/email-verification-v1.md). This does not decide account recovery or invitation onboarding. Pending-invitation budgeting is now confirmed in ADR 0010. ADR 0012 confirms the recipient's initial private category and reuse of accepted connections. Shared records and repayments now use the v2 sync contract.
 
 ### 2. Financial data and calendar contract
 
@@ -45,7 +44,7 @@ Budget examples and [shared split examples](contracts/shared-expense-examples.js
 
 Selected: a versioned SwiftData store explicitly saves a domain mutation and its pending operations together. Disk reopening, edit/delete tombstones, profile isolation, and rollback after a read-only store refuses a save are tested. See [local storage](local-storage.md).
 
-Implemented: SwiftData V2 migration, immutable prepared requests, acknowledgments, private cursors, cached revisions, conflict review, and explicit one-time copying into an empty account. V1 records and pending bytes survive migration. Account/server namespaces and Keychain prevent cross-account submission. Merging two populated ledgers and later V2-to-V3 migration remain separate work.
+Implemented: SwiftData V2 migration, immutable prepared requests, acknowledgments, private cursors, cached revisions, conflict review, and explicit one-time copying into an empty account. V1 records and pending bytes survive migration. Account/server namespaces and Keychain prevent cross-account submission. SwiftData V3 adds shared records and tests populated V2 migration while retaining prepared bytes. Merging two populated ledgers remains separate work.
 
 Use the custom backend as the shared sync service. The [draft protocol](data-model-and-sync.md) proposes client-generated operation IDs for safe retries, server-issued record revisions, per-user resumable change cursors, deletion/access-removal markers, and a full resync path that preserves pending local work. An offline device that returns after deletion-marker cleanup must not recreate deleted records. Shared writes must update both participants' feeds while exposing private assignments only to their owner.
 
@@ -57,7 +56,7 @@ Start synchronization on app launch/foreground, local changes, and manual refres
 
 Accepted: Phoenix/Elixir for the combined website and JSON sync API, Phoenix LiveView for the website, and Ecto with the SQLite adapter for server persistence. The application operates its own accounts and storage backend. Deploy on one host with a persistent local database directory, short write transactions, consistent backups, and no direct client access to the database file. CloudKit is not selected.
 
-The personal sync endpoints and device authentication are now implemented. Shared-expense sync remains separate work. Verify the Ecto SQLite transaction and connection configuration against concurrent website writes and sync requests during setup.
+The personal sync endpoints and device authentication are now implemented. Shared-expense and repayment sync are now implemented in v2. Verify the Ecto SQLite transaction and connection configuration against concurrent website writes and sync requests during setup.
 
 Keep website and API writes in the same application services so validation, versioning, and change tracking cannot diverge. Select supported framework/runtime versions during setup and record dependency versions then.
 

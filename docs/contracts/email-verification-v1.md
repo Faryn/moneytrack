@@ -1,6 +1,6 @@
 # Email ownership verification, v1
 
-Implemented preparation for the email invitations in ADR 0005. This does not implement shared records, invitation acceptance, public signup, email login, password recovery, or passkeys. Accounts remain administrator-created under ADR 0008. The creator's proposed share applies immediately under ADR 0010; recipient categorization and connection reuse remain pending.
+Implemented preparation for the email invitations in ADR 0005. Shared records and invitation acceptance are now implemented in the [v2 contract](shared-sync-v2.md). Verification does not enable public signup, email login, password recovery, or passkeys. Accounts remain administrator-created under ADR 0008. The creator's proposed share applies immediately under ADR 0010; recipient categorization and connection reuse are accepted in ADR 0012.
 
 ## User flow
 
@@ -34,4 +34,4 @@ Development uses Swoosh Local and the preview at `/dev/mailbox`; tests use Swoos
 
 ## Checks
 
-Server tests exercise account binding, unique verified addresses, code expiry/replay, persisted attempt limits, request deduplication and quotas, atomic queue rollback, superseded codes, worker lease recovery, provider failure retries, and payload removal. Browser and JSON API tests verify the same ownership flow. The isolated native integration check exercises authenticated state, request/retry, rejected proof, and the native code-entry form. Exact shared split math uses [common Swift/Elixir examples](shared-expense-examples.json), including odd cents assigned to the payer; it is not yet connected to the shared-expense UI or ledger.
+Server tests exercise account binding, unique verified addresses, code expiry/replay, persisted attempt limits, request deduplication and quotas, atomic queue rollback, superseded codes, worker lease recovery, provider failure retries, and payload removal. Browser and JSON API tests verify the same ownership flow. The isolated native integration check exercises authenticated state, request/retry, rejected proof, and the native code-entry form. Exact shared split math uses [common Swift/Elixir examples](shared-expense-examples.json), including odd cents assigned to the payer; it is now connected to the shared-expense UI and ledger.

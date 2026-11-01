@@ -28,10 +28,7 @@ struct AppRootView: View {
             }
             Tab("Shared", systemImage: "person.2", value: AppTab.shared) {
                 NavigationStack {
-                    ContentUnavailableView(
-                        "No shared expenses", systemImage: "person.2",
-                        description: Text("Shared expenses and invitations are coming next.")
-                    )
+                    SharedHomeView()
                     .navigationTitle("Shared")
                     .toolbar { EntryToolbar(add: { sheet = .expense }, account: { sheet = .account }) }
                 }
@@ -66,12 +63,14 @@ private enum RootSheet: Identifiable {
 }
 
 struct EntryToolbar: ToolbarContent {
+    @Environment(AppSession.self) private var app
     let add: () -> Void
     let account: () -> Void
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Button("Account", systemImage: "person.crop.circle", action: account)
                 .accessibilityIdentifier("account.open")
+                .accessibilityLabel(app.credential.map { "Account, signed in as \($0.username)" } ?? "Account")
         }
         ToolbarItem(placement: .primaryAction) {
             Button("Add Expense", systemImage: "plus", action: add)

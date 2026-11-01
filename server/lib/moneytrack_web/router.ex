@@ -46,6 +46,7 @@ defmodule MoneyTrackWeb.Router do
     live_session :authenticated, on_mount: [{MoneyTrackWeb.Auth, :required}] do
       live "/", BudgetLive, :index
       live "/account/email", EmailLive, :index
+      live "/shared", SharedLive, :index
     end
   end
 
@@ -61,6 +62,12 @@ defmodule MoneyTrackWeb.Router do
     post "/account/email/verify", EmailController, :verify
     get "/session", SessionController, :api_show
     delete "/session", SessionController, :api_delete
+    post "/sync", SessionController, :sync_push
+    get "/sync", SessionController, :sync_pull
+  end
+
+  scope "/api/v2", MoneyTrackWeb do
+    pipe_through [:api, :authenticated_api]
     post "/sync", SessionController, :sync_push
     get "/sync", SessionController, :sync_pull
   end

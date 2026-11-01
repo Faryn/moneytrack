@@ -25,3 +25,7 @@ This ADR supersedes the draft recommendation to count the full amount until acce
 ## Subsequent decision
 
 [ADR 0011](0011-record-only-settle-up.md) confirms record-only Settle Up and full/partial repayments. Its acknowledgment/correction policies remain open independently of pending-share budgeting.
+
+## Connected sharing implementation
+
+[ADR 0012](0012-sharing-defaults-and-connected-flow.md) accepts the private Uncategorized fallback, connection reuse, and immediate repayment recording by either participant. The [v2 contract](../contracts/shared-sync-v2.md) records the connected implementation and remaining limitations.

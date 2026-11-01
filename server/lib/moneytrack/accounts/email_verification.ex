@@ -78,6 +78,7 @@ defmodule MoneyTrack.Accounts.EmailVerification do
                })
                |> Repo.insert() do
             {:ok, _} ->
+              MoneyTrack.Sharing.email_verified(user, challenge.address)
               challenge |> Ecto.Changeset.change(retired_at: now) |> Repo.update!()
               cancel_pending_mail(challenge.id)
               {:ok, status(user)}

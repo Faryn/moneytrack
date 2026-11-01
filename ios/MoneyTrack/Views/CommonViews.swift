@@ -75,7 +75,7 @@ struct ExpenseRow: View {
             if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 4) {
                 Text(Money.format(-expense.personalShare))
-                    .foregroundStyle(AmountColors.negative).monospacedDigit()
+                    .foregroundStyle(expense.personalShare > 0 ? AmountColors.negative : .primary).monospacedDigit()
                 if expense.personalShare != expense.amount {
                     Text("\(Money.format(expense.amount)) total")
                         .font(.caption).foregroundStyle(.secondary)

@@ -2,6 +2,7 @@ defmodule MoneyTrackWeb.SessionController do
   use MoneyTrackWeb, :controller
   alias MoneyTrack.{Accounts, Ledger}
   alias MoneyTrackWeb.Auth
+  plug :compatible_sync when action in [:sync_push, :sync_pull]
 
   def new(conn, _params), do: render(conn, :new, error: nil)
 
@@ -116,6 +117,22 @@ defmodule MoneyTrackWeb.SessionController do
           "invalid_cursor",
           "Restart synchronization without discarding local changes."
         )
+    end
+  end
+
+  defp compatible_sync(conn, _opts) do
+    if String.starts_with?(conn.request_path, "/api/v1/") &&
+         (MoneyTrack.Sharing.has_data?(conn.assigns.current_user) ||
+            conn.params["entity"] in ["shared_expense", "shared_assignment", "repayment"]) do
+      conn
+      |> failure(
+        426,
+        "upgrade_required",
+        "Update MoneyTrack to sync shared activity. Your pending changes are preserved."
+      )
+      |> halt()
+    else
+      conn
     end
   end
 

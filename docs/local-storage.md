@@ -23,3 +23,7 @@ Store-open/migration failures show a retry screen and never trigger an automatic
 ## Verification and remaining work
 
 Unit tests cover financial examples, strict dates, reopening, rollback, isolation, migration, prepared retries, atomic/idempotent pull, conflict resolution, and copying. `scripts/check-connected` adds real server/API and simulator account checks. Shared-expense permissions/history, invitation onboarding, passkeys, recovery, production backups/restoration, distribution, and released-client API compatibility remain work before the complete MVP release.
+
+## Shared records in V3
+
+V3 adds shared expense/invitation/assignment/repayment projections and source-acknowledgment dependencies without modifying V1/V2 model definitions. Personal and shared domain changes still commit with their outbox operations. Populated V2 migration, exact prepared bytes, failed shared saves, queued source revisions, and open-editor conflicts are covered by native tests. Source IDs are suppressed by their shared projection even after shared deletion, so replay cannot double-count or resurrect the original personal expense. See the [shared sync contract](contracts/shared-sync-v2.md).

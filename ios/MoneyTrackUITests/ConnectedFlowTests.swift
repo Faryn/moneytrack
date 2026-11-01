@@ -6,6 +6,11 @@ final class ConnectedFlowTests: XCTestCase {
         guard ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"] == "http://127.0.0.1:4004" else {
             throw XCTSkip("Run scripts/check-connected for the isolated real-server check.")
         }
+        let interruption = addUIInterruptionMonitor(withDescription: "System password save") { alert in
+            if alert.buttons["Not Now"].exists { alert.buttons["Not Now"].tap(); return true }
+            return false
+        }
+        defer { removeUIInterruptionMonitor(interruption) }
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--reset-ui-testing-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launchEnvironment["MONEYTRACK_TEST_TODAY"] = "2026-01-15"
@@ -32,6 +37,9 @@ final class ConnectedFlowTests: XCTestCase {
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: copyToggle)
         wait(for: [enabled], timeout: 3)
         app.buttons["login.submit"].tap()
+        if app.buttons["Not Now"].waitForExistence(timeout: 5) { app.buttons["Not Now"].tap() }
+        let connected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@ AND hittable == true", "ui-connected-fixture"), object: app.buttons["account.open"])
+        wait(for: [connected], timeout: 30)
         XCTAssertTrue(app.buttons["category-Restaurants"].waitForExistence(timeout: 20))
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€22.00")
         app.buttons["account.open"].tap()
@@ -62,5 +70,34 @@ final class ConnectedFlowTests: XCTestCase {
         emailScreen.name = "Native email verification"
         emailScreen.lifetime = .keepAlways
         add(emailScreen)
+        app.navigationBars["Email for Sharing"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Account"].buttons["Close"].tap()
+        app.tabBars.buttons["Expenses"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'expense-row-'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5)); row.tap()
+        app.buttons["expense.actions"].tap(); app.buttons["Share Expense"].tap()
+        let recipient = app.textFields["sharing.email"]
+        XCTAssertTrue(recipient.waitForExistence(timeout: 5))
+        recipient.tap(); recipient.typeText("shared-b@example.org")
+        app.buttons["sharing.save"].tap()
+        app.tabBars.buttons["Budget"].tap()
+        XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€61.00")
+        app.tabBars.buttons["Shared"].tap()
+        let person = app.buttons["sharing.person.shared-b-fixture"]
+        XCTAssertTrue(person.waitForExistence(timeout: 20)); person.tap()
+        XCTAssertTrue(app.staticTexts["Owes you €39.00"].waitForExistence(timeout: 10))
+        app.buttons["sharing.settle"].tap()
+        let settlement = app.textFields["settle.amount"]
+        XCTAssertTrue(settlement.waitForExistence(timeout: 5))
+        let previous = settlement.value as? String ?? ""
+        settlement.tap(); settlement.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "15")
+        app.buttons["settle.save"].tap()
+        XCTAssertTrue(app.staticTexts["Owes you €24.00"].waitForExistence(timeout: 10))
+        let synced = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.staticTexts["sharing.pending"])
+        wait(for: [synced], timeout: 20)
+        let sharedScreen = XCTAttachment(screenshot: app.screenshot())
+        sharedScreen.name = "Native shared balance after partial repayment"; sharedScreen.lifetime = .keepAlways; add(sharedScreen)
+        app.tabBars.buttons["Budget"].tap()
+        XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€61.00")
     }
 }

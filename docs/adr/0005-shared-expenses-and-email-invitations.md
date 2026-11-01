@@ -38,3 +38,7 @@ Removal of sharing, pending invitation budget treatment, invitation lifetime, re
 [ADR 0008](0008-connected-accounts-and-transport.md) selects administrator-created accounts for now; invitation-led account onboarding follows later. [ADR 0010](0010-pending-share-budget-treatment.md) resolves pending budget treatment: apply the creator's proposed share immediately, rather than waiting for acceptance. Other open sharing policies remain pending.
 
 [ADR 0011](0011-record-only-settle-up.md) confirms full/partial repayment recording through Settle Up, with no payment processing or budget impact. Repayment acknowledgment and correction permissions remain open.
+
+## Connected sharing implementation
+
+[ADR 0012](0012-sharing-defaults-and-connected-flow.md) accepts the private Uncategorized fallback, connection reuse, and immediate repayment recording by either participant. The [v2 contract](../contracts/shared-sync-v2.md) records the connected implementation and remaining limitations.

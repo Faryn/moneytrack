@@ -46,31 +46,36 @@ defmodule MoneyTrackWeb.BudgetLive do
     do: {:noreply, push_patch(socket, to: ~p"/?#{%{month: month}}")}
 
   def handle_event("edit_expense", %{"id" => id}, socket) do
-    case Enum.find(socket.assigns.ledger.expenses, &(&1.id == id)) do
-      nil ->
-        {:noreply, put_flash(socket, :error, "That expense is no longer available.")}
+    if Enum.any?(socket.assigns.ledger.expenses, &(&1.id == id)) &&
+         MoneyTrack.Repo.get(MoneyTrack.Sharing.SharedExpense, id) do
+      {:noreply, push_navigate(socket, to: ~p"/shared?#{%{expense: id}}")}
+    else
+      case Enum.find(socket.assigns.ledger.expenses, &(&1.id == id)) do
+        nil ->
+          {:noreply, put_flash(socket, :error, "That expense is no longer available.")}
 
-      expense ->
-        payload = Ledger.envelope(expense)["payload"]
+        expense ->
+          payload = Ledger.envelope(expense)["payload"]
 
-        {:noreply,
-         assign(
-           socket,
-           :expense_form,
-           to_form(
-             %{
-               "id" => id,
-               "operationID" => Ecto.UUID.generate(),
-               "revision" => to_string(expense.revision),
-               "amount" => input_amount(expense.amount),
-               "description" => expense.description,
-               "categoryID" => expense.category_id,
-               "day" => Date.to_iso8601(expense.expense_date),
-               "createdAt" => payload["createdAt"]
-             },
-             as: :expense
-           )
-         )}
+          {:noreply,
+           assign(
+             socket,
+             :expense_form,
+             to_form(
+               %{
+                 "id" => id,
+                 "operationID" => Ecto.UUID.generate(),
+                 "revision" => to_string(expense.revision),
+                 "amount" => input_amount(expense.amount),
+                 "description" => expense.description,
+                 "categoryID" => expense.category_id,
+                 "day" => Date.to_iso8601(expense.expense_date),
+                 "createdAt" => payload["createdAt"]
+               },
+               as: :expense
+             )
+           )}
+      end
     end
   end
 
@@ -105,20 +110,25 @@ defmodule MoneyTrackWeb.BudgetLive do
   end
 
   def handle_event("delete_expense", %{"id" => id, "revision" => rev}, socket) do
-    case Integer.parse(rev) do
-      {revision, ""} ->
-        op =
-          operation(
-            "expense",
-            %{"id" => id, "deletedAt" => DateTime.to_iso8601(DateTime.utc_now())},
-            revision,
-            Ecto.UUID.generate()
-          )
+    if Enum.any?(socket.assigns.ledger.expenses, &(&1.id == id)) &&
+         MoneyTrack.Repo.get(MoneyTrack.Sharing.SharedExpense, id) do
+      {:noreply, push_navigate(socket, to: ~p"/shared?#{%{expense: id}}")}
+    else
+      case Integer.parse(rev) do
+        {revision, ""} ->
+          op =
+            operation(
+              "expense",
+              %{"id" => id, "deletedAt" => DateTime.to_iso8601(DateTime.utc_now())},
+              revision,
+              Ecto.UUID.generate()
+            )
 
-        {:noreply, save_operation(socket, Map.put(op, "action", "delete"))}
+          {:noreply, save_operation(socket, Map.put(op, "action", "delete"))}
 
-      _ ->
-        {:noreply, socket}
+        _ ->
+          {:noreply, socket}
+      end
     end
   end
 
@@ -608,6 +618,7 @@ defmodule MoneyTrackWeb.BudgetLive do
               phx-click="edit_expense"
               phx-value-id={expense.id}
             >Edit</button>
+            <.link navigate={~p"/shared?#{%{expense: expense.id}}"} class="btn btn-sm">Sharing</.link>
             <button
               type="button"
               class="btn btn-sm"

@@ -14,7 +14,7 @@ enum LedgerError: LocalizedError {
         case .missingExpense: "This expense is no longer available."
         case .categoryTooLong: "Use a category name of at most 100 characters."
         case .descriptionTooLong: "Use a description of at most 500 characters."
-        case .sharedEditingUnavailable: "This shared expense needs to be edited through its connected account."
+        case .sharedEditingUnavailable: "Open the shared expense to edit its details."
         }
     }
 }

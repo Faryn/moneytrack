@@ -44,7 +44,7 @@ Show a person's balance and activity in Shared, with a **Settle Up** action on t
 
 The resulting repayment appears in shared activity and changes only that pair's balance. Expenses, personal shares, and category budgets stay unchanged. A zero balance is neutral and labeled **Settled up**; positive/negative balances keep Owes you/You owe labels with green/red amounts. The web companion follows the same record-only flow.
 
-[ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms that proposed shares affect the creator's budget while invitations are pending. Repayment acknowledgment, corrections, and amounts above the current balance remain open policies; this design does not approve the draft defaults.
+[ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms that proposed shares affect the creator's budget while invitations are pending. ADR 0012 accepts immediate recording by either participant without another acknowledgment. Corrections and overpayment flows remain outside this version.
 
 ## Amount colors
 
@@ -71,6 +71,6 @@ Use standard SwiftUI navigation, lists, forms, sheets, menus, search, and access
 
 Budget, Expenses, and Shared use system tabs and independent navigation stacks. Personal expenses support creation, detail, editing, deletion, and local persistence. Yearly Plan uses a native sheet and category editor; budget edits confirm year-wide recalculation. Entry offers exact comma/dot decimal amounts, visible validation, editable local-history suggestions, and an expandable native date picker. The initial interface is English with locale-formatted EUR amounts.
 
-Shared currently has an honest empty state. Account now provides sign-in, explicit optional copying, sync/pending state, review, reauthentication, and sign-out. Login and personal sync use the real server; passkeys, sharing actions, and invitations remain unimplemented. Accessibility sizes stack category balances and expense amounts vertically; green/red colors adapt to light/dark appearance and retain text/signs.
+Shared now lists verified invitations, pending proposals, accepted people/balances, expenses/history, and repayments. Settle Up uses a native amount/date form and records full/partial payments with offline outbox saving. Share and shared edit/delete actions are connected to the real server. Account now provides sign-in, explicit optional copying, sync/pending state, review, reauthentication, and sign-out. Login and personal sync use the real server; passkeys remain unimplemented; invitation delivery uses local/test mail until production configuration. Accessibility sizes stack category balances and expense amounts vertically; green/red colors adapt to light/dark appearance and retain text/signs.
 
 Follow Apple's guidance on [tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars), [lists](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables), [sheets](https://developer.apple.com/design/human-interface-guidelines/sheets), [data entry](https://developer.apple.com/design/human-interface-guidelines/entering-data), and [color](https://developer.apple.com/design/human-interface-guidelines/color). Use system materials and controls. Cancel/Save belong on opposite sides of entry sheets; read-only root sheets have Close actions.

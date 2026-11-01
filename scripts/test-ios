@@ -8,20 +8,22 @@ fi
 
 simulator_id=${MONEYTRACK_SIMULATOR_UDID:-}
 if [ -z "$simulator_id" ]; then
+  minimum_version=$(xcodebuild -project "$repo_dir/ios/MoneyTrack.xcodeproj" -target MoneyTrack -configuration Debug -showBuildSettings -json | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["buildSettings"]["IPHONEOS_DEPLOYMENT_TARGET"])')
   simulator_id=$(xcrun simctl list devices available --json | python3 -c '
 import json, re, sys
+minimum = tuple(map(int, sys.argv[1].split(".")))
 candidates = []
 for runtime, devices in json.load(sys.stdin)["devices"].items():
     match = re.search(r"\.iOS-(\d+)-(\d+)", runtime)
-    if not match or tuple(map(int, match.groups())) < (26, 5):
+    if not match or tuple(map(int, match.groups())) < minimum:
         continue
     for device in devices:
         if device.get("isAvailable") and device["name"].startswith("iPhone"):
             candidates.append((device["state"] == "Booted", tuple(map(int, match.groups())), device["udid"]))
 if not candidates:
-    sys.exit("Install an iPhone simulator running iOS 26.5 or later, or set MONEYTRACK_SIMULATOR_UDID.")
+    sys.exit("Install an iPhone simulator compatible with the app deployment target, or set MONEYTRACK_SIMULATOR_UDID.")
 print(max(candidates)[2])
-')
+' "$minimum_version")
 fi
 
 derived_data=${MONEYTRACK_DERIVED_DATA:-$(mktemp -d "${TMPDIR:-/tmp}/moneytrack-ios-tests.XXXXXX")}

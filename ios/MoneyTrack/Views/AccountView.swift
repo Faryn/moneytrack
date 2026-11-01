@@ -143,6 +143,11 @@ private struct SyncReviewDetail: View {
     let issue: SyncIssue
     @State private var error: String?
     @State private var confirmKeep = false
+    private var isSharingProposal: Bool {
+        guard let change = store.pendingChanges.first(where: { $0.id == issue.id }),
+              let payload = try? JSONDecoder().decode(JSONValue.self, from: change.payload), case .object(let fields) = payload else { return false }
+        return fields["command"] == .string("share")
+    }
     var body: some View {
         List {
             Section { Text(issue.message) }
@@ -163,7 +168,12 @@ private struct SyncReviewDetail: View {
                 Section { Button("Use Server Version") { resolve(keep: false) } }
             }
             Section {
-                Button(issue.current?.deleted == true ? "Save as New Expense" : "Keep My Current Changes") { confirmKeep = true }
+                if !isSharingProposal && (issue.current != nil || !["shared_expense", "shared_assignment", "repayment"].contains(issue.entity)) && (issue.current?.deleted != true || issue.entity == "expense") {
+                    Button(issue.current?.deleted == true ? "Save as New Expense" : "Keep My Current Changes") { confirmKeep = true }
+                }
+                if ["shared_expense", "shared_assignment", "repayment"].contains(issue.entity) && issue.current == nil {
+                    Button("Discard This Draft", role: .destructive) { resolve(keep: false) }
+                }
             } footer: {
                 Text("Keeping your changes submits the current version on this iPhone. If it changed again elsewhere, you'll review it again.")
             }
@@ -187,7 +197,18 @@ private struct RecordSummary: View {
     let entity: String
     let payload: JSONValue
     var body: some View {
-        if entity == "expense", let value = try? payload.decoded(ExpenseValue.self) {
+        if entity == "shared_expense", case .object(let fields) = payload {
+            if case .integer(let amount) = fields["amount"] { LabeledContent("Total purchase", value: Money.format(amount)) }
+            if case .string(let description) = fields["description"] { LabeledContent("Description", value: description) }
+            if let day = fields["day"], let date = try? day.decoded(ExpenseDay.self) { LabeledContent("Date", value: date.date.formatted(date: .abbreviated, time: .omitted)) }
+            if case .string(let split) = fields["creatorSplit"] { LabeledContent("Creator's share", value: split.capitalized) }
+            if case .bool(let paid) = fields["paidByCreator"] { LabeledContent("Payer", value: paid ? "Original creator" : "Other participant") }
+        } else if entity == "repayment", case .object(let fields) = payload {
+            if case .integer(let amount) = fields["amount"] { LabeledContent("Repayment", value: Money.format(amount)) }
+            Text("This records a payment made outside MoneyTrack. If the balance changed, discard this draft and review the current balance before recording again.").font(.callout)
+        } else if entity == "shared_assignment", let value = try? payload.decoded(SharedAssignment.self) {
+            LabeledContent("Your private category", value: store.categories.first { $0.id == value.categoryID }?.name ?? "Category unavailable")
+        } else if entity == "expense", let value = try? payload.decoded(ExpenseValue.self) {
             LabeledContent("Amount", value: Money.format(value.amount))
             LabeledContent("Category", value: store.categories.first { $0.id == value.categoryID }?.name ?? "Category unavailable")
             LabeledContent("Description", value: value.description)

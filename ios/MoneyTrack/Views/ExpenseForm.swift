@@ -14,6 +14,7 @@ struct ExpenseForm: View {
     @State private var suggested = false
     @State private var error: String?
     @State private var confirmDiscard = false
+    @State private var expectedRevision: Int64?
     @FocusState private var amountFocused: Bool
 
     init(expense: ExpenseValue? = nil, categoryID: UUID? = nil, today: Date) {
@@ -96,6 +97,7 @@ struct ExpenseForm: View {
         }
         .interactiveDismissDisabled(dirty)
         .onAppear {
+            if let expense, expectedRevision == nil { expectedRevision = (try? store.recordRevision("expense", expense.id)) ?? 0 }
             if categoryID == nil { categoryID = store.expenses.first?.categoryID ?? store.categories.first?.id }
         }
         .task { if expense == nil { amountFocused = true } }
@@ -118,7 +120,7 @@ struct ExpenseForm: View {
         do {
             guard let categoryID else { throw LedgerError.missingCategory }
             try store.saveExpense(id: expense?.id, amount: Money.parse(amount), description: description,
-                                  categoryID: categoryID, day: ExpenseDay(date: date))
+                                  categoryID: categoryID, day: ExpenseDay(date: date), expectedRevision: expectedRevision)
             dismiss()
         } catch { self.error = error.localizedDescription }
     }

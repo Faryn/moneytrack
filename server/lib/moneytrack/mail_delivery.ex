@@ -36,6 +36,8 @@ defmodule MoneyTrack.MailDelivery do
             {:cont, :ok}
         end
       end)
+
+      MoneyTrack.Sharing.Delivery.deliver_pending()
     end
   end
 

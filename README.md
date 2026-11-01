@@ -4,9 +4,11 @@ A personal expense and budget tracker for a small user base, primarily on iPhone
 
 ## Project status
 
-The native iOS app now supports local personal expenses, flat categories, yearly budget editing, monthly totals and category breakdowns, category details, and searchable expense history. Entries can be created, edited, and deleted offline and survive relaunch. Standard SwiftUI tabs, navigation, forms, sheets, menus, and adaptive green/red amount colors lead the UX.
+The native SwiftUI app supports personal expenses and budgets offline, with exact monthly/category calculations, standard navigation/forms, and adaptive green/red amounts. The Phoenix/SQLite website and API use administrator-created username/password accounts, native Keychain sessions, and revision-based synchronization.
 
-The first connected flow is implemented: administrator-created accounts, username/password login on iOS and web, Keychain-held native sessions, and personal-expense/category/budget sync. The website supports monthly review, yearly budget amounts, and expense creation/edit/deletion through the same owner-scoped ledger service. SwiftData preserves offline changes, exact retry payloads, revisions, conflicts, and deletions. Email ownership verification is available on iOS and web with durable local/test mail delivery. Passkeys, invitations, shared expenses, recovery, and production deployment remain unfinished. Normal stores receive no sample data.
+Shared expenses support verified email invitations, immediate proposed-share budgeting, connection reuse, private categories, common edit/delete history, and record-only Settle Up. SwiftData preserves pending requests and conflicts through V1/V2-to-V3 migration. Normal stores receive no sample data.
+
+Passkeys, password recovery, production email/hosting, and TestFlight distribution remain unfinished. Invitation mail uses local/test delivery; no production deployment or payment provider is configured.
 
 ## Agreed product direction
 
@@ -67,12 +69,12 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Personal/email connected baseline verified on 2026-11-01: 53 server tests and 24 native tests pass, including populated V1-to-V2 migration, Keychain, disk failure recovery, and a real temporary backend. Native integration checks exercise retry, conflict resolution, deletion, session expiry/re-login, explicit on-device copying, and account restoration after relaunch. Website tests verify the same change feed and preservation of stale forms/drafts. Email checks also cover account-bound proof, durable delivery retries, rejected proof on the native API, and native code entry. The iOS Release build passes. Neither app has been deployed.
+Verified on 2026-11-01: 74 server tests and 31 native tests pass, including two-account sharing, private categories, partial settlement, shared conflicts/deletion, populated V1/V2 migrations, immutable retries, and native sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
 
-Recorded-repayment calculations are now verified separately: 68 server tests and four focused native financial tests pass. The Settle Up screen and persistence follow with the shared ledger; see [ADR 0011](docs/adr/0011-record-only-settle-up.md).
+The shared implementation and its compatibility boundaries are documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md).
 
 ## Next implementation milestone
 
-The personal iOS ↔ server/website flow is now verified. Email verification and exact shared split calculations are now prepared. Next: finish two-person sharing after the pending recipient-category and connection-reuse choices, and add optional passkeys once the stable HTTPS domain/relying party identity is chosen.
+The personal iOS ↔ server/website flow is now verified. The connected sharing and record-only settlement flow is implemented. Next: select the stable HTTPS domain, production mail/hosting, account recovery policy, and optional passkeys before preparing TestFlight. Repayment corrections, overpayments, and invitation cancellation are follow-up work.
 
 Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). No hosting provider, domain, production account configuration, or public release has been configured.

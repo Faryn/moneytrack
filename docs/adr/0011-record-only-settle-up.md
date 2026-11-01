@@ -24,3 +24,7 @@ For example, someone owes you €39. Recording €15 received leaves €24 owed 
 This decision confirms repayment recording and its financial meaning. It does not automatically accept all repayment recommendations in the draft data model. In particular, whether the other participant must acknowledge a record, who may edit/delete a repayment, and handling amounts above the outstanding balance remain open. Expense deletion's effect on separately recorded repayments is also still a draft policy.
 
 The shared persistence/API and real person screens are not implemented yet. The [common Swift/Elixir calculation contract](../contracts/settlement-calculations.md) now covers full/partial repayments in both directions and their separation from expense spending. Implement the real recording action with the shared ledger, including atomic history/feed updates, preserved offline records, conflict handling, and duplicate-safe synchronization. Do not expose a save action that only appears to record a repayment.
+
+## Connected sharing implementation
+
+[ADR 0012](0012-sharing-defaults-and-connected-flow.md) accepts the private Uncategorized fallback, connection reuse, and immediate repayment recording by either participant. The [v2 contract](../contracts/shared-sync-v2.md) records the connected implementation and remaining limitations.

@@ -1,6 +1,6 @@
 # Recorded repayment calculations
 
-This calculation contract supports the confirmed record-only Settle Up flow in [ADR 0011](../adr/0011-record-only-settle-up.md). It is not a storage schema, permission policy, or released sync API. Shared persistence and recording screens remain unimplemented.
+This calculation contract supports the confirmed record-only Settle Up flow in [ADR 0011](../adr/0011-record-only-settle-up.md). It is not a storage schema, permission policy, or released sync API. Shared persistence and recording screens are now implemented in the [v2 contract](shared-sync-v2.md).
 
 Use [settlement-examples.json](settlement-examples.json) in both Swift and Elixir. Each case combines exact expense shares with a sequence of recorded repayments, viewed from one participant's perspective. `paidByUser` is only a relative calculation input; a persisted repayment must identify the actual payer and recipient accounts, its calendar date, audit actor/time, revision, and operation identity.
 

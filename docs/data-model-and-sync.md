@@ -1,6 +1,6 @@
 # Data model and sync proposal
 
-Status: draft for implementation planning, not an accepted sync ADR. Accepted product choices are in [SPEC.md](../SPEC.md) and [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md). Proposed behavior below still needs review.
+Status: historical draft for implementation planning, not an accepted sync ADR. The implemented shared subset and remaining limitations are now documented in [ADR 0012](adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](contracts/shared-sync-v2.md); those take precedence over proposals below. Accepted product choices are in [SPEC.md](../SPEC.md) and [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md). Proposed behavior below still needs review.
 
 The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate pending-share budget treatment. [ADR 0011](adr/0011-record-only-settle-up.md) confirms recording full/partial repayments with no in-app payment or budget impact. Shared record implementation, the remaining invitation lifecycle, repayment acknowledgment/corrections, and amounts above the current balance remain proposals.
 
