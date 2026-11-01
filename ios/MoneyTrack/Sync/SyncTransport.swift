@@ -5,6 +5,9 @@ protocol SyncTransport: Sendable {
     func push(_ data: Data, credential: SessionCredential) async throws -> RemoteRecord
     func pull(cursor: String?, credential: SessionCredential) async throws -> ChangePage
     func signOut(_ credential: SessionCredential) async throws
+    func emailStatus(credential: SessionCredential) async throws -> AccountEmailStatus
+    func requestEmail(_ address: String, requestID: UUID, credential: SessionCredential) async throws -> AccountEmailStatus
+    func verifyEmail(id: UUID, code: String, credential: SessionCredential) async throws -> AccountEmailStatus
 }
 
 struct ServerRejection: LocalizedError, Sendable {
@@ -78,5 +81,37 @@ private final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         completionHandler(nil)
+    }
+}
+
+
+struct AccountEmailStatus: Codable, Equatable, Sendable {
+    let deliveryStatus: String?
+    let verifiedEmail: String?
+    let pendingEmail: String?
+    let verificationID: UUID?
+    let expiresAt: String?
+}
+
+extension SyncTransport {
+    func emailStatus(credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
+    func requestEmail(_ address: String, requestID: UUID, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
+    func verifyEmail(id: UUID, code: String, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
+}
+
+extension HTTPTransport {
+    func emailStatus(credential: SessionCredential) async throws -> AccountEmailStatus {
+        try JSONDecoder().decode(AccountEmailStatus.self, from: await request(server: credential.server,
+            path: "api/v1/account/email", method: "GET", token: credential.token))
+    }
+    func requestEmail(_ address: String, requestID: UUID, credential: SessionCredential) async throws -> AccountEmailStatus {
+        struct Request: Encodable { let email: String; let requestID: UUID }
+        return try JSONDecoder().decode(AccountEmailStatus.self, from: await request(server: credential.server,
+            path: "api/v1/account/email", method: "POST", body: JSONEncoder().encode(Request(email: address, requestID: requestID)), token: credential.token))
+    }
+    func verifyEmail(id: UUID, code: String, credential: SessionCredential) async throws -> AccountEmailStatus {
+        struct Request: Encodable { let verificationID: UUID; let code: String }
+        return try JSONDecoder().decode(AccountEmailStatus.self, from: await request(server: credential.server,
+            path: "api/v1/account/email/verify", method: "POST", body: JSONEncoder().encode(Request(verificationID: id, code: code)), token: credential.token))
     }
 }

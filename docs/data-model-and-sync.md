@@ -2,7 +2,7 @@
 
 Status: draft for implementation planning, not an accepted sync ADR. Accepted product choices are in [SPEC.md](../SPEC.md) and [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md). Proposed behavior below still needs review.
 
-The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). The shared records, invitation lifecycle, and repayment behavior below remain proposals.
+The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate pending-share budget treatment. Shared record implementation, the remaining invitation lifecycle, and repayment behavior below remain proposals.
 
 ## Ownership
 
@@ -42,10 +42,10 @@ Use client-generated UUIDs for offline-created business records, integer minor c
 2. In its menu, enter the recipient's email and choose payer and split.
 3. If there is no accepted connection, persist a pending invitation proposal. Queue it offline and send it after synchronization.
 4. Recipient follows an expiring invitation link, signs in or creates an account, and proves control of the target address. Use a single-use token bound to the recipient email and invitation; an already verified matching address may satisfy this requirement. A forwarded link alone must not let a different address claim the invitation.
-5. Acceptance creates the connection and applies the proposed sharing to the original expense atomically. Record the expense revision against which the proposal was made; if it changed, require refreshed confirmation rather than applying stale amounts.
+5. Acceptance creates the connection and grants shared access atomically; the creator's proposed budget share was already applied under ADR 0010. Record the expense revision against which the proposal was made; if it changed, require refreshed confirmation rather than applying stale amounts.
 6. Future expenses may be shared with that accepted account without another email invitation. The connection is an access prerequisite, not permission to read all expenses between the users: each expense must explicitly include both participants.
 
-Proposed pending behavior: until initial acceptance, keep the expense personal for budget/debt calculations and show the prospective split separately. Reject expired, cancelled, or already used invitations safely. Declining leaves the expense personal. Cancellation and acceptance races are resolved by a transactional invitation state check.
+Accepted pending budget behavior in [ADR 0010](adr/0010-pending-share-budget-treatment.md): apply the creator's proposed personal share to their budget immediately, even while the invitation is pending or queued offline. Keep pending and accepted sharing visibly distinct; recipient access still requires acceptance. This supersedes the earlier proposal to count the full expense until acceptance. Cancellation/decline effects, invitation lifetime, and the treatment of pending obligations remain unconfirmed. Transactional invitation state checks must handle retries and cancellation/acceptance races.
 
 An invitation exposes only the minimum sender/recipient and acceptance information before acceptance, not an expense history. Send no email or expense content as part of this documentation work.
 

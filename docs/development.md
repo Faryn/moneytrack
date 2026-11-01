@@ -49,6 +49,8 @@ Done when the flow works through real application storage and API boundaries. Th
 
 The local iOS budget flow is implemented: yearly category amounts, positive/negative carryover, January reset, whole-year recalculation after budget edits, total remaining, category breakdown, detail navigation, and native expense forms/history. Entry uses local history suggestions; no NLP is included.
 
+Sharing preparation on 2026-11-01 adds exact split math with common Swift/Elixir fixtures and account-bound email verification on iOS/web. Verification mail survives restarts and retries in an encrypted SQLite queue; development/test mail stays local. Shared records, invitations, and the pending recipient-category and connection-reuse choices remain unimplemented. See the [verification contract](contracts/email-verification-v1.md).
+
 - Connect the tested budget calculation and editing flows to authenticated server storage and the website.
 - Resolve remaining invitation and repayment assumptions before implementing affected behavior. Budget rules are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md).
 - Add email invitation onboarding and verified recipient acceptance using fake/test mail during development.

@@ -78,6 +78,34 @@ final class ConnectedAPITests: XCTestCase {
         try await session.signOut()
     }
 
+    func testRealServerEmailVerificationRequestRetryAndRejectedCode() async throws {
+        guard let address = ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"], address == "http://127.0.0.1:4004" else {
+            throw XCTSkip("Run scripts/check-connected for the isolated real-server check.")
+        }
+        let transport = HTTPTransport()
+        let credential = try await transport.signIn(server: ServerAddress.parse(address), username: "native-core-fixture", password: "fixture-passphrase-2026")
+        let initial = try await transport.emailStatus(credential: credential)
+        XCTAssertNil(initial.verifiedEmail)
+        let id = UUID(), email = "fixture-\(id.uuidString.lowercased())@example.org"
+        let pending = try await transport.requestEmail(email, requestID: id, credential: credential)
+        XCTAssertEqual(pending.verificationID, id)
+        XCTAssertEqual(pending.pendingEmail, email)
+        let retried = try await transport.requestEmail(email, requestID: id, credential: credential)
+        XCTAssertEqual(pending.verificationID, retried.verificationID)
+        XCTAssertEqual(pending.pendingEmail, retried.pendingEmail)
+        XCTAssertEqual(pending.expiresAt, retried.expiresAt)
+        do {
+            _ = try await transport.verifyEmail(id: id, code: "notacode", credential: credential)
+            XCTFail("An invalid code must not prove ownership")
+        } catch let rejection as ServerRejection {
+            XCTAssertTrue(rejection.message.contains("incorrect or expired"))
+        }
+        let afterFailure = try await transport.emailStatus(credential: credential)
+        XCTAssertEqual(afterFailure.verificationID, id)
+        XCTAssertNil(afterFailure.verifiedEmail)
+        try await transport.signOut(credential)
+    }
+
     private func pump(_ store: LedgerStore, _ transport: HTTPTransport, _ credential: SessionCredential) async throws {
         while let (id, data) = try store.prepareNextOperation() {
             let response = try await transport.push(data, credential: credential)

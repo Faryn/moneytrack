@@ -18,7 +18,8 @@ defmodule MoneyTrack.Application do
       # Start a worker by calling: MoneyTrack.Worker.start_link(arg)
       # {MoneyTrack.Worker, arg},
       # Start to serve requests, typically the last entry
-      MoneyTrackWeb.Endpoint
+      MoneyTrackWeb.Endpoint,
+      MoneyTrack.MailDelivery
     ]
 
     # See https://elixir.hexdocs.pm/Supervisor.html

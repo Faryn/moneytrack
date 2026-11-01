@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "7800-all-paid-by-user",
+      "amount": 7800,
+      "split": "all",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 7800,
+        "otherShare": 0,
+        "balance": 0
+      }
+    },
+    {
+      "id": "7800-half-paid-by-user",
+      "amount": 7800,
+      "split": "half",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 3900,
+        "otherShare": 3900,
+        "balance": 3900
+      }
+    },
+    {
+      "id": "7800-none-paid-by-user",
+      "amount": 7800,
+      "split": "none",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 0,
+        "otherShare": 7800,
+        "balance": 7800
+      }
+    },
+    {
+      "id": "7800-all-paid-by-other",
+      "amount": 7800,
+      "split": "all",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 7800,
+        "otherShare": 0,
+        "balance": -7800
+      }
+    },
+    {
+      "id": "7800-half-paid-by-other",
+      "amount": 7800,
+      "split": "half",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 3900,
+        "otherShare": 3900,
+        "balance": -3900
+      }
+    },
+    {
+      "id": "7800-none-paid-by-other",
+      "amount": 7800,
+      "split": "none",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 0,
+        "otherShare": 7800,
+        "balance": 0
+      }
+    },
+    {
+      "id": "101-half-paid-by-user",
+      "amount": 101,
+      "split": "half",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 51,
+        "otherShare": 50,
+        "balance": 50
+      }
+    },
+    {
+      "id": "101-half-paid-by-other",
+      "amount": 101,
+      "split": "half",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 50,
+        "otherShare": 51,
+        "balance": -50
+      }
+    },
+    {
+      "id": "1-half-paid-by-user",
+      "amount": 1,
+      "split": "half",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 1,
+        "otherShare": 0,
+        "balance": 0
+      }
+    },
+    {
+      "id": "1-half-paid-by-other",
+      "amount": 1,
+      "split": "half",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 0,
+        "otherShare": 1,
+        "balance": 0
+      }
+    },
+    {
+      "id": "99999999999-half-paid-by-user",
+      "amount": 99999999999,
+      "split": "half",
+      "paidByUser": true,
+      "expected": {
+        "personalShare": 50000000000,
+        "otherShare": 49999999999,
+        "balance": 49999999999
+      }
+    },
+    {
+      "id": "99999999999-half-paid-by-other",
+      "amount": 99999999999,
+      "split": "half",
+      "paidByUser": false,
+      "expected": {
+        "personalShare": 49999999999,
+        "otherShare": 50000000000,
+        "balance": -49999999999
+      }
+    }
+  ]
+}

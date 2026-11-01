@@ -26,3 +26,6 @@ config :logger, level: :info
 # of environment variables, is done on config/runtime.exs.
 
 config :moneytrack, :secure_cookies, true
+
+# Configure a real provider and sender before enabling verification delivery.
+config :moneytrack, email_delivery_enabled: false, mail_delivery_polling: false

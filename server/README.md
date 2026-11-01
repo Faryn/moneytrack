@@ -22,7 +22,7 @@ mix phx.server
 
 The website is at [localhost:4000](http://localhost:4000). `GET /api/health` returns `{"status":"ok"}` and is a liveness probe, not a database-readiness or authenticated sync endpoint. Set `PORT` to use a different local port.
 
-`mix setup` downloads dependencies, applies the account/ledger migration, and builds assets. It creates no default account or financial seed records. After setup, run `scripts/create-user USERNAME` from the repository root, using the same database environment as the server. The helper prompts for a password without echoing it and passes it through stdin, keeping it out of command history and arguments. Usernames are 3–32 letters/numbers/._-; passwords are 12–72 bytes. Restarting the server is not required after adding an account.
+`mix setup` downloads dependencies, applies the account/ledger and email-verification migrations, and builds assets. It creates no default account or financial seed records. After setup, run `scripts/create-user USERNAME` from the repository root, using the same database environment as the server. The helper prompts for a password without echoing it and passes it through stdin, keeping it out of command history and arguments. Usernames are 3–32 letters/numbers/._-; passwords are 12–72 bytes. Restarting the server is not required after adding an account.
 
 ## Database location
 
@@ -62,7 +62,7 @@ Both LiveViews and API controllers call `MoneyTrack.Ledger` for authorization, v
 
 Accounts use maintained bcrypt password hashing and Hammer rate limiting. Native device tokens are hashed, expiring, and revocable; encrypted/signed browser cookies are separate, with CSRF protection and secure flags in production. Request/SQL parameter logging is suppressed. HTTPS, server-readable storage, and administrator-created accounts are recorded in [ADR 0008](../docs/adr/0008-connected-accounts-and-transport.md). Password reset/recovery and passkeys remain release requirements.
 
-Development email uses Swoosh's local preview at `/dev/mailbox`; tests use its test adapter. No invitations are sent, and no production delivery provider is configured. Development dashboard and mail preview routes are excluded from production builds.
+Email ownership verification is implemented through one account-bound context for the authenticated website and native API. Codes expire, enforce persisted attempt limits, and use a durable encrypted delivery queue; see the [verification contract](../docs/contracts/email-verification-v1.md). Development email uses Swoosh's local preview at `/dev/mailbox`; tests use its test adapter. No invitations are sent, and no production delivery provider is configured. Production verification delivery and queue polling remain disabled until a provider and sender are configured. Development dashboard and mail preview routes are excluded from production builds.
 
 Before deploying, configure `DATABASE_PATH`, `SECRET_KEY_BASE`, `PHX_HOST`, trusted HTTPS termination, private backend-port access, backups/restoration, and distribution. Production forces HTTPS and secure cookies. Forwarded protocol headers must come only from the trusted proxy. No production deployment, public domain, invitation provider, or release account configuration is included.
 

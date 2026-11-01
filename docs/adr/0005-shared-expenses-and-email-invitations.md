@@ -32,3 +32,7 @@ Shared expenses are intended to work between MoneyTrack users, rather than exist
 ## Not decided here
 
 Removal of sharing, pending invitation budget treatment, invitation lifetime, reuse of an accepted sharing relationship, and repayment confirmation are proposed in the [data model and sync proposal](../data-model-and-sync.md). They are not accepted by this ADR. Shared edit/delete permissions and private assignment ownership are accepted above.
+
+## Subsequent decisions
+
+[ADR 0008](0008-connected-accounts-and-transport.md) selects administrator-created accounts for now; invitation-led account onboarding follows later. [ADR 0010](0010-pending-share-budget-treatment.md) resolves pending budget treatment: apply the creator's proposed share immediately, rather than waiting for acceptance. Other open sharing policies remain pending.

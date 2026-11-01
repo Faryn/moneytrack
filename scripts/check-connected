@@ -54,7 +54,7 @@ fi
 python3 - "$connected_dir/ios-check.log" <<'PY'
 import pathlib, re, sys
 log = pathlib.Path(sys.argv[1]).read_text()
-for name in ['testRealServerRetryConflictDeletionAndExpiredSessionRecovery', 'testExplicitCopyLoginSyncAndKeychainRelaunch']:
+for name in ['testRealServerRetryConflictDeletionAndExpiredSessionRecovery', 'testRealServerEmailVerificationRequestRetryAndRejectedCode', 'testExplicitCopyLoginSyncAndKeychainRelaunch']:
     if not re.search(r'Test Case .*' + name + r'.* passed', log):
         raise SystemExit('The real-server test did not pass (or was skipped): ' + name)
 print('Server checks, real native API integration, and connected simulator UI checks passed.')

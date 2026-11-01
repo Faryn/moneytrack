@@ -157,3 +157,32 @@ final class AppSession {
         } while true
     }
 }
+
+
+extension AppSession {
+    func emailStatus() async throws -> AccountEmailStatus {
+        try await emailOperation { try await self.transport.emailStatus(credential: $0) }
+    }
+    func requestEmail(_ address: String, requestID: UUID) async throws -> AccountEmailStatus {
+        try await emailOperation { try await self.transport.requestEmail(address, requestID: requestID, credential: $0) }
+    }
+    func verifyEmail(id: UUID, code: String) async throws -> AccountEmailStatus {
+        try await emailOperation { try await self.transport.verifyEmail(id: id, code: code, credential: $0) }
+    }
+    private func emailOperation(_ operation: (SessionCredential) async throws -> AccountEmailStatus) async throws -> AccountEmailStatus {
+        guard let credential, !needsAuthentication else { throw ConnectionError.unauthorized }
+        let started = generation
+        do {
+            let result = try await operation(credential)
+            try Task.checkCancellation()
+            guard started == generation else { throw CancellationError() }
+            return result
+        } catch {
+            if started == generation, case ConnectionError.unauthorized = error {
+                needsAuthentication = true
+                status = "Sign in to sync"
+            }
+            throw error
+        }
+    }
+}

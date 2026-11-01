@@ -28,7 +28,9 @@ EUR-only operation, interface languages, the exact online website scope, and rem
 
 Accepted in [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md): both participating users can see the common shared expense after a direct email invitation is accepted. No contact-management feature or non-account placeholder debtors. Keep personal categories and budgets private; each participant categorizes their own share. Invitation acceptance must bind the intended email identity to an authenticated account, without changing username/password login.
 
-Accepted: either participant can edit common expense fields or delete the shared expense, with history visible to both. Only an assignment's owner can edit it, and private categories and budgets stay out of shared history. The [data model and sync proposal](data-model-and-sync.md) covers records, invitation states, history storage, and per-user change feeds. Pending-invitation treatment, reuse of an accepted connection, removing sharing, and repayment confirmation still need review.
+Accepted: either participant can edit common expense fields or delete the shared expense, with history visible to both. Only an assignment's owner can edit it, and private categories and budgets stay out of shared history. The [data model and sync proposal](data-model-and-sync.md) covers records, invitation states, history storage, and per-user change feeds. [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate application of the proposed personal share to the creator's budget, including while an invitation is pending. Reuse of an accepted connection, cancellation/decline effects, removing sharing, and repayment confirmation still need review.
+
+Email ownership verification is implemented on iOS and web with expiring account-bound codes, a durable encrypted mail queue, and local/test delivery. See the [verification contract](contracts/email-verification-v1.md). This does not decide account recovery or invitation onboarding. Pending-invitation budgeting is now confirmed in ADR 0010. The recipient's initial private category and reuse of an accepted connection are awaiting user answers before dependent behavior is built.
 
 ### 2. Financial data and calendar contract
 
@@ -36,7 +38,7 @@ Personal budget calculation, negative rollover, yearly edits, and deterministic 
 
 Recommendation: integer minor currency units, explicit currency, client-generated UUIDs, and an explicit calendar expense date separate from UTC creation/modification timestamps. Travel and server timezones must not move an expense into another month. Calculate remaining budgets and debts from underlying records rather than syncing editable running totals.
 
-Publish language-neutral JSON examples for budget rollover, splits, repayments, deletion, and rounding. Run those same examples against Swift and server calculations to prevent differences between offline and website results.
+Budget examples and [shared split examples](contracts/shared-expense-examples.json) now run in Swift and Elixir. The latter verify all/half/none, opposite balances, and payer-assigned odd cents. Publish further language-neutral JSON examples for repayments and shared deletion after their policies are settled. Run those same examples against Swift and server calculations to prevent differences between offline and website results.
 
 ### 3. Offline storage and sync protocol
 

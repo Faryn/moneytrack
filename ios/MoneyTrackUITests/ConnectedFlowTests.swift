@@ -50,5 +50,17 @@ final class ConnectedFlowTests: XCTestCase {
         screenshot.name = "Connected native account"
         screenshot.lifetime = .keepAlways
         add(screenshot)
+        app.buttons["account.email"].tap()
+        let email = app.textFields["email.address"]
+        XCTAssertTrue(email.waitForExistence(timeout: 10))
+        email.tap(); email.typeText("ui-sharing-fixture@example.org")
+        app.buttons["email.send"].tap()
+        XCTAssertTrue(app.textFields["email.code"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["email.verify"].isEnabled)
+        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        let emailScreen = XCTAttachment(screenshot: app.screenshot())
+        emailScreen.name = "Native email verification"
+        emailScreen.lifetime = .keepAlways
+        add(emailScreen)
     }
 }

@@ -62,12 +62,12 @@ Category selection is visible and editable. The first local implementation sugge
 From a saved expense's action menu:
 
 1. Select Share Expense.
-2. Enter the other person's email address to invite them, or use an already accepted sharing relationship.
+2. Enter the other person's email address to invite them, or use an already accepted sharing relationship if connection reuse is selected.
 3. Choose who paid; default to the current user.
 4. Choose the current user's share: all, half, or none.
 5. Confirm the personal budget impact and resulting debt.
 
-An accepted shared expense is one common record visible to both participants. Only each participant's own share counts against their budget. Each user selects a private category for their own share; the other participant cannot see their categories or budgets. Invitation acceptance and delivery need connectivity, while invitation requests and edits can be queued offline. The exact treatment of a pending invitation and the removal of an already accepted share are proposed in the [data model and sync draft](docs/data-model-and-sync.md).
+An accepted shared expense is one common record visible to both participants. Only each participant's own share counts against their budget. Each user selects a private category for their own share; the other participant cannot see their categories or budgets. Invitation acceptance and delivery need connectivity, while invitation requests and edits can be queued offline. Applying a sharing proposal immediately changes the creator's budget consumption to their proposed personal share, even while the invitation is pending or waiting for synchronization; see [ADR 0010](docs/adr/0010-pending-share-budget-treatment.md). Recipient access still requires acceptance. Cancellation/decline effects and removal of an already accepted share remain open in the [data model and sync draft](docs/data-model-and-sync.md).
 
 Either participant can edit the common description, amount, date, payer, and split, or delete the shared expense. A history visible to both records the actor, time, and shared changes, including deletion. Private category changes are not exposed to the other participant. Financial changes update each person's budget and their shared balance consistently; concurrent changes use the conflict handling described below.
 
@@ -88,7 +88,7 @@ The category describes the current user's budget impact. Shared budget managemen
 
 Show each person's net balance and the expenses and repayments behind it. Obligations in opposite directions offset each other for that person.
 
-Participants are MoneyTrack users connected through direct email invitations. A recipient without an account can create one and accept the invitation. There is no separate contact-management feature or non-account placeholder debtor. Balance views are derived from actual sharing relationships. These choices are recorded in [ADR 0005](docs/adr/0005-shared-expenses-and-email-invitations.md).
+Participants are MoneyTrack users connected through direct email invitations. A recipient without an account initially needs the administrator to create one; public invitation-led onboarding follows later. There is no separate contact-management feature or non-account placeholder debtor. Balance views are derived from actual sharing relationships. These choices are recorded in [ADR 0005](docs/adr/0005-shared-expenses-and-email-invitations.md).
 
 Assumption: allow recording a full or partial repayment so balances can be cleared. Repayments affect debts only, never the expense budget. Expense deletion or editing recalculates obligations; any separately recorded repayments remain part of the balance history.
 
@@ -168,12 +168,12 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 1. A €6,000 yearly category budget allocates €500 per month. Spending €400 in January leaves €100. February starts with €600 available.
 2. Spending €550 against January's €500 leaves −€50. February starts with €450.
-3. With a €500 allocation, saving a personal €78 expense leaves €422. Once sharing is accepted, making it an equal split paid by the user changes remaining budget to €461 and creates a €39 receivable.
+3. With a €500 allocation, saving a personal €78 expense leaves €422. Applying an equal split paid by the user changes remaining budget to €461 immediately, including while an invitation is pending. After acceptance both participants see the common expense and the other participant owes €39.
 4. Recording repayment of that €39 clears the receivable and leaves the remaining budget at €461.
 5. An expense created offline appears immediately and reaches another signed-in device once synchronization completes, exactly once.
 6. Deleting an expense restores its personal budget impact and removes its debt obligation. Repeated synchronization does not restore the deleted item.
 7. January of the following year begins with that year's monthly allocation and no prior-year budget carryover. Outstanding debts remain visible.
-8. An email recipient creates an account if needed, proves control of the invited address, and accepts sharing. Both participants can then view the same expense, while their category assignments and budgets remain private.
+8. An email recipient obtains an administrator-created account if needed, proves control of the invited address, and accepts sharing. Both participants can then view the same expense, while their category assignments and budgets remain private.
 9. Either participant edits a shared expense. Both receive the updated expense and shared change history, with their own budget impact recalculated. Neither can edit or inspect the other's category assignment.
 
 ## Deferred features
@@ -187,4 +187,4 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 ## Assumptions to review
 
-The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. Pending invitations, removal of sharing, invitation onboarding and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.
+The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. The remaining invitation lifecycle choices, removal of sharing, invitation onboarding and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.

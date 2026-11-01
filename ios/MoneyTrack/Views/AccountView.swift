@@ -12,6 +12,8 @@ struct AccountView: View {
                 Section("Account") {
                     LabeledContent("Username", value: account.username)
                     LabeledContent("Server", value: account.server.host() ?? account.server.absoluteString)
+                    NavigationLink("Email for Sharing") { EmailVerificationView() }
+                        .disabled(app.needsAuthentication).accessibilityIdentifier("account.email")
                 }
                 Section {
                     Label(app.status, systemImage: app.needsAuthentication ? "person.crop.circle.badge.exclamationmark" : "arrow.triangle.2.circlepath")

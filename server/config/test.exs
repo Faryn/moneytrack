@@ -36,3 +36,8 @@ config :phoenix,
 
 # Keep production password hashing at its normal cost.
 config :bcrypt_elixir, log_rounds: 4
+
+config :moneytrack,
+  email_delivery_enabled: true,
+  mail_delivery_polling: false,
+  mail_from: "noreply@moneytrack.invalid"
