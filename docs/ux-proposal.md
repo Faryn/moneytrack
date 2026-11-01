@@ -1,6 +1,6 @@
 # App UX proposal
 
-Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Sharing/account flows below remain design proposals; they do not approve outstanding invitation or repayment behavior.
+Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Sharing/account flows below remain design proposals except for the explicitly confirmed choices. ADR 0011 confirms record-only Settle Up; outstanding invitation and repayment permission policies remain open.
 
 ## Main structure
 
@@ -34,7 +34,17 @@ Expense detail distinguishes total purchase, user's personal budget impact, paye
 
 The expense menu contains Share, Edit, and Delete. Share asks for email, payer, and All/Half/None for the current user's share, with a preview of personal spending and the resulting obligation before confirmation. Both participants can edit common fields and see shared history. Category assignments stay private.
 
-Show a person's balance and activity in Shared, with a repayment action there. A repayment changes the interpersonal balance without changing budget spending. Pending-invitation effects and repayment confirmation remain the proposals already listed in the technical backlog.
+Show a person's balance and activity in Shared, with a **Settle Up** action on that person's detail screen. Under [ADR 0011](adr/0011-record-only-settle-up.md), open a standard SwiftUI sheet containing:
+
+- An editable amount, initially the full outstanding balance, supporting full or partial repayment.
+- Clear payer/recipient wording, such as “You paid Alex” or “Alex paid you.”
+- Today's repayment date by default, with a secondary date control.
+- A preview of the remaining shared balance, alongside “Only records a payment made outside MoneyTrack.”
+- Cancel and **Record Repayment** actions. Do not use “Pay” as the confirmation label or offer a payment-provider flow.
+
+The resulting repayment appears in shared activity and changes only that pair's balance. Expenses, personal shares, and category budgets stay unchanged. A zero balance is neutral and labeled **Settled up**; positive/negative balances keep Owes you/You owe labels with green/red amounts. The web companion follows the same record-only flow.
+
+[ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms that proposed shares affect the creator's budget while invitations are pending. Repayment acknowledgment, corrections, and amounts above the current balance remain open policies; this design does not approve the draft defaults.
 
 ## Amount colors
 

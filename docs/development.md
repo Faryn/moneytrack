@@ -55,8 +55,10 @@ Sharing preparation on 2026-11-01 adds exact split math with common Swift/Elixir
 - Resolve remaining invitation and repayment assumptions before implementing affected behavior. Budget rules are confirmed in [ADR 0006](adr/0006-calendar-year-budget-calculation.md).
 - Add email invitation onboarding and verified recipient acceptance using fake/test mail during development.
 - Show one shared expense to both participants, with private category assignments and personal-share budget calculations.
-- Implement shared edit/delete history and agreed repayment behavior.
+- Implement shared edit/delete history and the record-only Settle Up flow in ADR 0011, asking for an editable amount. Resolve acknowledgment/correction policies before connecting its save action.
 - Verify the financial and authorization examples across both users, the website, and offline iOS devices.
+
+Record-only Settle Up is now a confirmed requirement (ADR 0011). Full/partial repayment calculations run against the same fixtures in Swift and Elixir, including both directions, unchanged expense spending, exact cents, and aggregate overflow. Recording screens, shared persistence, and synchronization are still pending.
 
 ## 5. Finish authentication and prepare a release
 

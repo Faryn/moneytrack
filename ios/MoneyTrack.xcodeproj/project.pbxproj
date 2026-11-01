@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0BCE47B17211EBCC7BB20C56 /* SharedMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6DAE23BCFCA94BD81136303 /* SharedMath.swift */; };
 		2110A9837CFCD07F1E92173A /* ExpenseForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B0E354554D241BF5331A44 /* ExpenseForm.swift */; };
+		312F47ECE0B4D6D64E6A0228 /* settlement-examples.json in Resources */ = {isa = PBXBuildFile; fileRef = 7951503ED8168BBA31DE9ED4 /* settlement-examples.json */; };
 		3858077738CE2E0668B6E263 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B061F7D8BFEAE9EA396677B /* AppRootView.swift */; };
 		3F8DA8D469A6B2C757A4B613 /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16D63668F40F5C9630BD53CF /* BudgetView.swift */; };
 		3F9454FDB9B5D6A22F3F39D6 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11B8551EDB7D3F4AF810A542 /* AccountView.swift */; };
@@ -70,6 +71,7 @@
 		51ADE1C3ED4594CCB2D2C27B /* ConnectedAPITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectedAPITests.swift; sourceTree = "<group>"; };
 		64906528A1DEEAF020322EA3 /* MoneyTrackApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoneyTrackApp.swift; sourceTree = "<group>"; };
 		76B0E354554D241BF5331A44 /* ExpenseForm.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExpenseForm.swift; sourceTree = "<group>"; };
+		7951503ED8168BBA31DE9ED4 /* settlement-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; name = "settlement-examples.json"; path = "../../docs/contracts/settlement-examples.json"; sourceTree = "<group>"; };
 		869AAC4D1A22038D1783F9DC /* shared-expense-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; name = "shared-expense-examples.json"; path = "../../docs/contracts/shared-expense-examples.json"; sourceTree = "<group>"; };
 		9667DE09961404D75034861B /* SharedMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedMathTests.swift; sourceTree = "<group>"; };
 		966B1D2A2ED6816929970A42 /* BudgetTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BudgetTests.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				51ADE1C3ED4594CCB2D2C27B /* ConnectedAPITests.swift */,
 				9667DE09961404D75034861B /* SharedMathTests.swift */,
 				869AAC4D1A22038D1783F9DC /* shared-expense-examples.json */,
+				7951503ED8168BBA31DE9ED4 /* settlement-examples.json */,
 			);
 			name = MoneyTrackTests;
 			path = MoneyTrackTests;
@@ -346,6 +349,7 @@
 			files = (
 				98056B9C5BC4442C7805F808 /* budget-examples.json in Resources */,
 				59D9D7EC03659AD061BF78DE /* shared-expense-examples.json in Resources */,
+				312F47ECE0B4D6D64E6A0228 /* settlement-examples.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

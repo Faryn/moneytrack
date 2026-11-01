@@ -8,16 +8,17 @@ Negative carryover and whole-year recalculation after budget edits are confirmed
 
 Administrator-created accounts and ordinary server-readable storage with HTTPS are now confirmed in [ADR 0008](adr/0008-connected-accounts-and-transport.md). The first personal sync implementation is selected in [ADR 0009](adr/0009-personal-sync-contract.md); sharing details remain draft.
 
+Settle Up is confirmed in [ADR 0011](adr/0011-record-only-settle-up.md): ask for an editable full/partial amount and record a repayment without moving money or changing budgets. ADR 0010 already confirms immediate application of a proposed personal share while an invitation is pending.
+
 ## Proposed MVP defaults awaiting confirmation
 
 These recommendations were discussed but have not been explicitly accepted. Repository preparation does not promote them into requirements.
 
 | Choice | Proposed default |
 | --- | --- |
-| Pending sharing | Keep the expense personal until the first invitation is accepted. |
 | Subsequent sharing | Reuse an accepted sharing connection without another email invitation. |
 | Incoming category | Assign the user's share to a private zero-budget Uncategorized category until they choose another. Count it immediately in total spending. |
-| Repayment recording | Either participant may record full/partial repayment, with shared history and no second confirmation. |
+| Repayment acknowledgment/corrections | Recording is confirmed in ADR 0011; acknowledgment by the other participant and edit/delete permissions remain open. |
 | Password recovery | Use verified email for password resets, retaining username login. |
 
 EUR-only operation, interface languages, the exact online website scope, and removal of an accepted share also remain marked assumptions/open choices. See [implementation milestones](development.md) for the proposed build order.
@@ -34,11 +35,11 @@ Email ownership verification is implemented on iOS and web with expiring account
 
 ### 2. Financial data and calendar contract
 
-Personal budget calculation, negative rollover, yearly edits, and deterministic monthly cent allocation are defined in ADR 0006 and exercised in Swift/Elixir with the same fixture. Finalize server expense, split, repayment, and private-assignment representations, including the effect of deleting a settled shared expense.
+Personal budget calculation, negative rollover, yearly edits, and deterministic monthly cent allocation are defined in ADR 0006 and exercised in Swift/Elixir with the same fixture. Settle Up recording is confirmed in ADR 0011, and the [repayment examples](contracts/settlement-examples.json) exercise both directions, full/partial amounts, and unchanged expense spending in Swift/Elixir. Finalize server expense, split, repayment, and private-assignment representations, including the effect of deleting a settled shared expense.
 
 Recommendation: integer minor currency units, explicit currency, client-generated UUIDs, and an explicit calendar expense date separate from UTC creation/modification timestamps. Travel and server timezones must not move an expense into another month. Calculate remaining budgets and debts from underlying records rather than syncing editable running totals.
 
-Budget examples and [shared split examples](contracts/shared-expense-examples.json) now run in Swift and Elixir. The latter verify all/half/none, opposite balances, and payer-assigned odd cents. Publish further language-neutral JSON examples for repayments and shared deletion after their policies are settled. Run those same examples against Swift and server calculations to prevent differences between offline and website results.
+Budget examples and [shared split examples](contracts/shared-expense-examples.json) now run in Swift and Elixir. The latter verify all/half/none, opposite balances, and payer-assigned odd cents. Shared deletion/repayment correction examples follow after those policies are settled. Run those same examples against Swift and server calculations to prevent differences between offline and website results.
 
 ### 3. Offline storage and sync protocol
 

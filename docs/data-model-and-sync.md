@@ -2,7 +2,7 @@
 
 Status: draft for implementation planning, not an accepted sync ADR. Accepted product choices are in [SPEC.md](../SPEC.md) and [ADR 0005](adr/0005-shared-expenses-and-email-invitations.md). Proposed behavior below still needs review.
 
-The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate pending-share budget treatment. Shared record implementation, the remaining invitation lifecycle, and repayment behavior below remain proposals.
+The personal-record subset is implemented in [ADR 0009](adr/0009-personal-sync-contract.md). Accounts/transport are selected in [ADR 0008](adr/0008-connected-accounts-and-transport.md). [ADR 0010](adr/0010-pending-share-budget-treatment.md) confirms immediate pending-share budget treatment. [ADR 0011](adr/0011-record-only-settle-up.md) confirms recording full/partial repayments with no in-app payment or budget impact. Shared record implementation, the remaining invitation lifecycle, repayment acknowledgment/corrections, and amounts above the current balance remain proposals.
 
 ## Ownership
 
@@ -62,8 +62,8 @@ Use the confirmed budget rounding, positive/negative carryover, whole-year recal
 - Accepted in ADR 0005: both accepted participants may edit common expense fields and delete shared expenses. Show the actor, time, and shared changes in a history available to both, including deletion.
 - Accepted: categories can be edited only by their owner. Proposed implementation: give private assignments separate revisions, so Alice categorizing an expense does not conflict with Bob categorizing it. Do not include either private assignment in shared history.
 - Proposed: do not silently convert an accepted shared expense back to a personal record. The original personal expense no longer describes both users' history; an explicit removal/reversal policy needs agreement.
-- Proposed: repayments become effective immediately when recorded by either participant and are visible to both. Confirmation/dispute requirements remain open.
-- Deleting an expense removes its obligation and personal spending for both users. Existing repayments remain, potentially reversing the net balance; proposed UI: preview that outcome before confirmation.
+- Accepted in ADR 0011: Settle Up asks for an amount and records a full/partial repayment made outside the app, separate from expenses and visible in shared activity. Acknowledgment by the other participant, correction permissions, and amounts above the outstanding balance remain open; do not assume the earlier proposal of immediate unconfirmed recording by either participant is accepted.
+- Accepted: deleting an expense removes its obligation and personal spending for both users. Proposed repayment policy: existing repayment records remain, potentially reversing the net balance; preview that outcome before confirmation. Repayment retention/correction behavior still needs agreement.
 - Proposed: reject changes by an actor who has lost access, even if their device queued the change earlier. Revocation cannot instantly erase an already downloaded copy from an offline device; remove cached common data when revocation is received, without sending other private data.
 
 ## Proposed sync contract
@@ -104,7 +104,7 @@ Use a versioned JSON API and a durable local outbox. SwiftData is selected in [A
 - Pagination and reconnects neither skip changes nor resurrect deleted expenses.
 - A concurrent website edit and offline iOS edit surface a resolvable conflict.
 - A freshly accepted expense counts toward the recipient's budget before manual categorization.
-- A repayment affects only the interpersonal balance; deletion preserves the separately recorded repayment.
+- Accepted: a repayment affects only the interpersonal balance and never expense spending/budgets. Repayment retention after expense deletion is still a proposed policy.
 - Shared financial examples produce identical results in Swift and Elixir.
 
 ## Remaining review choices

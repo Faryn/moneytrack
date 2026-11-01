@@ -17,6 +17,7 @@ The first connected flow is implemented: administrator-created accounts, usernam
 - Personal expenses first. Share a saved expense afterward with one other user through a direct email invitation.
 - Splits of all, half, or none; only each participant's own share counts against their budget.
 - Both participants see the shared expense and may edit or delete it, with shared change history. Categories and budgets remain private.
+- Settle Up asks for an editable amount and records full/partial repayments against shared balances. It never moves money or changes expense budgets.
 - Username/password login with optional passkeys on iOS and the website.
 - Future German/English quick parsing uses built-in iOS capabilities, with no cloud AI. For example: `78€, Theodor, Restaurants`, where Theodor is the restaurant description.
 
@@ -66,7 +67,9 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Verified on 2026-11-01: 53 server tests and 24 native tests pass, including populated V1-to-V2 migration, Keychain, disk failure recovery, and a real temporary backend. Native integration checks exercise retry, conflict resolution, deletion, session expiry/re-login, explicit on-device copying, and account restoration after relaunch. Website tests verify the same change feed and preservation of stale forms/drafts. Email checks also cover account-bound proof, durable delivery retries, rejected proof on the native API, and native code entry. The iOS Release build passes. Neither app has been deployed.
+Personal/email connected baseline verified on 2026-11-01: 53 server tests and 24 native tests pass, including populated V1-to-V2 migration, Keychain, disk failure recovery, and a real temporary backend. Native integration checks exercise retry, conflict resolution, deletion, session expiry/re-login, explicit on-device copying, and account restoration after relaunch. Website tests verify the same change feed and preservation of stale forms/drafts. Email checks also cover account-bound proof, durable delivery retries, rejected proof on the native API, and native code entry. The iOS Release build passes. Neither app has been deployed.
+
+Recorded-repayment calculations are now verified separately: 68 server tests and four focused native financial tests pass. The Settle Up screen and persistence follow with the shared ledger; see [ADR 0011](docs/adr/0011-record-only-settle-up.md).
 
 ## Next implementation milestone
 

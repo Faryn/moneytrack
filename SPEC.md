@@ -17,6 +17,7 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Only the user's personal share counts against their budget.
 - Supported splits between two people are 100/0, 50/50, and 0/100.
 - Shared expenses track how much is owed between people.
+- Settle Up asks for an amount and records a full or partial repayment made outside the app. Repayments affect shared balances only; MoneyTrack never initiates a payment.
 - Shared expenses are visible to both participating users after accepting a direct email invitation. A separate contact list is not required.
 - Either participant can edit or delete a shared expense; both can see its change history. Personal category assignments can be edited only by their owner.
 - Categories are a flat list with yearly budget amounts.
@@ -90,7 +91,11 @@ Show each person's net balance and the expenses and repayments behind it. Obliga
 
 Participants are MoneyTrack users connected through direct email invitations. A recipient without an account initially needs the administrator to create one; public invitation-led onboarding follows later. There is no separate contact-management feature or non-account placeholder debtor. Balance views are derived from actual sharing relationships. These choices are recorded in [ADR 0005](docs/adr/0005-shared-expenses-and-email-invitations.md).
 
-Assumption: allow recording a full or partial repayment so balances can be cleared. Repayments affect debts only, never the expense budget. Expense deletion or editing recalculates obligations; any separately recorded repayments remain part of the balance history.
+Settle Up is confirmed in [ADR 0011](docs/adr/0011-record-only-settle-up.md). From a person's shared balance, open a native sheet with an editable amount, prefilled with the outstanding balance. Show the payer and recipient explicitly. Default the repayment date to today, with a secondary date control. Use **Record Repayment** for confirmation, with Cancel available. The app records a payment made elsewhere; it never moves money or asks for bank/payment details.
+
+A partial repayment reduces what is owed; recording the full amount clears it. Display repayments alongside the shared expenses explaining that person's balance. Keep the current monthly budget, personal expense shares, and spending totals unchanged. Shared balances and repayment history do not reset in January.
+
+Whether a record needs the other person's acknowledgment, repayment edit/delete permissions, handling amounts above the current balance, and what happens to repayments when an expense is deleted still need policy decisions before the recording feature is connected. These are separate from the confirmed record-only feature.
 
 ### Categories and budgets
 
@@ -169,7 +174,7 @@ No bank connections or income tracking are required. Shared balance tracking doe
 1. A €6,000 yearly category budget allocates €500 per month. Spending €400 in January leaves €100. February starts with €600 available.
 2. Spending €550 against January's €500 leaves −€50. February starts with €450.
 3. With a €500 allocation, saving a personal €78 expense leaves €422. Applying an equal split paid by the user changes remaining budget to €461 immediately, including while an invitation is pending. After acceptance both participants see the common expense and the other participant owes €39.
-4. Recording repayment of that €39 clears the receivable and leaves the remaining budget at €461.
+4. Settle Up suggests that €39 and allows editing the amount. Recording €15 received leaves €24 owed to the user; recording the remaining €24 clears the balance. The remaining budget stays €461 after each record, and no money is moved by the app.
 5. An expense created offline appears immediately and reaches another signed-in device once synchronization completes, exactly once.
 6. Deleting an expense restores its personal budget impact and removes its debt obligation. Repeated synchronization does not restore the deleted item.
 7. January of the following year begins with that year's monthly allocation and no prior-year budget carryover. Outstanding debts remain visible.
@@ -187,4 +192,4 @@ No bank connections or income tracking are required. Shared balance tracking doe
 
 ## Assumptions to review
 
-The main unconfirmed choices are EUR-only operation, repayment recording, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. The remaining invitation lifecycle choices, removal of sharing, invitation onboarding and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.
+The main unconfirmed choices are EUR-only operation, repayment confirmation/correction policies, the website's initial scope, and interface languages. The first local iOS slice displays EUR and English interface text; it does not settle the release's currency/language scope. The remaining invitation lifecycle choices, removal of sharing, invitation onboarding and recovery, hosting, app distribution, and export/backup requirements still need decisions before release planning. Negative carryover and whole-year recalculation after a yearly budget edit are confirmed. Application-owned username/password authentication with optional passkeys, a Phoenix server, a SQLite storage backend, shared visibility through direct email invitations, and edit/delete access for both participants with shared history are accepted choices. See the [data model and sync proposal](docs/data-model-and-sync.md) for proposed implementation behavior.

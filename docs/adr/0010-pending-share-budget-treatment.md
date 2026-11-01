@@ -21,3 +21,7 @@ For example, a €78 personal expense against €500 leaves €422. Applying a h
 The pending proposal becomes relevant financial state and must be persisted and synchronized with revision checks. It cannot be represented only as an email awaiting delivery. Preserve the distinction between pending and accepted sharing in the UI.
 
 This ADR supersedes the draft recommendation to count the full amount until acceptance. It does not choose the recipient's initial private category, reuse of an accepted connection, invitation lifetime, cancellation/decline effects, removal of accepted sharing, or repayment rules. Those remain open. In particular, do not infer an irreversible settlement or confirmed debt from mailbox verification alone.
+
+## Subsequent decision
+
+[ADR 0011](0011-record-only-settle-up.md) confirms record-only Settle Up and full/partial repayments. Its acknowledgment/correction policies remain open independently of pending-share budgeting.

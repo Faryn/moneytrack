@@ -1,0 +1,310 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "no-shared-activity",
+      "expenses": [],
+      "repayments": [],
+      "expected": {
+        "personalSpending": 0,
+        "otherSpending": 0,
+        "expenseBalance": 0,
+        "balance": 0
+      }
+    },
+    {
+      "id": "expense-before-settle-up",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": 3900,
+        "balance": 3900
+      }
+    },
+    {
+      "id": "received-full",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 3900,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": 3900,
+        "balance": 0
+      }
+    },
+    {
+      "id": "received-partial",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1500,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": 3900,
+        "balance": 2400
+      }
+    },
+    {
+      "id": "paid-full",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 3900,
+          "paidByUser": true
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": -3900,
+        "balance": 0
+      }
+    },
+    {
+      "id": "paid-partial",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1500,
+          "paidByUser": true
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": -3900,
+        "balance": -2400
+      }
+    },
+    {
+      "id": "received-two-partial-repayments",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1500,
+          "paidByUser": false
+        },
+        {
+          "amount": 2400,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": 3900,
+        "balance": 0
+      }
+    },
+    {
+      "id": "paid-two-partial-repayments",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1500,
+          "paidByUser": true
+        },
+        {
+          "amount": 2400,
+          "paidByUser": true
+        }
+      ],
+      "expected": {
+        "personalSpending": 3900,
+        "otherSpending": 3900,
+        "expenseBalance": -3900,
+        "balance": 0
+      }
+    },
+    {
+      "id": "opposing-expenses-net-before-settlement",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "half",
+          "paidByUser": true
+        },
+        {
+          "amount": 4000,
+          "split": "half",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1000,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 5900,
+        "otherSpending": 5900,
+        "expenseBalance": 1900,
+        "balance": 900
+      }
+    },
+    {
+      "id": "all-personal-share-partial-payment",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "all",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1234,
+          "paidByUser": true
+        }
+      ],
+      "expected": {
+        "personalSpending": 7800,
+        "otherSpending": 0,
+        "expenseBalance": -7800,
+        "balance": -6566
+      }
+    },
+    {
+      "id": "no-personal-share-full-receipt",
+      "expenses": [
+        {
+          "amount": 7800,
+          "split": "none",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 7800,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 0,
+        "otherSpending": 7800,
+        "expenseBalance": 7800,
+        "balance": 0
+      }
+    },
+    {
+      "id": "odd-cent-purchase-partial-receipt",
+      "expenses": [
+        {
+          "amount": 101,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 51,
+        "otherSpending": 50,
+        "expenseBalance": 50,
+        "balance": 49
+      }
+    },
+    {
+      "id": "odd-cent-purchase-partial-payment",
+      "expenses": [
+        {
+          "amount": 101,
+          "split": "half",
+          "paidByUser": false
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 49,
+          "paidByUser": true
+        }
+      ],
+      "expected": {
+        "personalSpending": 50,
+        "otherSpending": 51,
+        "expenseBalance": -50,
+        "balance": -1
+      }
+    },
+    {
+      "id": "final-cent",
+      "expenses": [
+        {
+          "amount": 2,
+          "split": "half",
+          "paidByUser": true
+        }
+      ],
+      "repayments": [
+        {
+          "amount": 1,
+          "paidByUser": false
+        }
+      ],
+      "expected": {
+        "personalSpending": 1,
+        "otherSpending": 1,
+        "expenseBalance": 1,
+        "balance": 0
+      }
+    }
+  ]
+}
