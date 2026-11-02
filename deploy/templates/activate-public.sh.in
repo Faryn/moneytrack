@@ -2,12 +2,12 @@
 set -eu
 test "$(id -u)" = 0
 directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-target=/etc/nginx/conf.d/app.example.invalid.conf
-lineage=/etc/letsencrypt/live/app.example.invalid
+target=/etc/nginx/conf.d/@@PUBLIC_HOST@@.conf
+lineage=/etc/letsencrypt/live/@@PUBLIC_HOST@@
 
 curl --fail --silent --show-error --max-time 10 \
-  -H 'Host: app.example.invalid' -H 'X-Forwarded-Proto: https' \
-  http://192.0.2.10:4018/api/health >/dev/null
+  -H 'Host: @@PUBLIC_HOST@@' -H 'X-Forwarded-Proto: https' \
+  http://@@APP_IP@@:4018/api/health >/dev/null
 
 working=$(mktemp -d /tmp/moneytrack-nginx.XXXXXX)
 had_previous=false
@@ -49,7 +49,7 @@ if ! test -f "$lineage/fullchain.pem" || ! test -f "$lineage/privkey.pem"; then
 server {
     listen 80;
     listen [::]:80;
-    server_name app.example.invalid;
+    server_name @@PUBLIC_HOST@@;
     location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }
     location / { return 503; }
 }
@@ -60,7 +60,7 @@ NGINX
   # Reuse this host's existing Certbot account. Do not register a new account
   # or accept new account terms without an administrator's intervention.
   certbot certonly --webroot --webroot-path /var/www/letsencrypt \
-    --cert-name app.example.invalid -d app.example.invalid --non-interactive
+    --cert-name @@PUBLIC_HOST@@ -d @@PUBLIC_HOST@@ --non-interactive
 fi
 
 install -m 0644 "$directory/nginx-moneytrack.conf" "$target"
@@ -70,7 +70,7 @@ install -d -m 0755 /etc/letsencrypt/renewal-hooks/deploy
 cat > /etc/letsencrypt/renewal-hooks/deploy/moneytrack-nginx-reload <<'HOOK'
 #!/bin/sh
 set -eu
-test "${RENEWED_LINEAGE:-}" = /etc/letsencrypt/live/app.example.invalid || exit 0
+test "${RENEWED_LINEAGE:-}" = /etc/letsencrypt/live/@@PUBLIC_HOST@@ || exit 0
 /usr/sbin/nginx -t
 systemctl reload nginx
 HOOK
@@ -80,7 +80,7 @@ for family in -4 -6; do
   # listener groups before considering activation complete.
   curl "$family" --fail --silent --show-error --connect-timeout 3 --max-time 5 \
     --retry 6 --retry-all-errors --retry-delay 1 \
-    https://app.example.invalid/api/health
+    https://@@PUBLIC_HOST@@/api/health
 done
 finished=true
 printf '\nMoneyTrack HTTPS site activated on IPv4 and IPv6.\n'

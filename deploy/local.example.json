@@ -1,0 +1,9 @@
+{
+  "PUBLIC_HOST": "app.example.invalid",
+  "APP_SSH": "app-host",
+  "PROXY_SSH": "proxy-host",
+  "APP_IP": "192.0.2.10",
+  "PROXY_IP": "192.0.2.20",
+  "PROXY_IPV6": "2001:db8::10",
+  "PROXY_PUBLIC_IPV4": "203.0.113.10"
+}

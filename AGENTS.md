@@ -30,6 +30,7 @@
 ## Local development and operational data
 
 - This checkout is inside OneDrive. Keep active SQLite databases, WAL files, backups, credentials, and real financial data outside the checkout in a host-local application-data directory.
+- Keep real deployment hostnames, SSH aliases, and addresses in ignored local configuration only. iOS uses `ios/Configuration/Local.xcconfig`; deployment templates render from `deploy/local.json` into ignored `deploy/local/`. Run `python3 scripts/check-private-config` before committing related changes.
 - Do not commit `.env` secrets, signing credentials, personal data, generated dependencies, or build output. Keep dependency lockfiles and shared Xcode project configuration under version control once generated.
 - Use maintained authentication and WebAuthn libraries rather than implementing cryptography.
 - Choose and record supported toolchain versions during scaffolding; do not invent build/test commands for code that does not exist.

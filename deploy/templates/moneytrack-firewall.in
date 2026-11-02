@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 # Affect this application's listener only; run before Tailscale's accept rule.
-app_ip=192.0.2.10
-proxy_ip=192.0.2.20
+app_ip=@@APP_IP@@
+proxy_ip=@@PROXY_IP@@
 port=4018
 chain=MONEYTRACK_IN
 if ! iptables -w -n -L "$chain" >/dev/null 2>&1; then

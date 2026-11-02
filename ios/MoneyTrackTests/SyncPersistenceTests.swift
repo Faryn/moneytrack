@@ -201,6 +201,15 @@ final class SyncPersistenceTests: XCTestCase {
         XCTAssertNil(try vault.read())
     }
 
+    func testConfiguredServerIsDefaultAndTestsNeverFallBackToIt() {
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: "https://APP.example.invalid/"), "https://app.example.invalid")
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: nil), "")
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: "$(UNSET_SERVER)"), "")
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: "https://app.example.invalid", isTesting: true), "")
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: "https://app.example.invalid", isTesting: true, testingServer: "http://127.0.0.1:4004"), "http://127.0.0.1:4004")
+        XCTAssertEqual(ServerAddress.initialSignInAddress(configured: "https://app.example.invalid", isTesting: true, testingServer: "not-a-url"), "")
+    }
+
     func testOnlySecureRootServerAddressesAreAccepted() throws {
         XCTAssertEqual(try ServerAddress.parse("https://EXAMPLE.test:443/"), URL(string: "https://example.test"))
         for invalid in ["http://example.test", "https://user:password@example.test", "https://example.test/path", "https://example.test?token=secret", "https://example.test#fragment", "not-a-url"] {

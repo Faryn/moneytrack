@@ -12,6 +12,9 @@ xcuserdata/
 .env
 .env.*
 !.env.example
+/ios/Configuration/Local.xcconfig
+/deploy/local.json
+/deploy/local/
 *.p8
 *.p12
 *.mobileprovision

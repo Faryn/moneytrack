@@ -74,15 +74,24 @@ private struct SignInView: View {
     var body: some View {
         Form {
             Section {
-                TextField("Server address", text: $server)
-                    .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .disabled(app.credential != nil).accessibilityIdentifier("login.server")
                 TextField("Username", text: $username)
                     .textContentType(.username).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .disabled(app.credential != nil).accessibilityIdentifier("login.username")
                 SecureField("Password", text: $password)
                     .textContentType(.password).accessibilityIdentifier("login.password")
             } footer: { Text("Accounts are created by the administrator. Your password isn't stored by MoneyTrack on this iPhone.") }
+            if server.isEmpty {
+                Section { Text("The app's server hasn't been configured. Contact your administrator.").foregroundStyle(.secondary) }
+            }
+            #if DEBUG
+            Section {
+                DisclosureGroup("Development Server") {
+                    TextField("Server address", text: $server)
+                        .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .disabled(app.credential != nil).accessibilityIdentifier("login.server")
+                }
+            }
+            #endif
             if app.credential == nil && !store.categories.isEmpty {
                 Section {
                     Toggle("Copy on-device entries", isOn: $copyLocal)
@@ -111,11 +120,7 @@ private struct SignInView: View {
         .onDisappear { signInTask?.cancel() }
         .onAppear {
             if let current = app.credential { server = current.server.absoluteString; username = current.username }
-            #if DEBUG
-            if server.isEmpty && ProcessInfo.processInfo.arguments.contains("--ui-testing") {
-                server = ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"] ?? ""
-            }
-            #endif
+            else if server.isEmpty { server = ServerAddress.defaultSignInAddress }
         }
         .alert("Couldn't Sign In", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button("OK", role: .cancel) {}

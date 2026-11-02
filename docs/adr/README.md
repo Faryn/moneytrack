@@ -2,6 +2,8 @@
 
 Accepted decisions describe agreed architecture. Proposed technical choices remain in the [technical decision backlog](../technical-decisions.md) until agreed and recorded.
 
+Real deployment identifiers are intentionally omitted; [ADR 0016](0016-private-central-server-configuration.md) defines private configuration and the central app default.
+
 | ADR | Status | Decision |
 | --- | --- | --- |
 | [0001](0001-single-repository-and-combined-server.md) | Accepted | Single repository; native iOS client; combined website and API server |
@@ -19,3 +21,4 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0013](0013-whole-year-budget-and-guilt-free-spending.md) | Accepted | Whole yearly total before category allocations; one guilt-free pool; joint exact-cent allocation; reachable bottom expense entry |
 | [0014](0014-expense-action-and-currency-fields.md) | Accepted | Expenses-only floating plus; keyboard Save Expense; aligned EUR fields and exact two-place money presentation |
 | [0015](0015-app-host-deployment.md) | Accepted hosting direction | application host Phoenix/SQLite release; nginx HTTPS on app.example.invalid over Tailscale; private listener and persistent storage |
+| [0016](0016-private-central-server-configuration.md) | Accepted | Central app default from ignored configuration; explicit test isolation; host identifiers excluded from Git |

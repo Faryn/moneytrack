@@ -1,9 +1,9 @@
-# ADR 0015: application host backend with nginx over Tailscale
+# ADR 0015: application-VM backend with nginx over Tailscale
 
 - Status: Accepted hosting direction; private deployment preparation
 - Date: 2026-11-02
 
-The user selected the local VM `app-host` for the Phoenix website/API and SQLite. Internet access will use nginx on `proxy-host.example.invalid`, linked to application host by Tailscale. The selected public hostname is `app.example.invalid`.
+The user selected the local VM `app-host` for the Phoenix website/API and SQLite. Internet access will use nginx on `proxy-host`, linked to application host by Tailscale. The selected public hostname is `app.example.invalid`.
 
 ## Decision
 

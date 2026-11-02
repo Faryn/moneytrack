@@ -2,7 +2,7 @@ name: moneytrack
 services:
   web:
     image: moneytrack:prepared
-    # Bind Phoenix directly to application host's Tailscale address. The scoped host
+    # Bind Phoenix directly to the application host's Tailscale address. The scoped host
     # firewall admits only the nginx host and local health/admin checks.
     network_mode: host
     env_file: /etc/moneytrack/moneytrack.env

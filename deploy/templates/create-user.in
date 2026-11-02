@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create an administrator-provisioned account in the application host release."""
+"""Create an administrator-provisioned account in the application-host release."""
 import getpass
 import re
 import shlex
@@ -17,4 +17,4 @@ command = [
     "/app/bin/moneytrack", "eval",
     'MoneyTrack.Release.create_user(System.fetch_env!("MONEYTRACK_USERNAME"))',
 ]
-subprocess.run(["ssh", "-T", "app-host", shlex.join(command)], input=password, text=True, check=True)
+subprocess.run(["ssh", "-T", "@@APP_SSH@@", shlex.join(command)], input=password, text=True, check=True)

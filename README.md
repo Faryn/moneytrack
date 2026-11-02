@@ -69,7 +69,7 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Verified on 2026-11-02: 90 server tests and 42 native tests pass in the isolated connected suite. Coverage includes whole-year plans, guilt-free pooling, two-decimal currency entry, exhaustive cent-level split/repayment checks, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. The backend is deployed on application host and publicly reachable through HTTPS nginx; iOS distribution remains pending.
+Verified on 2026-11-02: 90 server tests and 43 native tests pass in the isolated connected suite. Coverage includes whole-year plans, guilt-free pooling, two-decimal currency entry, exhaustive cent-level split/repayment checks, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. The backend is deployed on application host and publicly reachable through HTTPS nginx; iOS distribution remains pending.
 
 Sharing is documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md). Whole-year plans and guilt-free spending extend it through [ADR 0013](docs/adr/0013-whole-year-budget-and-guilt-free-spending.md) and the [v3 contract](docs/contracts/annual-budget-v3.md).
 

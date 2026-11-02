@@ -88,6 +88,7 @@
 		76A830856AA3F9EBCBE4AB60 /* AnnualPlanPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnnualPlanPersistenceTests.swift; sourceTree = "<group>"; };
 		76B0E354554D241BF5331A44 /* ExpenseForm.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExpenseForm.swift; sourceTree = "<group>"; };
 		7951503ED8168BBA31DE9ED4 /* settlement-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "settlement-examples.json"; path = "../../docs/contracts/settlement-examples.json"; sourceTree = "<group>"; };
+		7E0A7594A97AFD4B8B278CD1 /* App.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
 		869AAC4D1A22038D1783F9DC /* shared-expense-examples.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "shared-expense-examples.json"; path = "../../docs/contracts/shared-expense-examples.json"; sourceTree = "<group>"; };
 		9667DE09961404D75034861B /* SharedMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedMathTests.swift; sourceTree = "<group>"; };
 		966B1D2A2ED6816929970A42 /* BudgetTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BudgetTests.swift; sourceTree = "<group>"; };
@@ -168,6 +169,14 @@
 			path = Sync;
 			sourceTree = "<group>";
 		};
+		4BC4E766882E99DD2A0C7975 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				7E0A7594A97AFD4B8B278CD1 /* App.xcconfig */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		710E1025DF02560BA09DB032 = {
 			isa = PBXGroup;
 			children = (
@@ -176,6 +185,7 @@
 				7640264BE1F856A448048DEA /* MoneyTrack */,
 				830418BFA46FCB31704A5181 /* MoneyTrackTests */,
 				CC38D8471CC0C846A5AF4C78 /* MoneyTrackUITests */,
+				4BC4E766882E99DD2A0C7975 /* Configuration */,
 			);
 			sourceTree = "<group>";
 		};
@@ -470,6 +480,7 @@
 /* Begin XCBuildConfiguration section */
 		508E2E7C4355B3E690FAA999 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7E0A7594A97AFD4B8B278CD1 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -501,6 +512,7 @@
 		};
 		6CE22B5D75A2331C57CA9547 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7E0A7594A97AFD4B8B278CD1 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

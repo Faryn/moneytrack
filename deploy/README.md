@@ -1,94 +1,84 @@
-# application host deployment
+# Private deployment configuration
 
-One Phoenix website/API release, SQLite, and an nginx HTTPS proxy over Tailscale. Hosting decision: [ADR 0015](../docs/adr/0015-app-host-deployment.md). Runtime files are outside this OneDrive checkout.
+The application VM runs one Phoenix/SQLite release. An external nginx host terminates HTTPS and forwards over Tailscale. The public deployment is verified, but its real hostname, SSH aliases, and addresses are intentionally excluded from tracked source and Git history.
 
-## Layout
+## Local settings
 
-| Location | Purpose |
+Copy `local.example.json` to ignored `local.json` and enter the actual host settings there. Examples use reserved documentation addresses and are not runnable deployment targets. The existing checkout already has private settings populated.
+
+```sh
+python3 deploy/render.py
+```
+
+This produces host-specific files in ignored `deploy/local/`. Output elsewhere inside the repository is rejected. Generated files are mode 0600. Never commit the JSON settings or rendered files. The renderer validates DNS/SSH/address fields before substitution.
+
+Use the tracked Compose file, backup command, and systemd units alongside the rendered firewall script. Run rendered `prepare-host.sh` as root on the application VM once. It creates UID/GID 10100, persistent storage, and a protected stable runtime secret, preserving an existing database/secret on later runs.
+
+| Location on application VM | Purpose |
 | --- | --- |
-| application host `192.0.2.10:4018` | Private Phoenix listener; source-restricted to the proxy and local checks |
-| Proxy `192.0.2.20` | proxy-host.example.invalid nginx host; public hostname app.example.invalid |
-| `/srv/moneytrack/source` | Build source on application host; not a runtime data directory |
-| `/opt/moneytrack` | Compose, firewall, and backup commands |
-| `/etc/moneytrack/moneytrack.env` | Root-only stable runtime configuration/secret |
-| `/var/lib/moneytrack/moneytrack.sqlite3` | Persistent SQLite, with WAL/SHM alongside it |
-| `/var/backups/moneytrack` | Verified closed SQLite snapshots; not off-VM copies |
+| `/srv/moneytrack/source` | Build source, separate from runtime data |
+| `/opt/moneytrack` | Compose, rendered firewall, backup command |
+| `/etc/moneytrack/moneytrack.env` | Root-only runtime settings and secret |
+| `/var/lib/moneytrack` | SQLite database and WAL/SHM sidecars |
+| `/var/backups/moneytrack` | Verified, closed SQLite snapshots |
 
-Build with the pinned [official Elixir image](https://hub.docker.com/_/elixir/) and Debian runtime in `server/Dockerfile`. The image includes the Erlang VM and an application release, following [Phoenix releases](https://phoenix.hexdocs.pm/releases.html). Runtime memory is capped at 512 MiB, CPU at 1.5 cores, with two Erlang schedulers. Docker does not independently restart the container: systemd supervises it so the firewall is established first.
+## Application default
 
-## Build and install
+The iOS target loads `ios/Configuration/App.xcconfig`, which optionally includes ignored `Local.xcconfig`. Set `MONEYTRACK_SERVER_URL` there; see the tracked example for escaping URL slashes in xcconfig syntax. Both Debug and Release builds embed that configured URL as `MoneyTrackDefaultServerURL`. New sign-ins use it automatically. Existing credentials and pending changes stay associated with their original server/account.
 
-Run `deploy/prepare-app-host.sh` as root on application host once; it creates the dedicated account/directories and a secret without printing it. Repeating it preserves the existing secret/database. Source uploads must exclude `.env`, dependencies, build output, databases, and financial data. Build on application host, not macOS:
+Debug builds allow an explicit Development Server override. UI tests use only `MONEYTRACK_TEST_SERVER`; a missing/invalid test setting leaves the server unset rather than contacting the real instance.
+
+## Build and service management
+
+Build `server/Dockerfile` on the Linux application VM using its pinned image digests:
 
 ```sh
 docker build --build-arg VCS_REF=YOUR_COMMIT -t moneytrack:prepared /srv/moneytrack/source/server
 ```
 
-Install `compose.yaml`, `moneytrack-firewall`, and `backup.py` into `/opt/moneytrack`; install the `.service`/`.timer` files into `/etc/systemd/system`. The firewall script must be executable and root-owned. Verify units before activation:
+Install the tracked Compose/backup files and rendered firewall into `/opt/moneytrack`, and service/timer units into `/etc/systemd/system`. Validate units before starting them. The firewall service runs before the application, limits only its listener, and is reapplied on Tailscale restart. systemd supervises the container; Docker does not independently restart it ahead of the firewall.
 
 ```sh
 sudo systemd-analyze verify /etc/systemd/system/moneytrack*.service /etc/systemd/system/moneytrack-backup.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now moneytrack-firewall.service
-```
-
-For an initial database, run migrations before starting the service:
-
-```sh
 sudo docker compose -f /opt/moneytrack/compose.yaml run --rm --no-deps web /app/bin/moneytrack eval 'MoneyTrack.Release.migrate()'
 sudo systemctl enable --now moneytrack.service
 sudo systemctl start moneytrack-backup.service
 sudo systemctl enable --now moneytrack-backup.timer
 ```
 
-Create an account from the local checkout when ready:
+Create real accounts deliberately, with a password prompt and SSH stdin:
 
 ```sh
-python3 deploy/create-user USERNAME
+python3 deploy/local/create-user USERNAME
 ```
 
-The helper prompts without echoing, sends the password through SSH stdin, and never places it in command arguments or Git. No account is created by installation.
+No default accounts are created by installation. Passwords stay out of command arguments and Git.
 
-## Check and operate
+## nginx and TLS
+
+Copy rendered `activate-public.sh` and `nginx-moneytrack.conf` together to a private staging directory on the proxy host. Invoke the script with sudo there. It checks the private backend, obtains a certificate using the existing Certbot account, validates nginx before reload, and checks public HTTPS separately over IPv4 and IPv6. A failure restores the previous site configuration. An HTTP-only ACME challenge remains available for renewals without exposing plaintext login. The certificate-specific reload hook and Certbot renewal timer are active.
+
+The rendered IPv6 listener must match the proxy's existing explicit address. A wildcard IPv6 listener belongs to a different virtual-server group on this deployment. Readiness retries allow nginx's new workers to start before activation is declared successful.
+
+## Updates and recovery
+
+Create a verified backup before migrations, retain the previous image tag, stop the application for the migration window, migrate using the new image, and verify health/access after starting it. The release also applies pending migrations on startup. Do not automatically downgrade a database when rolling back an image.
+
+Backups use SQLite's online backup API and `quick_check`, then close the destination as a standalone snapshot. They are private local files with no automatic deletion policy. Off-VM copies and retention remain to be selected. Restore while the app is stopped, preserving the current database/sidecars and stable runtime secret.
+
+## Verification and boundaries
+
+Verified on 2026-11-02: Linux release build; all four migrations; disposable account creation; empty production accounts; restart recovery; database integrity; private-port source restrictions; and verified daily backup. Public HTTPS health passes on IPv4 and IPv6. Login cookies are Secure/HttpOnly, HSTS is present, HTTP redirects to HTTPS, unauthenticated API access returns 401, and LiveView upgrades with status 101. TLS 1.3, certificate renewal scheduling, and its reload hook are verified.
+
+Production mail, password recovery, passkeys, and iOS distribution remain separate work. No remote deployment is changed by rendering or editing private local configuration.
+
+## Checks
 
 ```sh
-ssh app-host 'sudo -n systemctl is-active moneytrack.service moneytrack-backup.timer'
-ssh app-host 'sudo -n docker compose -f /opt/moneytrack/compose.yaml ps'
-ssh app-host 'sudo -n journalctl -u moneytrack.service -n 40 --no-pager'
+python3 -m unittest discover -s deploy -p 'test_*.py'
+python3 scripts/check-private-config
 ```
 
-From the nginx host, expect 200 and `{"status":"ok"}`:
-
-```sh
-curl --fail -H 'Host: app.example.invalid' -H 'X-Forwarded-Proto: https' http://192.0.2.10:4018/api/health
-```
-
-The public health route is a liveness check; migration, database integrity, login redirect/cookies, and denied unauthenticated API access must also be checked when deploying. Other tailnet clients should time out on port 4018. Do not weaken the firewall to make a direct laptop connection work; use an SSH tunnel or run checks on the trusted hosts.
-
-## Public proxy activation
-
-The repository's `nginx-moneytrack.conf` is now installed for the live site. For a fresh deployment: First point `app.example.invalid` to the public nginx host (including correct IPv6 if used). Obtain its certificate using that host's existing Certbot setup. Then install the site with sudo, run `nginx -t`, and reload nginx only after validation. The template expects a per-host Let's Encrypt certificate; adapt its paths if the host instead uses a wildcard certificate. Test HTTPS, secure cookies, browser login, LiveView WebSocket upgrades, and authenticated API access. No public signup is enabled.
-
-The activation script and template are staged at `/home/paul/moneytrack-deploy` on the proxy host. Run this in your own terminal to enter the sudo password there:
-
-```sh
-ssh -t proxy-host.example.invalid 'sudo sh /home/paul/moneytrack-deploy/activate-public.sh'
-```
-
-It checks application host first, uses an HTTP-only ACME challenge without serving login over plaintext, reuses the existing Certbot account, validates nginx before each reload, and checks public HTTPS health separately over IPv4 and IPv6 with reload-readiness retries. An activation failure restores the previous site configuration. Renewal challenges remain available after HTTPS activation, with a certificate-specific nginx reload hook. The script stops for administrator action if Certbot requires account selection or new account registration.
-
-This host's proxy-host.example.invalid sites use the explicit IPv6 HTTPS listener `[2001:db8::10]:443`. MoneyTrack must join that listener; a wildcard `[::]:443` belongs to a different virtual-server group and can serve another site's certificate on IPv6. The original activation attempt rolled back and left no MoneyTrack nginx site; its Certbot renewal record exists. The corrected explicit-address template was then installed successfully.
-
-## Updates, backup and recovery
-
-Take a fresh verified backup before migrations. Tag the current image for rollback, build a new immutable revision tag, and stop the app for the migration window. Run migrations with the new image and start it; confirm health and access before retiring the prior image. Do not automatically roll back a database schema when changing images.
-
-The timer uses the SQLite online backup API and `quick_check`, so copying the live main file without WAL is unnecessary. Snapshots are separate closed files, mode 0600, with no automatic retention deletion. For recovery, stop the app, preserve the current database and sidecars, restore a verified snapshot as the service user, and retain the same runtime secret. A backup on the same VM does not survive loss of that VM; off-VM storage remains to be selected.
-
-Production mail delivery/polling stays disabled, so email verification and sharing invitations need a delivery provider before being used publicly. Optional passkeys, password recovery, and iOS distribution remain separate work.
-
-## Verified preparation · 2026-11-02
-
-The Linux production image builds on application host. All 90 server tests pass. All four migrations apply; an isolated disposable release also verifies account creation, while the production database remains empty of accounts. systemd supervision, container health, secure/HttpOnly cookies, and unauthenticated API rejection are verified over the proxy host’s actual Tailscale path. A regular tailnet client is blocked. The first online backup passes integrity validation and the daily timer is enabled. The release also checks/applies pending migrations at startup, so take a verified backup before replacing its image.
-
-DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. Public activation is verified: hostname-valid HTTPS health returns 200 on both addresses; login returns 200 with Secure/HttpOnly cookies and HSTS; HTTP redirects to HTTPS; unauthenticated v3 sync returns 401; and an anonymous login-page session upgrades the LiveView WebSocket with status 101. TLS 1.3 also passes from the Linux proxy client. The certificate expires January 31, 2027. The Certbot renewal timer and certificate-specific nginx reload hook are active.
+The privacy check rejects tracked local settings and known private host values. This repository has no configured remote; earlier local host-bearing deployment commits were rewritten after an external private bundle backup. Host-specific files and backups remain outside tracked history.

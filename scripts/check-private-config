@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Reject tracked private configuration and locally known host identifiers."""
+import json
+import pathlib
+import subprocess
+import sys
+
+root = pathlib.Path(__file__).resolve().parent.parent
+names = subprocess.check_output(["git", "ls-files", "-z"], cwd=root).decode().split("\0")
+names = [name for name in names if name]
+private = [name for name in names if name in ["ios/Configuration/Local.xcconfig", "deploy/local.json"] or name.startswith("deploy/local/")]
+if private:
+    sys.exit("Private configuration is tracked: " + ", ".join(private))
+config = root / "deploy/local.json"
+if config.exists():
+    values = [v.encode().lower() for v in json.loads(config.read_text()).values() if isinstance(v, str) and v]
+    matches = []
+    for name in names:
+        path = root / name
+        if path.is_file() and any(value in path.read_bytes().lower() for value in values):
+            matches.append(name)
+    if matches:
+        sys.exit("Private host identifiers found in tracked files: " + ", ".join(matches))
+print("Tracked private-configuration checks passed.")

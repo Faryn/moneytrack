@@ -3,30 +3,30 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name app.example.invalid;
+    server_name @@PUBLIC_HOST@@;
     location /.well-known/acme-challenge/ {
         root /var/www/letsencrypt;
     }
     location / {
-        return 301 https://app.example.invalid$request_uri;
+        return 301 https://@@PUBLIC_HOST@@$request_uri;
     }
 }
 
 server {
     listen 443 ssl;
-    # Join the same IPv6 listener as the other proxy-host.example.invalid sites. A wildcard
+    # Join the same IPv6 listener as the other proxy sites. A wildcard
     # listener is a different virtual-server group on this host.
-    listen [2001:db8::10]:443 ssl;
-    server_name app.example.invalid;
-    ssl_certificate /etc/letsencrypt/live/app.example.invalid/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.example.invalid/privkey.pem;
+    listen [@@PROXY_IPV6@@]:443 ssl;
+    server_name @@PUBLIC_HOST@@;
+    ssl_certificate /etc/letsencrypt/live/@@PUBLIC_HOST@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@PUBLIC_HOST@@/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     client_max_body_size 1m;
 
     location / {
-        proxy_pass http://192.0.2.10:4018;
+        proxy_pass http://@@APP_IP@@:4018;
         proxy_http_version 1.1;
-        proxy_set_header Host app.example.invalid;
+        proxy_set_header Host @@PUBLIC_HOST@@;
         proxy_set_header X-Forwarded-Proto https;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Real-IP $remote_addr;

@@ -85,6 +85,23 @@ enum ConnectionError: LocalizedError {
 }
 
 enum ServerAddress {
+    static var defaultSignInAddress: String {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+            return initialSignInAddress(configured: nil, isTesting: true,
+                testingServer: ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"])
+        }
+        #endif
+        return initialSignInAddress(configured: Bundle.main.object(forInfoDictionaryKey: "MoneyTrackDefaultServerURL") as? String)
+    }
+
+    static func initialSignInAddress(configured: String?, isTesting: Bool = false, testingServer: String? = nil) -> String {
+        // A missing test override must never fall through to the real instance.
+        let candidate = isTesting ? testingServer : configured
+        guard let candidate, !candidate.contains("$("), let url = try? parse(candidate) else { return "" }
+        return url.absoluteString
+    }
+
     static func parse(_ text: String) throws -> URL {
         guard var c = URLComponents(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
               let host = c.host?.lowercased(), !host.isEmpty, c.user == nil, c.password == nil,

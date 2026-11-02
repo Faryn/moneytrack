@@ -21,7 +21,7 @@ install -d -m 0755 -o paul -g paul /srv/moneytrack
 if ! test -f /etc/moneytrack/moneytrack.env; then
   umask 077
   {
-    printf 'PHX_HOST=app.example.invalid\nPHX_BIND_IP=192.0.2.10\nPORT=4018\n'
+    printf 'PHX_HOST=@@PUBLIC_HOST@@\nPHX_BIND_IP=@@APP_IP@@\nPORT=4018\n'
     printf 'DATABASE_PATH=/data/moneytrack.sqlite3\nPHX_SERVER=true\nSECRET_KEY_BASE='
     openssl rand -base64 64 | tr -d '\n'
     printf '\n'
