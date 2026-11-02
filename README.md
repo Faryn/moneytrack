@@ -8,7 +8,7 @@ The native SwiftUI app supports personal expenses and budgets offline, with exac
 
 Shared expenses support verified email invitations, immediate proposed-share budgeting, connection reuse, private categories, common edit/delete history, and record-only Settle Up. SwiftData preserves pending requests and conflicts through forward migrations to V4. Normal stores receive no sample data.
 
-The backend is installed privately on application host with persistent SQLite, restart supervision, and verified local backups. Public activation at app.example.invalid awaits DNS, TLS, and nginx configuration; see the [deployment runbook](deploy/README.md). Passkeys, password recovery, production email, and TestFlight remain unfinished. No payment provider is configured.
+The backend is installed privately on application host with persistent SQLite, restart supervision, and verified local backups. Public activation at app.example.invalid awaits TLS and privileged nginx setup; DNS is verified; see the [deployment runbook](deploy/README.md). Passkeys, password recovery, production email, and TestFlight remain unfinished. No payment provider is configured.
 
 ## Agreed product direction
 
@@ -75,6 +75,6 @@ Sharing is documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected
 
 ## Next implementation milestone
 
-The personal iOS ↔ server/website flow is now verified. The connected sharing and record-only settlement flow is implemented. The hostname is app.example.invalid and hosting is application host behind the existing nginx host over Tailscale. Next: activate DNS/TLS/nginx, configure production mail, decide account recovery, and implement optional passkeys before TestFlight. Repayment corrections, overpayments, and invitation cancellation are follow-up work.
+The personal iOS ↔ server/website flow is now verified. The connected sharing and record-only settlement flow is implemented. The hostname is app.example.invalid and hosting is application host behind the existing nginx host over Tailscale. Next: activate TLS/nginx, configure production mail, decide account recovery, and implement optional passkeys before TestFlight. Repayment corrections, overpayments, and invitation cancellation are follow-up work.
 
 Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). application host hosting and the public hostname are selected; production accounts and a public release are not configured.

@@ -76,7 +76,7 @@ Recommendation: a documented, versioned JSON API with additive changes where pos
 
 ### 7. Hosting, backup, and recovery
 
-Selected in [ADR 0015](adr/0015-app-host-deployment.md): self-host on application host with nginx at app.example.invalid over Tailscale. Private runtime setup and verified local SQLite backups are implemented; DNS/TLS/nginx public activation remains pending. Use one application deployment with SQLite on persistent host-local storage. Plan WAL mode with full commit durability, verify a patched runtime at setup, and configure foreign keys and bounded lock waits. Use SQLite-aware automated encrypted backups stored separately and a verified restore procedure. Define acceptable data loss and recovery time. Decide export format and how users recover changes that have not yet synced.
+Selected in [ADR 0015](adr/0015-app-host-deployment.md): self-host on application host with nginx at app.example.invalid over Tailscale. Private runtime setup and verified local SQLite backups are implemented; TLS/nginx public activation remains pending; DNS is verified. Use one application deployment with SQLite on persistent host-local storage. Plan WAL mode with full commit durability, verify a patched runtime at setup, and configure foreign keys and bounded lock waits. Use SQLite-aware automated encrypted backups stored separately and a verified restore procedure. Define acceptable data loss and recovery time. Decide export format and how users recover changes that have not yet synced.
 
 ### 8. Distribution and delivery checks
 

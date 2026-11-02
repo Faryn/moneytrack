@@ -69,6 +69,14 @@ The public health route is a liveness check; migration, database integrity, logi
 
 The repository's `nginx-moneytrack.conf` is a staged configuration, not an installed site. First point `app.example.invalid` to the public nginx host (including correct IPv6 if used). Obtain its certificate using that host's existing Certbot setup. Then install the site with sudo, run `nginx -t`, and reload nginx only after validation. The template expects a per-host Let's Encrypt certificate; adapt its paths if the host instead uses a wildcard certificate. Test HTTPS, secure cookies, browser login, LiveView WebSocket upgrades, and authenticated API access. No public signup is enabled.
 
+The activation script and template are staged at `/home/paul/moneytrack-deploy` on the proxy host. Run this in your own terminal to enter the sudo password there:
+
+```sh
+ssh -t proxy-host.example.invalid 'sudo sh /home/paul/moneytrack-deploy/activate-public.sh'
+```
+
+It checks application host first, uses an HTTP-only ACME challenge without serving login over plaintext, reuses the existing Certbot account, validates nginx before each reload, and checks public HTTPS health. An activation failure restores the previous site configuration. Renewal challenges remain available after HTTPS activation, with a certificate-specific nginx reload hook. The script stops for administrator action if Certbot requires account selection or new account registration.
+
 ## Updates, backup and recovery
 
 Take a fresh verified backup before migrations. Tag the current image for rollback, build a new immutable revision tag, and stop the app for the migration window. Run migrations with the new image and start it; confirm health and access before retiring the prior image. Do not automatically roll back a database schema when changing images.
@@ -81,4 +89,4 @@ Production mail delivery/polling stays disabled, so email verification and shari
 
 The Linux production image builds on application host. All 90 server tests pass. All four migrations apply; an isolated disposable release also verifies account creation, while the production database remains empty of accounts. systemd supervision, container health, secure/HttpOnly cookies, and unauthenticated API rejection are verified over the proxy host’s actual Tailscale path. A regular tailnet client is blocked. The first online backup passes integrity validation and the daily timer is enabled. The release also checks/applies pending migrations at startup, so take a verified backup before replacing its image.
 
-DNS does not yet resolve app.example.invalid, and the current SSH user on the nginx host cannot use sudo without a password. No public nginx configuration or certificate has been installed.
+DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. No public nginx configuration or certificate has been installed; the activation script is staged and syntax-checked.
