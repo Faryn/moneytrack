@@ -1,6 +1,6 @@
 # App UX proposal
 
-Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Connected sharing/account flows are implemented under ADR 0012. ADR 0013 adds total-first budgeting, guilt-free spending, and the reachable bottom expense action. Remaining release assumptions stay marked in SPEC.
+Status: iOS-led UX direction with the first personal-expense slice implemented natively. Confirmed: category budgets directly on Budget home, detail navigation, green/red amounts, the category-list variant, and Apple HIG with standard components. Connected sharing/account flows are implemented under ADR 0012. ADR 0013 adds total-first budgeting, guilt-free spending, and the reachable bottom expense action. ADR 0014 refines this to an Expenses-only floating plus and aligned currency fields with a working keyboard save action. Remaining release assumptions stay marked in SPEC.
 
 ## Main structure
 
@@ -10,7 +10,7 @@ Use three persistent native tabs, each with its own navigation stack:
 2. **Expenses**: a chronological, searchable log of personal and shared expenses, with the user's own-share spending total for the selected month. Tapping an expense opens its details and actions.
 3. **Shared**: balances with accepted sharing partners, pending invitations where needed, and navigation to each person's shared expenses and repayments. Do not net amounts owed by different people into the spendable budget.
 
-Provide Add Expense as a large bottom button above the native tab bar on all three destinations. Use the system sheet, subtle symbol bounce and haptics; remove motion when Reduce Motion is enabled. Put account, passkeys, security, and sync status under a profile button. Keep Yearly Plan accessible from Budget home rather than burying it in account settings.
+Provide Add Expense as a compact trailing floating plus above the native tab bar on Expenses only. Keep Budget and Shared free of this action. Use the system sheet, subtle symbol bounce and haptics; remove motion when Reduce Motion is enabled. Put account, passkeys, security, and sync status under a profile button. Keep Yearly Plan accessible from Budget home rather than burying it in account settings.
 
 ## Budget home
 
@@ -24,7 +24,7 @@ Recent expenses are optional on Budget home once category budgets are present. R
 
 ## Quick entry
 
-Open a native sheet with amount first, optional description, and a suggested editable category. Default the date to today with an additional date control for older entries. Saving returns immediately to the previous screen with updated balances and native success feedback. A View action remains an optional refinement; no mandatory sharing step.
+Open a native sheet with amount first, optional description, and a suggested editable category. Default the date to today with an additional date control for older entries. Top Save and keyboard Save Expense use the same validation/action. Saving returns immediately to the previous screen with updated balances and native success feedback. Currency fields show EUR, trailing-aligned exact amounts, and two fractional digits after editing. A View action remains an optional refinement; no mandatory sharing step.
 
 Category suggestions should be easy to accept and override. Do not interpret a description such as Theodor as a person. Future on-device German/English parsing fills this same editable form rather than adding a separate chat interface.
 

@@ -42,7 +42,7 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 - Display the selected month's total remaining budget prominently.
 - Show the monthly allocation, carryover, and personal spending as supporting figures.
 - Allow moving between months.
-- Provide a large Add Expense action near the bottom, above the native tab bar, with subtle system animation and haptics that respect Reduce Motion.
+- Keep expense creation on Expenses: use a compact trailing floating plus above the native tab bar, with an accessible Add Expense label and subtle system animation/haptics that respect Reduce Motion. Budget and Shared have no add button.
 - Show the guilt-free pool's remaining amount and allow opening its spending details.
 - Show category names, their monthly available budget (including carryover), personal spending, and remaining/overspent amounts directly on Budget home.
 - Make each category row or tile a navigation target for its budget details and expenses.
@@ -54,9 +54,11 @@ The primary client is a native iOS app using SwiftUI and standard system compone
 1. Enter an amount.
 2. Enter an optional description, such as `Theodor` (the restaurant name).
 3. Accept or change the suggested category.
-4. Save immediately to local storage.
+4. Save immediately to local storage using the top Save or the reachable keyboard Save Expense action.
 
 The date is today by default and can be changed through an additional control. An example expense is amount `78 €`, description `Theodor`, category `Restaurants`. The description must not automatically be interpreted as a participant.
+
+All monetary fields show EUR and align editable amounts to the trailing edge. Use a decimal keyboard and exactly two fractional digits after editing; accept comma/dot decimals without rounding away extra digits. Display money with two decimal places.
 
 Category selection is visible and editable. Suggest exact previously categorized descriptions, otherwise the most recent category when available. Users can override it, create a category, or leave the selection as Guilt-free spending. Saving without a category uses a private default category, creating it atomically with the expense and pending sync changes when necessary. Expense capture works before budget setup. Suggestions do not require cloud services. More sophisticated matching remains deferred.
 

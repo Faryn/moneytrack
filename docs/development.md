@@ -75,3 +75,7 @@ Use synthetic expenses and identities in fixtures. Keep personal financial expor
 ## 6. Whole-year budgeting and reachable entry
 
 ADR 0013 replaces category-first setup with a yearly total followed by category allocations. Native and web overview show overall remaining, one guilt-free pool, and category details. Unallocated categories share the pool; allocated overspending stays with its category and reduces the total. API v3 saves the complete private plan as one revision, with explicit conflicts and immutable retries. SwiftData V4 preserves populated earlier stores and legacy budgets until explicit conversion. Common exact-cent examples run in Swift and Elixir. The native Add Expense action sits above the tab bar with system animation/haptics and Reduce Motion support.
+
+## 7. Refined expense action and currency entry
+
+ADR 0014 replaces the large all-tab action with a compact floating plus on Expenses only. The expense keyboard saves with the same action as top Save. Native and website monetary inputs show EUR, align amounts to the trailing edge, and format valid input to two fractional digits after editing without rounding invalid precision. The connected check on 2026-11-02 passes 90 server tests and 42 native tests, including exhaustive cent-level split/settlement checks, invalid/overpaid/stale repayment rejection, exact retries, and unchanged personal spending. Release builds successfully.

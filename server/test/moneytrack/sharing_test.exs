@@ -139,6 +139,18 @@ defmodule MoneyTrack.SharingTest do
     }
 
     op = operation("repayment", p)
+
+    for invalid <- [
+          Map.put(p, "payerID", a.id),
+          Map.put(p, "amount", 3901),
+          Map.put(p, "amount", 0)
+        ] do
+      assert {:error, {:validation, _}} =
+               Ledger.apply_operation(a, operation("repayment", invalid))
+    end
+
+    assert Sharing.balance(a, c) == 3900
+    assert Repo.aggregate(Sharing.Repayment, :count) == 0
     assert {:ok, repaid} = Ledger.apply_operation(a, op)
     assert {:ok, ^repaid} = Ledger.apply_operation(a, op)
     assert Sharing.balance(a, c) == 2400

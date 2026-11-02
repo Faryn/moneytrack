@@ -25,6 +25,7 @@ final class ConnectedFlowTests: XCTestCase {
         app.textFields["category.annual"].tap(); app.textFields["category.annual"].typeText("1200")
         app.buttons["category.save"].tap()
         app.navigationBars["Yearly Plan"].buttons["Close"].tap()
+        app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
         app.textFields["expense.amount"].tap(); app.textFields["expense.amount"].typeText("78")
         app.textFields["expense.description"].tap(); app.textFields["expense.description"].typeText("Theodor")
@@ -92,7 +93,9 @@ final class ConnectedFlowTests: XCTestCase {
         let settlement = app.textFields["settle.amount"]
         XCTAssertTrue(settlement.waitForExistence(timeout: 5))
         let previous = settlement.value as? String ?? ""
-        settlement.tap(); settlement.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "15")
+        settlement.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap()
+        settlement.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "15")
+        XCTAssertEqual(settlement.value as? String, "15")
         app.buttons["settle.save"].tap()
         XCTAssertTrue(app.staticTexts["Owes you €24.00"].waitForExistence(timeout: 10))
         let synced = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.staticTexts["sharing.pending"])

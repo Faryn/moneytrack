@@ -627,10 +627,9 @@ defmodule MoneyTrackWeb.BudgetLive do
             max="9999"
             required
           />
-          <.input
+          <.currency_input
             field={@budget_form[:amount]}
             label="Yearly amount (€)"
-            inputmode="decimal"
             required
           />
           <button
@@ -656,7 +655,7 @@ defmodule MoneyTrackWeb.BudgetLive do
             field={@expense_form[field]}
             type="hidden"
           />
-          <.input field={@expense_form[:amount]} label="Amount (€)" inputmode="decimal" required />
+          <.currency_input field={@expense_form[:amount]} label="Amount (€)" required />
           <.input field={@expense_form[:description]} label="Description" maxlength="500" />
           <.input
             field={@expense_form[:categoryID]}

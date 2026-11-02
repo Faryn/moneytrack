@@ -41,7 +41,7 @@ enum Money {
     }
 
     static func format(_ amount: Int64, locale: Locale = .current) -> String {
-        (Decimal(amount) / 100).formatted(.currency(code: "EUR").locale(locale))
+        (Decimal(amount) / 100).formatted(.currency(code: "EUR").precision(.fractionLength(2)).locale(locale))
     }
 
     static func input(_ amount: Int64, locale: Locale = .current) -> String {

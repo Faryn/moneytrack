@@ -31,6 +31,21 @@ const liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
     ...colocatedHooks,
+    CurrencyInput: {
+      mounted() {
+        this.normalize = () => {
+          const match = this.el.value.trim().match(/^([0-9]+)([.,]([0-9]{1,2}))?$/)
+          if (!match) return
+          const separator = match[2]?.[0] || (navigator.language.startsWith("de") ? "," : ".")
+          const value = match[1] + separator + (match[3] || "").padEnd(2, "0")
+          if (value === this.el.value) return
+          this.el.value = value
+          this.el.dispatchEvent(new Event("input", {bubbles: true}))
+        }
+        this.el.addEventListener("blur", this.normalize)
+      },
+      destroyed() { this.el.removeEventListener("blur", this.normalize) },
+    },
     LocalMonth: {
       mounted() {
         if (!new URL(window.location.href).searchParams.has("month")) {

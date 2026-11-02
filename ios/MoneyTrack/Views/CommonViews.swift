@@ -1,5 +1,42 @@
 import SwiftUI
 
+struct CurrencyField: View {
+    let title: String
+    @Binding var text: String
+    let identifier: String
+    var focus: FocusState<Bool>.Binding? = nil
+    @Environment(\.locale) private var locale
+    @FocusState private var localFocus: Bool
+    private var isFocused: Bool { focus?.wrappedValue ?? localFocus }
+
+    var body: some View {
+        LabeledContent(title) {
+            HStack(spacing: 8) {
+                Text("EUR").font(.caption).foregroundStyle(.secondary).accessibilityHidden(true)
+                TextField("0\(locale.decimalSeparator ?? ".")00", text: $text)
+                    .keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    .monospacedDigit().frame(minWidth: 88)
+                    .focused(focus ?? $localFocus)
+                    .accessibilityLabel("\(title), euros")
+                    .accessibilityIdentifier(identifier)
+            }
+        }
+        .onChange(of: isFocused) {
+            if !isFocused, let cents = try? Money.parse(text, allowZero: true) {
+                text = Money.input(cents, locale: locale)
+            }
+        }
+        .toolbar {
+            if focus == nil && localFocus {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { localFocus = false }
+                }
+            }
+        }
+    }
+}
+
 enum AmountColors {
     static let positive = Color("MoneyPositive")
     static let negative = Color("MoneyNegative")

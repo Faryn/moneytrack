@@ -40,6 +40,34 @@ defmodule MoneyTrack.SharedMathTest do
     end
   end
 
+  test "every cent split settles partially then fully in either direction without budget changes" do
+    for amount <- 1..257, split <- ["all", "half", "none"], payer <- [true, false] do
+      expense = MoneyTrack.SharedMath.calculate(amount, split, payer)
+      assert expense["personalShare"] + expense["otherShare"] == amount
+      debt = abs(expense["balance"])
+
+      if debt > 0 do
+        first = max(1, div(debt, 2))
+        repayment = %{"amount" => first, "paidByUser" => expense["balance"] < 0}
+        partial = MoneyTrack.SharedMath.summarize([expense], [repayment])
+
+        assert partial["balance"] ==
+                 if(expense["balance"] < 0, do: -(debt - first), else: debt - first)
+
+        repayments =
+          if debt > first,
+            do: [repayment, Map.put(repayment, "amount", debt - first)],
+            else: [repayment]
+
+        settled = MoneyTrack.SharedMath.summarize([expense], repayments)
+        assert settled["balance"] == 0
+        assert settled["personalSpending"] == expense["personalShare"]
+        assert settled["otherSpending"] == expense["otherShare"]
+        assert settled["expenseBalance"] == expense["balance"]
+      end
+    end
+  end
+
   @settlements Path.expand("../../../docs/contracts/settlement-examples.json", __DIR__)
                |> File.read!()
                |> Jason.decode!()

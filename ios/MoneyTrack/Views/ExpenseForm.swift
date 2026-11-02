@@ -37,11 +37,8 @@ struct ExpenseForm: View {
     }
     var body: some View {
         Form {
-            Section("Amount (€)") {
-                TextField("0,00", text: $amount)
-                    .font(.title2).keyboardType(.decimalPad).focused($amountFocused)
-                    .accessibilityLabel("Amount in euros")
-                    .accessibilityIdentifier("expense.amount")
+            Section {
+                CurrencyField(title: "Amount", text: $amount, identifier: "expense.amount", focus: $amountFocused)
                 if !amount.isEmpty && (try? Money.parse(amount)) == nil {
                     Text("Enter a positive amount such as 78,50 or 78.50, without thousands separators.")
                         .font(.callout).foregroundStyle(AmountColors.negative)
@@ -92,7 +89,9 @@ struct ExpenseForm: View {
             }
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Done") { amountFocused = false }
+                Button("Save Expense", action: save)
+                    .disabled(!canSave)
+                    .accessibilityIdentifier("expense.keyboard-save")
             }
         }
         .interactiveDismissDisabled(dirty)

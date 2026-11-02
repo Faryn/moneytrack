@@ -78,4 +78,27 @@ final class SharedMathTests: XCTestCase {
         XCTAssertEqual(try SharedMath.summarize(expenses: values.reversed(), repayments: []).balance, Int64.max)
     }
 
+    func testEveryCentSplitCanBeSettledPartiallyThenFullyInEitherDirection() throws {
+        for amount in Int64(1)...257 {
+            for split in PersonalSplit.allCases {
+                for payer in [true, false] {
+                    let expense = try SharedMath.calculate(amount: amount, split: split, paidByUser: payer)
+                    XCTAssertEqual(expense.personalShare + expense.otherShare, amount)
+                    let debt = abs(expense.balance)
+                    guard debt > 0 else { continue }
+                    let first = max(1, debt / 2)
+                    var repayments = [RepaymentAmounts(amount: first, paidByUser: expense.balance < 0)]
+                    let partial = try SharedMath.summarize(expenses: [expense], repayments: repayments)
+                    XCTAssertEqual(partial.balance, expense.balance < 0 ? -(debt - first) : debt - first)
+                    if debt > first { repayments.append(.init(amount: debt - first, paidByUser: expense.balance < 0)) }
+                    let settled = try SharedMath.summarize(expenses: [expense], repayments: repayments)
+                    XCTAssertEqual(settled.balance, 0, "amount=\(amount), split=\(split), payer=\(payer)")
+                    XCTAssertEqual(settled.personalSpending, expense.personalShare)
+                    XCTAssertEqual(settled.otherSpending, expense.otherShare)
+                    XCTAssertEqual(settled.expenseBalance, expense.balance)
+                }
+            }
+        }
+    }
+
 }

@@ -454,7 +454,7 @@ defmodule MoneyTrackWeb.SharedLive do
           field={@repayment_form[key]}
           type="hidden"
         />
-        <.input field={@repayment_form[:amount]} label="Amount (€)" inputmode="decimal" required />
+        <.currency_input field={@repayment_form[:amount]} label="Amount (€)" required />
         <.input
           field={@repayment_form[:day]}
           type="date"
@@ -512,7 +512,7 @@ defmodule MoneyTrackWeb.SharedLive do
       >
         <h2 class="text-xl font-semibold">Edit Shared Expense</h2>
         <.input :for={key <- [:id, :revision]} field={@edit_form[key]} type="hidden" />
-        <.input field={@edit_form[:amount]} label="Amount (€)" inputmode="decimal" required />
+        <.currency_input field={@edit_form[:amount]} label="Amount (€)" required />
         <.input field={@edit_form[:description]} label="Description" maxlength="500" />
         <.input field={@edit_form[:day]} label="Date" type="date" required />
         <.input

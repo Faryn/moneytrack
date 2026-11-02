@@ -19,6 +19,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.buttons["category.save"].tap()
         app.navigationBars["Yearly Plan"].buttons["Close"].tap()
         XCTAssertTrue(app.buttons["category-Restaurants"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
         let amount = app.textFields["expense.amount"]
         XCTAssertTrue(amount.waitForExistence(timeout: 5))
@@ -27,6 +28,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.textFields["expense.description"].tap()
         app.textFields["expense.description"].typeText("Theodor")
         app.buttons["expense.save"].tap()
+        app.tabBars.buttons["Budget"].tap()
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€22.00")
         app.terminate()
         app.launchArguments.removeAll { $0 == "--reset-ui-testing-data" }
@@ -43,8 +45,9 @@ final class PersonalExpenseFlowTests: XCTestCase {
         let editedAmount = app.textFields["expense.amount"]
         XCTAssertTrue(editedAmount.waitForExistence(timeout: 5))
         let originalText = editedAmount.value as? String ?? ""
-        editedAmount.tap()
+        editedAmount.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap()
         editedAmount.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: originalText.count) + "98")
+        XCTAssertEqual(editedAmount.value as? String, "98")
         app.buttons["expense.save"].tap()
         app.tabBars.buttons["Budget"].tap()
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€2.00")
@@ -57,7 +60,9 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.buttons["budget.yearly-plan"].tap()
         let total = app.textFields["budget.annual"]
         let oldTotal = total.value as? String ?? ""
-        total.tap(); total.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldTotal.count) + "3600")
+        total.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap()
+        total.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldTotal.count) + "3600")
+        XCTAssertEqual(total.value as? String, "3600")
         app.buttons["budget.save"].tap(); app.buttons["Update Yearly Budget"].tap()
         app.buttons["category.add"].tap()
         app.textFields["category.name"].tap()
@@ -66,6 +71,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.textFields["category.annual"].typeText("2400")
         app.buttons["category.save"].tap()
         app.navigationBars["Yearly Plan"].buttons["Close"].tap()
+        app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
         app.textFields["expense.amount"].tap()
         app.textFields["expense.amount"].typeText("150")
@@ -73,6 +79,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["Restaurants"].waitForExistence(timeout: 5))
         app.buttons["Restaurants"].tap()
         app.buttons["expense.save"].tap()
+        app.tabBars.buttons["Budget"].tap()
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€150.00")
         XCTAssertTrue(app.buttons["category-Restaurants"].label.contains("over budget"))
         let screenshot = XCTAttachment(screenshot: app.screenshot())

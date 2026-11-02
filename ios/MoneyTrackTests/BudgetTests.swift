@@ -2,6 +2,21 @@ import XCTest
 @testable import MoneyTrack
 
 final class BudgetTests: XCTestCase {
+    func testCurrencyUsesTwoDecimalPlacesAndRoundTripsExactly() throws {
+        for localeID in ["en_US", "de_DE"] {
+            let locale = Locale(identifier: localeID)
+            let separator = locale.decimalSeparator!
+            for cents in [Int64(0), 1, 10, 100, 7850, Money.maximum] {
+                let input = Money.input(cents, locale: locale)
+                XCTAssertEqual(input.components(separatedBy: separator).last?.count, 2)
+                XCTAssertEqual(try Money.parse(input, allowZero: true), cents)
+                XCTAssertTrue(Money.format(cents, locale: locale).contains(separator + String(format: "%02lld", cents % 100)))
+            }
+        }
+        for invalid in ["1.001", "1,999", "0.009", "1.234,56", "1,234.56"] {
+            XCTAssertThrowsError(try Money.parse(invalid))
+        }
+    }
     private struct Examples: Decodable {
         let version: Int
         let cases: [Example]

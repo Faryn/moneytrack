@@ -23,4 +23,6 @@ Yearly Plan starts with the total and shows Allocated and Guilt-free amounts, fo
 
 Add Expense becomes a large bottom action above the native tab bar. Use subtle system animation and haptics; respect Reduce Motion. Standard SwiftUI forms, sheets, lists, colors, and Dynamic Type remain the design baseline.
 
+Subsequent refinement: [ADR 0014](0014-expense-action-and-currency-fields.md) replaces this large all-tab action with a compact floating plus on Expenses only and standardizes currency fields. The budgeting decision remains unchanged.
+
 Implementation and compatibility: [API v3](../contracts/annual-budget-v3.md), [shared calculation examples](../contracts/annual-plan-examples.json), and [local storage](../local-storage.md). This supersedes category-first setup and independent rounding in ADR 0006 for whole-year plans; earlier records retain their legacy behavior until explicitly converted.

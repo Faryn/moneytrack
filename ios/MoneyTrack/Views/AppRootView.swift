@@ -19,14 +19,19 @@ struct AppRootView: View {
                     BudgetView(month: $month, openYearlyPlan: { sheet = .yearly(month.year) })
                         .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
-                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
             }
             Tab("Expenses", systemImage: "list.bullet", value: AppTab.expenses) {
                 NavigationStack {
                     ExpenseListView(month: $month)
                         .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
-                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    HStack {
+                        Spacer()
+                        ReachableExpenseButton { sheet = .expense }
+                    }
+                    .padding(.horizontal, 20).padding(.vertical, 8)
+                }
             }
             Tab("Shared", systemImage: "person.2", value: AppTab.shared) {
                 NavigationStack {
@@ -34,7 +39,6 @@ struct AppRootView: View {
                     .navigationTitle("Shared")
                     .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
-                .safeAreaInset(edge: .bottom, spacing: 0) { ReachableExpenseButton { sheet = .expense } }
             }
         }
         .sheet(item: $sheet) { destination in
@@ -87,14 +91,13 @@ struct ReachableExpenseButton: View {
             action()
         } label: {
             Label("Add Expense", systemImage: "plus")
-                .font(.headline).frame(maxWidth: .infinity)
+                .labelStyle(.iconOnly)
+                .font(.title2.weight(.semibold)).frame(width: 28, height: 28)
                 .symbolEffect(.bounce, value: activations)
                 .symbolEffectsRemoved(reduceMotion)
         }
-        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
+        .buttonStyle(.borderedProminent).buttonBorderShape(.circle).controlSize(.large)
         .accessibilityIdentifier("expense.add")
-        .padding(.horizontal, 20).padding(.vertical, 8)
-        .background(.bar)
         .sensoryFeedback(.selection, trigger: activations)
     }
 }

@@ -19,8 +19,7 @@ struct YearlyPlanView: View {
         Form {
             Section { Stepper("Year \(String(year))", value: $year, in: 1900...9999) }
             Section {
-                TextField("Yearly budget (€)", text: $total).keyboardType(.decimalPad)
-                    .accessibilityIdentifier("budget.annual")
+                CurrencyField(title: "Yearly budget", text: $total, identifier: "budget.annual")
                 if let parsed {
                     LabeledContent("Per month on average", value: Money.format(parsed / 12))
                     LabeledContent("Assigned to categories", value: Money.format(allocated))
@@ -106,7 +105,7 @@ struct CategoryEditor: View {
             Section { TextField("Category name", text: $name).textInputAutocapitalization(.words).accessibilityIdentifier("category.name") }
             if let snapshot, !reserved {
                 Section {
-                    TextField("Yearly allocation (€)", text: $annual).keyboardType(.decimalPad).accessibilityIdentifier("category.annual")
+                    CurrencyField(title: "Yearly allocation", text: $annual, identifier: "category.annual")
                     if let parsed {
                         let previous = snapshot.allocations.first { $0.categoryID == category?.id }?.amount ?? 0
                         let free = snapshot.guiltFree + previous - parsed

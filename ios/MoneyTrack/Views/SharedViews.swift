@@ -212,7 +212,7 @@ struct SharedExpenseEditor: View {
     var body: some View {
         Form {
             Section {
-                TextField("Amount", text: $amount).keyboardType(.decimalPad).accessibilityIdentifier("shared-edit.amount")
+                CurrencyField(title: "Amount", text: $amount, identifier: "shared-edit.amount")
                 TextField("Description", text: $description).accessibilityIdentifier("shared-edit.description")
                 DatePicker("Date", selection: $date, displayedComponents: .date)
                 Picker("Paid by", selection: $paidByUser) { Text("You").tag(true); Text(original.otherName).tag(false) }
@@ -255,8 +255,7 @@ struct SettleUpForm: View {
             if let balance = confirmedBalance {
                 Section {
                     Text(balance < 0 ? "You paid \(connection.otherName)" : "\(connection.otherName) paid you")
-                    TextField("Amount (€)", text: $amount).keyboardType(.decimalPad).focused($focused)
-                        .accessibilityIdentifier("settle.amount")
+                    CurrencyField(title: "Amount", text: $amount, identifier: "settle.amount", focus: $focused)
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                 } footer: { Text("Only records a payment made outside MoneyTrack. Both people see the repayment; budgets stay unchanged.") }
                 if let parsed, parsed <= abs(balance) {

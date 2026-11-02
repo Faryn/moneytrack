@@ -13,7 +13,7 @@ Passkeys, password recovery, production email/hosting, and TestFlight distributi
 ## Agreed product direction
 
 - Native SwiftUI with standard iOS components, targeting the latest stable iOS release selected at implementation time.
-- A large, reachable bottom Add Expense action opens fast form entry with suggested categories, today's date, and offline saving followed by synchronization. Native animation/haptics respect Reduce Motion.
+- A compact floating plus on Expenses opens fast form entry with suggested categories, today's date, and offline saving followed by synchronization. Native animation/haptics respect Reduce Motion.
 - Set the whole yearly budget, then allocate parts to flat categories. The remainder is one guilt-free pool for unallocated/uncategorized spending. Exact monthly amounts carry unused and overspent balances within the year, with a January reset; yearly edits recalculate the whole year.
 - Category budgets are visible on Budget home. Green/red amounts distinguish available budget, overspending, and the direction of shared balances, alongside text labels and signs.
 - Personal expenses first. Share a saved expense afterward with one other user through a direct email invitation.
@@ -69,7 +69,7 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Verified on 2026-11-01: 89 server tests and 40 native tests pass across the connected suite and focused follow-up checks. Coverage includes whole-year plans, guilt-free pooling, exact-cent conservation, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
+Verified on 2026-11-02: 90 server tests and 42 native tests pass in the isolated connected suite. Coverage includes whole-year plans, guilt-free pooling, two-decimal currency entry, exhaustive cent-level split/repayment checks, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
 
 Sharing is documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md). Whole-year plans and guilt-free spending extend it through [ADR 0013](docs/adr/0013-whole-year-budget-and-guilt-free-spending.md) and the [v3 contract](docs/contracts/annual-budget-v3.md).
 

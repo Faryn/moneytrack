@@ -346,7 +346,7 @@ defmodule MoneyTrackWeb.PlanLive do
           field={@form[key]}
           type="hidden"
         />
-        <.input field={@form[:total]} label="Yearly budget (€)" inputmode="decimal" required />
+        <.currency_input field={@form[:total]} label="Yearly budget (€)" required />
         <p>
           Category allocations come from this total. Everything unassigned is guilt-free spending.
         </p>
@@ -394,10 +394,9 @@ defmodule MoneyTrackWeb.PlanLive do
           label="Category name"
           required
         />
-        <.input
+        <.currency_input
           field={@allocation_form[:amount]}
           label="Yearly allocation (€); zero uses guilt-free"
-          inputmode="decimal"
         />
         <.button data-confirm="Recalculate this whole calendar year with these allocations?">Save Allocation</.button><button
           phx-click="cancel"

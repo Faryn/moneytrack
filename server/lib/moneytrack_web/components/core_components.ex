@@ -302,6 +302,42 @@ defmodule MoneyTrackWeb.CoreComponents do
     """
   end
 
+  attr :field, Phoenix.HTML.FormField, required: true
+  attr :label, :string, required: true
+  attr :required, :boolean, default: false
+
+  def currency_input(assigns) do
+    ~H"""
+    <div class="fieldset mb-2">
+      <label for={@field.id}>
+        <span class="label mb-1">{@label}</span>
+        <span class="input w-full flex items-center gap-3">
+          <span class="text-base-content/60" aria-hidden="true">EUR</span>
+          <input
+            id={@field.id}
+            name={@field.name}
+            value={Phoenix.HTML.Form.normalize_value("text", @field.value)}
+            type="text"
+            inputmode="decimal"
+            pattern="[0-9]+([.,][0-9]{1,2})?"
+            maxlength="16"
+            placeholder="0.00"
+            autocomplete="off"
+            aria-label={@label <> " (EUR)"}
+            data-currency="EUR"
+            phx-hook="CurrencyInput"
+            class="min-w-0 flex-1 text-right tabular-nums"
+            required={@required}
+          />
+        </span>
+      </label>
+      <.error :for={{message, options} <- @field.errors}>
+        {translate_error({message, options})}
+      </.error>
+    </div>
+    """
+  end
+
   # Helper used by inputs to generate form errors
   defp error(assigns) do
     ~H"""
