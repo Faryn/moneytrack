@@ -75,7 +75,9 @@ The activation script and template are staged at `/home/paul/moneytrack-deploy` 
 ssh -t proxy-host.example.invalid 'sudo sh /home/paul/moneytrack-deploy/activate-public.sh'
 ```
 
-It checks application host first, uses an HTTP-only ACME challenge without serving login over plaintext, reuses the existing Certbot account, validates nginx before each reload, and checks public HTTPS health. An activation failure restores the previous site configuration. Renewal challenges remain available after HTTPS activation, with a certificate-specific nginx reload hook. The script stops for administrator action if Certbot requires account selection or new account registration.
+It checks application host first, uses an HTTP-only ACME challenge without serving login over plaintext, reuses the existing Certbot account, validates nginx before each reload, and checks public HTTPS health separately over IPv4 and IPv6 with reload-readiness retries. An activation failure restores the previous site configuration. Renewal challenges remain available after HTTPS activation, with a certificate-specific nginx reload hook. The script stops for administrator action if Certbot requires account selection or new account registration.
+
+This host's proxy-host.example.invalid sites use the explicit IPv6 HTTPS listener `[2001:db8::10]:443`. MoneyTrack must join that listener; a wildcard `[::]:443` belongs to a different virtual-server group and can serve another site's certificate on IPv6. The original activation attempt rolled back and left no MoneyTrack nginx site; its Certbot renewal record exists. The corrected template is staged for a sudo rerun.
 
 ## Updates, backup and recovery
 
@@ -89,4 +91,4 @@ Production mail delivery/polling stays disabled, so email verification and shari
 
 The Linux production image builds on application host. All 90 server tests pass. All four migrations apply; an isolated disposable release also verifies account creation, while the production database remains empty of accounts. systemd supervision, container health, secure/HttpOnly cookies, and unauthenticated API rejection are verified over the proxy host’s actual Tailscale path. A regular tailnet client is blocked. The first online backup passes integrity validation and the daily timer is enabled. The release also checks/applies pending migrations at startup, so take a verified backup before replacing its image.
 
-DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. No public nginx configuration or certificate has been installed; the activation script is staged and syntax-checked.
+DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. Public activation is not yet verified; the corrected activation script is staged and syntax-checked.

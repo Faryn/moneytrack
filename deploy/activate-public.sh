@@ -75,6 +75,12 @@ test "${RENEWED_LINEAGE:-}" = /etc/letsencrypt/live/app.example.invalid || exit 
 systemctl reload nginx
 HOOK
 chmod 0755 /etc/letsencrypt/renewal-hooks/deploy/moneytrack-nginx-reload
-curl --fail --silent --show-error --max-time 15 https://app.example.invalid/api/health
+for family in -4 -6; do
+  # nginx reload is asynchronous; wait for the new workers and verify both
+  # listener groups before considering activation complete.
+  curl "$family" --fail --silent --show-error --connect-timeout 3 --max-time 5 \
+    --retry 6 --retry-all-errors --retry-delay 1 \
+    https://app.example.invalid/api/health
+done
 finished=true
-printf '\nMoneyTrack HTTPS site activated.\n'
+printf '\nMoneyTrack HTTPS site activated on IPv4 and IPv6.\n'
