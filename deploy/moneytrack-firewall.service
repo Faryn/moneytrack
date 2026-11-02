@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict MoneyTrack listener to the trusted Tailscale proxy
+After=tailscaled.service
+PartOf=tailscaled.service
+Before=moneytrack.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/moneytrack/moneytrack-firewall
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

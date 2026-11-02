@@ -96,18 +96,22 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = System.fetch_env!("PHX_HOST")
+  bind_address = System.get_env("PHX_BIND_IP", "127.0.0.1")
+
+  ip =
+    case :inet.parse_address(String.to_charlist(bind_address)) do
+      {:ok, address} -> address
+      _ -> raise "PHX_BIND_IP must be a numeric IPv4 or IPv6 address"
+    end
 
   config :moneytrack, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :moneytrack, MoneyTrackWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://bandit.hexdocs.pm/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
+      # Production defaults to loopback; deployments explicitly select a private IP.
+      ip: ip
     ],
     secret_key_base: secret_key_base
 

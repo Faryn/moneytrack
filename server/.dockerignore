@@ -1,0 +1,11 @@
+_build
+deps
+cover
+.elixir_ls
+.env*
+*.sqlite*
+*.db*
+*.log
+priv/static/assets
+priv/static/cache_manifest.json
+test

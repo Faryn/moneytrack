@@ -64,7 +64,7 @@ Keep website and API writes in the same application services so validation, vers
 
 Accepted in [ADR 0004](adr/0004-password-login-and-passkeys.md): username/password login with optional passkeys as an alternative login method on both iOS and the website, using the same application-owned accounts. Passkeys are not a required second factor, and Sign in with Apple is not selected. Native Authentication Services and web WebAuthn use the same relying party identity and server-side credential verification.
 
-Selected in ADR 0008: administrator-created accounts, ASCII/case-normalized usernames, bcrypt, Hammer, 30-day hashed/revocable sessions, native Keychain credentials, HTTPS, and ordinary server-readable storage. Still to decide: recovery and recovery email, stable domain/relying party ID, production credential management, and invitation onboarding.
+Selected in ADR 0008: administrator-created accounts, ASCII/case-normalized usernames, bcrypt, Hammer, 30-day hashed/revocable sessions, native Keychain credentials, HTTPS, and ordinary server-readable storage. Selected public hostname: app.example.invalid under ADR 0015; passkey relying party configuration still needs implementation. Recovery and recovery email, invitation onboarding, and full credential management remain open.
 
 Implemented: separate browser/device sessions, scoped authorization, TLS requirements, and parameter-log filtering. Production backup encryption/restoration and release account operations still need configuration. End-to-end encryption is not required by the user.
 
@@ -76,7 +76,7 @@ Recommendation: a documented, versioned JSON API with additive changes where pos
 
 ### 7. Hosting, backup, and recovery
 
-Choose self-hosting versus a managed service, a domain, and who operates it. Use one application deployment with SQLite on persistent host-local storage. Plan WAL mode with full commit durability, verify a patched runtime at setup, and configure foreign keys and bounded lock waits. Use SQLite-aware automated encrypted backups stored separately and a verified restore procedure. Define acceptable data loss and recovery time. Decide export format and how users recover changes that have not yet synced.
+Selected in [ADR 0015](adr/0015-app-host-deployment.md): self-host on application host with nginx at app.example.invalid over Tailscale. Private runtime setup and verified local SQLite backups are implemented; DNS/TLS/nginx public activation remains pending. Use one application deployment with SQLite on persistent host-local storage. Plan WAL mode with full commit durability, verify a patched runtime at setup, and configure foreign keys and bounded lock waits. Use SQLite-aware automated encrypted backups stored separately and a verified restore procedure. Define acceptable data loss and recovery time. Decide export format and how users recover changes that have not yet synced.
 
 ### 8. Distribution and delivery checks
 

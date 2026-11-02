@@ -8,7 +8,7 @@ The native SwiftUI app supports personal expenses and budgets offline, with exac
 
 Shared expenses support verified email invitations, immediate proposed-share budgeting, connection reuse, private categories, common edit/delete history, and record-only Settle Up. SwiftData preserves pending requests and conflicts through forward migrations to V4. Normal stores receive no sample data.
 
-Passkeys, password recovery, production email/hosting, and TestFlight distribution remain unfinished. Invitation mail uses local/test delivery; no production deployment or payment provider is configured.
+The backend is installed privately on application host with persistent SQLite, restart supervision, and verified local backups. Public activation at app.example.invalid awaits DNS, TLS, and nginx configuration; see the [deployment runbook](deploy/README.md). Passkeys, password recovery, production email, and TestFlight remain unfinished. No payment provider is configured.
 
 ## Agreed product direction
 
@@ -69,12 +69,12 @@ scripts/test-ios
 scripts/check-connected
 ```
 
-Verified on 2026-11-02: 90 server tests and 42 native tests pass in the isolated connected suite. Coverage includes whole-year plans, guilt-free pooling, two-decimal currency entry, exhaustive cent-level split/repayment checks, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. Neither app has been deployed.
+Verified on 2026-11-02: 90 server tests and 42 native tests pass in the isolated connected suite. Coverage includes whole-year plans, guilt-free pooling, two-decimal currency entry, exhaustive cent-level split/repayment checks, two-account sharing, private categories, partial settlement, financial conflicts/deletion, populated V1/V2/V3 migrations, immutable retries, and native setup/sharing/settlement UI. The iOS Release build passes. The current app/test deployment target is iOS 27.0. The backend is privately deployed on application host; public nginx activation and iOS distribution remain pending.
 
 Sharing is documented in [ADR 0012](docs/adr/0012-sharing-defaults-and-connected-flow.md) and the [v2 contract](docs/contracts/shared-sync-v2.md). Whole-year plans and guilt-free spending extend it through [ADR 0013](docs/adr/0013-whole-year-budget-and-guilt-free-spending.md) and the [v3 contract](docs/contracts/annual-budget-v3.md).
 
 ## Next implementation milestone
 
-The personal iOS ↔ server/website flow is now verified. The connected sharing and record-only settlement flow is implemented. Next: select the stable HTTPS domain, production mail/hosting, account recovery policy, and optional passkeys before preparing TestFlight. Repayment corrections, overpayments, and invitation cancellation are follow-up work.
+The personal iOS ↔ server/website flow is now verified. The connected sharing and record-only settlement flow is implemented. The hostname is app.example.invalid and hosting is application host behind the existing nginx host over Tailscale. Next: activate DNS/TLS/nginx, configure production mail, decide account recovery, and implement optional passkeys before TestFlight. Repayment corrections, overpayments, and invitation cancellation are follow-up work.
 
-Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). No hosting provider, domain, production account configuration, or public release has been configured.
+Remaining product assumptions stay marked in the [technical backlog](docs/technical-decisions.md). application host hosting and the public hostname are selected; production accounts and a public release are not configured.

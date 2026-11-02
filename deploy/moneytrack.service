@@ -1,0 +1,19 @@
+[Unit]
+Description=MoneyTrack Phoenix website and sync API
+Requires=docker.service moneytrack-firewall.service
+After=docker.service tailscaled.service network-online.target moneytrack-firewall.service
+Wants=network-online.target
+PartOf=docker.service tailscaled.service moneytrack-firewall.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/moneytrack
+ExecStartPre=/usr/bin/docker compose config --quiet
+ExecStart=/usr/bin/docker compose up --no-build --abort-on-container-exit --exit-code-from web
+ExecStop=/usr/bin/docker compose stop -t 30
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=45
+
+[Install]
+WantedBy=multi-user.target

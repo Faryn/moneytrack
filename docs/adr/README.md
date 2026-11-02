@@ -18,3 +18,4 @@ Accepted decisions describe agreed architecture. Proposed technical choices rema
 | [0012](0012-sharing-defaults-and-connected-flow.md) | Accepted | Private Uncategorized fallback, reuse accepted connections, and immediate repayment recording by either participant; connected shared flow |
 | [0013](0013-whole-year-budget-and-guilt-free-spending.md) | Accepted | Whole yearly total before category allocations; one guilt-free pool; joint exact-cent allocation; reachable bottom expense entry |
 | [0014](0014-expense-action-and-currency-fields.md) | Accepted | Expenses-only floating plus; keyboard Save Expense; aligned EUR fields and exact two-place money presentation |
+| [0015](0015-app-host-deployment.md) | Accepted hosting direction | application host Phoenix/SQLite release; nginx HTTPS on app.example.invalid over Tailscale; private listener and persistent storage |
