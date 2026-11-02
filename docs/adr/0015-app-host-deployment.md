@@ -21,3 +21,7 @@ The user selected the local VM `app-host` for the Phoenix website/API and SQLite
 Preparation does not configure production email, passkeys, password recovery, or TestFlight. The public nginx configuration is staged for review. DNS for the chosen hostname and sudo access on the nginx host are needed before public activation; application host sudo access is available. The existing authorization and transport rules in [ADR 0008](0008-connected-accounts-and-transport.md) still apply.
 
 See the [deployment runbook](../../deploy/README.md) and [Phoenix release documentation](https://phoenix.hexdocs.pm/releases.html).
+
+## Public activation verified · 2026-11-02
+
+The user installed the site and certificate with sudo. Public HTTPS health passes on IPv4 and IPv6; the login page, secure cookies, HSTS, HTTP redirect, unauthenticated API rejection, and LiveView WebSocket upgrade are verified. Certificate renewal scheduling and its nginx reload hook are active. The explicit host IPv6 listener is required. Accounts, mail delivery, recovery, passkeys, and iOS distribution remain separate work.

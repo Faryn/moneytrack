@@ -67,7 +67,7 @@ The public health route is a liveness check; migration, database integrity, logi
 
 ## Public proxy activation
 
-The repository's `nginx-moneytrack.conf` is a staged configuration, not an installed site. First point `app.example.invalid` to the public nginx host (including correct IPv6 if used). Obtain its certificate using that host's existing Certbot setup. Then install the site with sudo, run `nginx -t`, and reload nginx only after validation. The template expects a per-host Let's Encrypt certificate; adapt its paths if the host instead uses a wildcard certificate. Test HTTPS, secure cookies, browser login, LiveView WebSocket upgrades, and authenticated API access. No public signup is enabled.
+The repository's `nginx-moneytrack.conf` is now installed for the live site. For a fresh deployment: First point `app.example.invalid` to the public nginx host (including correct IPv6 if used). Obtain its certificate using that host's existing Certbot setup. Then install the site with sudo, run `nginx -t`, and reload nginx only after validation. The template expects a per-host Let's Encrypt certificate; adapt its paths if the host instead uses a wildcard certificate. Test HTTPS, secure cookies, browser login, LiveView WebSocket upgrades, and authenticated API access. No public signup is enabled.
 
 The activation script and template are staged at `/home/paul/moneytrack-deploy` on the proxy host. Run this in your own terminal to enter the sudo password there:
 
@@ -77,7 +77,7 @@ ssh -t proxy-host.example.invalid 'sudo sh /home/paul/moneytrack-deploy/activate
 
 It checks application host first, uses an HTTP-only ACME challenge without serving login over plaintext, reuses the existing Certbot account, validates nginx before each reload, and checks public HTTPS health separately over IPv4 and IPv6 with reload-readiness retries. An activation failure restores the previous site configuration. Renewal challenges remain available after HTTPS activation, with a certificate-specific nginx reload hook. The script stops for administrator action if Certbot requires account selection or new account registration.
 
-This host's proxy-host.example.invalid sites use the explicit IPv6 HTTPS listener `[2001:db8::10]:443`. MoneyTrack must join that listener; a wildcard `[::]:443` belongs to a different virtual-server group and can serve another site's certificate on IPv6. The original activation attempt rolled back and left no MoneyTrack nginx site; its Certbot renewal record exists. The corrected template is staged for a sudo rerun.
+This host's proxy-host.example.invalid sites use the explicit IPv6 HTTPS listener `[2001:db8::10]:443`. MoneyTrack must join that listener; a wildcard `[::]:443` belongs to a different virtual-server group and can serve another site's certificate on IPv6. The original activation attempt rolled back and left no MoneyTrack nginx site; its Certbot renewal record exists. The corrected explicit-address template was then installed successfully.
 
 ## Updates, backup and recovery
 
@@ -91,4 +91,4 @@ Production mail delivery/polling stays disabled, so email verification and shari
 
 The Linux production image builds on application host. All 90 server tests pass. All four migrations apply; an isolated disposable release also verifies account creation, while the production database remains empty of accounts. systemd supervision, container health, secure/HttpOnly cookies, and unauthenticated API rejection are verified over the proxy host’s actual Tailscale path. A regular tailnet client is blocked. The first online backup passes integrity validation and the daily timer is enabled. The release also checks/applies pending migrations at startup, so take a verified backup before replacing its image.
 
-DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. Public activation is not yet verified; the corrected activation script is staged and syntax-checked.
+DNS now resolves app.example.invalid to `203.0.113.10` and `2001:db8::10`. The current SSH user on the nginx host cannot use sudo without a password, and root SSH access is unavailable. Public activation is verified: hostname-valid HTTPS health returns 200 on both addresses; login returns 200 with Secure/HttpOnly cookies and HSTS; HTTP redirects to HTTPS; unauthenticated v3 sync returns 401; and an anonymous login-page session upgrades the LiveView WebSocket with status 101. TLS 1.3 also passes from the Linux proxy client. The certificate expires January 31, 2027. The Certbot renewal timer and certificate-specific nginx reload hook are active.
