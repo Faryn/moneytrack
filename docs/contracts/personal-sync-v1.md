@@ -75,3 +75,7 @@ Server errors and transport failures leave the exact prepared request pending. A
 ## Subsequent API versions
 
 [API v2](shared-sync-v2.md) adds shared records; [API v3](annual-budget-v3.md) adds whole-year budgets and guilt-free spending. Current native clients use v3. V1/V2 sync returns 426 when an account has a whole-year plan, preserving pending work for upgrade. The original personal payloads remain accepted through v3 subject to the new per-year legacy-budget guard.
+
+## Personal income extension
+
+[ADR 0019](../adr/0019-personal-income-bookings.md) adds `/api/v5/sync` with the existing operation envelope and optional `kind` on personal expense payloads. Values are `expense` or `income`; absent means expense. Income retains positive exact cents and personalShare equal to amount, but consumes no budget. Income is private and cannot be shared. Updates to existing income require explicit kind. V1–v4 return 426 for accounts with any income history or income submissions. Existing prepared expense operations remain accepted unchanged by v5.

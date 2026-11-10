@@ -19,6 +19,8 @@ defmodule MoneyTrackWeb.ErrorHTML do
   # the template name. For example, "404.html" becomes
   # "Not Found".
   def render(template, _assigns) do
-    Phoenix.Controller.status_message_from_template(template)
+    template
+    |> Phoenix.Controller.status_message_from_template()
+    |> MoneyTrackWeb.Language.message()
   end
 end

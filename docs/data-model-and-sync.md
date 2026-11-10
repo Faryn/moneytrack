@@ -110,3 +110,7 @@ Use a versioned JSON API and a durable local outbox. SwiftData is selected in [A
 ## Remaining review choices
 
 Prioritize pending-invitation treatment, reuse of accepted connections, removal of sharing, repayment confirmation, recovery policy, and the Uncategorized behavior. Common edit/delete permissions with shared history are accepted in ADR 0005. After remaining choices are settled, promote the sync design to an ADR and scaffold a small end-to-end flow.
+
+## Implemented currency extension
+
+[ADR 0017](adr/0017-expense-currency-conversion.md) supersedes generic amount/currency proposals for the current implementation: expenses retain original currency provenance but all financial calculations and repayments use fixed EUR cents. Native V5 and sync v4 carry that provenance atomically with the amount.

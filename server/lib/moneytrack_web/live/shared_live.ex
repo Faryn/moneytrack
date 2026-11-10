@@ -39,7 +39,7 @@ defmodule MoneyTrackWeb.SharedLive do
         if e = Enum.find(socket.assigns.sharing.expenses, &(&1["entityID"] == id)) do
           start_edit(socket, e)
         else
-          case Enum.find(socket.assigns.personal.expenses, &(&1.id == id)) do
+          case Enum.find(socket.assigns.personal.expenses, &(&1.id == id && &1.kind != "income")) do
             nil ->
               socket
 
@@ -80,7 +80,7 @@ defmodule MoneyTrackWeb.SharedLive do
 
       {:noreply, save(socket, op("shared_expense", payload, 0))}
     else
-      {:noreply, assign(socket, error: "Choose a personal expense to share.")}
+      {:noreply, assign(socket, error: gettext("Choose a personal expense to share."))}
     end
   end
 
@@ -103,10 +103,16 @@ defmodule MoneyTrackWeb.SharedLive do
   def handle_event("save", %{"shared" => p}, socket) do
     socket = assign(socket, edit_form: to_form(p, as: :shared))
 
-    with {:ok, amount} <- amount(p["amount"]), {:ok, date} <- Date.from_iso8601(p["day"] || "") do
+    current = Enum.find(socket.assigns.sharing.expenses, &(&1["entityID"] == p["id"]))
+    old_conversion = if current, do: current["payload"]["conversion"]
+
+    with {:ok, amount, conversion} <-
+           MoneyTrack.Currency.from_input(p["amount"], p["currency"], old_conversion),
+         {:ok, date} <- Date.from_iso8601(p["day"] || "") do
       payload = %{
         "id" => p["id"],
         "amount" => amount,
+        "conversion" => conversion,
         "description" => p["description"],
         "day" => day(date),
         "paidByCreator" => p["paidByCreator"] == "true",
@@ -115,7 +121,7 @@ defmodule MoneyTrackWeb.SharedLive do
 
       {:noreply, save(socket, op("shared_expense", payload, int_value(p["revision"])))}
     else
-      _ -> {:noreply, assign(socket, error: "Enter a valid amount and date.")}
+      _ -> {:noreply, assign(socket, error: gettext("Enter a valid amount and date."))}
     end
   end
 
@@ -171,7 +177,7 @@ defmodule MoneyTrackWeb.SharedLive do
 
       {:noreply, save(socket, op("repayment", payload, 0))}
     else
-      _ -> {:noreply, assign(socket, error: "Enter a valid repayment amount and date.")}
+      _ -> {:noreply, assign(socket, error: gettext("Enter a valid repayment amount and date."))}
     end
   end
 
@@ -228,15 +234,17 @@ defmodule MoneyTrackWeb.SharedLive do
         socket
         |> assign(
           conflict: %{operation: operation, current: current},
-          error: "This shared item changed. Review before replacing it."
+          error: gettext("This shared item changed. Review before replacing it.")
         )
         |> reload()
 
       {:error, {:validation, message}} ->
-        socket |> assign(error: message) |> reload()
+        socket |> assign(error: MoneyTrackWeb.Language.message(message)) |> reload()
 
       _ ->
-        socket |> assign(error: "This item is unavailable or its fields need review.") |> reload()
+        socket
+        |> assign(error: gettext("This item is unavailable or its fields need review."))
+        |> reload()
     end
   end
 
@@ -255,7 +263,12 @@ defmodule MoneyTrackWeb.SharedLive do
     form = %{
       "id" => e["entityID"],
       "revision" => to_string(e["revision"]),
-      "amount" => input_amount(p["amount"]),
+      "amount" =>
+        if(p["conversion"],
+          do: MoneyTrack.Currency.original_input(p["conversion"]),
+          else: input_amount(p["amount"])
+        ),
+      "currency" => if(p["conversion"], do: p["conversion"]["originalCurrency"], else: "EUR"),
       "description" => p["description"],
       "day" => iso_day(p["day"]),
       "paidByCreator" => to_string(p["paidByCreator"]),
@@ -311,16 +324,41 @@ defmodule MoneyTrackWeb.SharedLive do
       "#{d["year"]}-#{String.pad_leading(to_string(d["month"]), 2, "0")}-#{String.pad_leading(to_string(d["day"]), 2, "0")}"
 
   defp input_amount(n), do: "#{div(n, 100)}.#{String.pad_leading(to_string(rem(n, 100)), 2, "0")}"
-  defp money(n), do: "#{if n < 0, do: "−", else: ""}€#{input_amount(abs(n))}"
-  defp balance_label(0), do: "Settled up"
-  defp balance_label(n), do: "#{if n > 0, do: "Owes you", else: "You owe"} #{money(abs(n))}"
+  defp money(cents), do: MoneyTrackWeb.Language.money(cents)
+  defp balance_label(0), do: gettext("Settled up")
+  defp balance_label(n) when n > 0, do: gettext("Owes you %{amount}", amount: money(n))
+  defp balance_label(n), do: gettext("You owe %{amount}", amount: money(-n))
+  defp split_label("all"), do: gettext("All")
+  defp split_label("half"), do: gettext("Half")
+  defp split_label("none"), do: gettext("None")
+  defp split_label(value), do: value
+
+  defp sharing_status("pending"), do: gettext("Awaiting acceptance")
+  defp sharing_status("accepted"), do: gettext("Accepted")
+  defp sharing_status(value), do: value
+
+  defp history_action("shared"), do: gettext("Shared")
+  defp history_action("accepted"), do: gettext("Accepted")
+  defp history_action("deleted"), do: gettext("Deleted")
+  defp history_action("edited"), do: gettext("Edited")
+  defp history_action(value), do: value
+
+  defp displayed_day(day) do
+    case Date.from_iso8601(iso_day(day)) do
+      {:ok, date} -> MoneyTrackWeb.Language.date(date)
+      _ -> iso_day(day)
+    end
+  end
+
   defp color(n) when n > 0, do: "text-green-700 dark:text-green-300"
   defp color(n) when n < 0, do: "text-red-700 dark:text-red-300"
   defp color(_), do: "text-base-content"
 
   defp deletion_message(e, balances) do
     base =
-      "Delete this expense? Its spending and obligation are removed; recorded repayments remain."
+      gettext(
+        "Delete this expense? Its spending and obligation are removed; recorded repayments remain."
+      )
 
     p = e["payload"]
 
@@ -334,9 +372,11 @@ defmodule MoneyTrackWeb.SharedLive do
           "balance"
         ]
 
-      base <> " After deletion: " <> balance_label(balances[c["id"]] - delta) <> "."
+      base <>
+        " " <>
+        gettext("After deletion: %{balance}.", balance: balance_label(balances[c["id"]] - delta))
     else
-      base <> " The pending invitation will no longer be available."
+      base <> " " <> gettext("The pending invitation will no longer be available.")
     end
   end
 
@@ -350,19 +390,38 @@ defmodule MoneyTrackWeb.SharedLive do
     |> Enum.map_join(" · ", fn {key, value} ->
       case key do
         "amount" ->
-          "Amount: #{money(value)}"
+          gettext("Amount: %{amount}", amount: money(value))
+
+        "conversion" ->
+          if value,
+            do:
+              gettext("Original: %{amount} %{currency} · ECB %{date}",
+                amount: MoneyTrack.Currency.original_input(value),
+                currency: value["originalCurrency"],
+                date: value["rateDate"]
+              ),
+            else: gettext("Currency: EUR")
 
         "description" ->
-          "Description: #{value}"
+          gettext("Description: %{description}", description: value)
 
         "day" ->
-          "Date: #{iso_day(value)}"
+          gettext("Date: %{date}", date: displayed_day(value))
 
         "paidByCreator" ->
-          "Paid by: #{if value, do: p["creatorName"], else: p["recipientName"] || p["recipientEmail"] || "Other person"}"
+          gettext("Paid by: %{person}",
+            person:
+              if(value,
+                do: p["creatorName"],
+                else: p["recipientName"] || p["recipientEmail"] || gettext("Other person")
+              )
+          )
 
         "creatorSplit" ->
-          "#{p["creatorName"]}'s share: #{String.capitalize(value)}"
+          gettext("Share of %{person}: %{split}",
+            person: p["creatorName"],
+            split: split_label(value)
+          )
       end
     end)
   end
@@ -378,7 +437,7 @@ defmodule MoneyTrackWeb.SharedLive do
           ),
         personal_options:
           Enum.reject(assigns.personal.expenses, fn e ->
-            Enum.any?(assigns.sharing.expenses, &(&1["entityID"] == e.id))
+            e.kind == "income" || Enum.any?(assigns.sharing.expenses, &(&1["entityID"] == e.id))
           end)
           |> Enum.map(
             &{if(&1.description == "", do: money(&1.amount), else: &1.description), &1.id}
@@ -387,40 +446,50 @@ defmodule MoneyTrackWeb.SharedLive do
 
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
-      <.link navigate={~p"/"} class="link">Budget</.link>
-      <h1 class="text-2xl font-semibold">Shared</h1>
+      <.link navigate={~p"/"} class="link">{gettext("Budget")}</.link>
+      <h1 class="text-2xl font-semibold">{gettext("Shared")}</h1>
       <p :if={@error} id="sharing-error" role="alert" class="text-error">{@error}</p>
       <section :if={@conflict} id="sharing-conflict" class="card border border-warning p-4">
         <p>
-          Server version: {Jason.encode!(
-            @conflict.current["payload"]
-            |> Map.take(~w(amount description creatorSplit paidByCreator))
-          )}
+          {gettext("Server version")}: {if @conflict.current["deleted"],
+            do: gettext("Deleted"),
+            else:
+              change_text(
+                Map.take(
+                  @conflict.current["payload"],
+                  ~w(amount description creatorSplit paidByCreator)
+                ),
+                @conflict.current["payload"]
+              )}
         </p>
-        <button phx-click="use_server" class="btn">Use Server Version</button>
-        <button :if={!@conflict.current["deleted"]} phx-click="keep_local" class="btn">Keep My Changes</button>
+        <button phx-click="use_server" class="btn">{gettext("Use Server Version")}</button>
+        <button :if={!@conflict.current["deleted"]} phx-click="keep_local" class="btn">{gettext(
+          "Keep My Changes"
+        )}</button>
       </section>
       <section :if={@sharing.invitations != []} class="space-y-3">
-        <h2 class="text-xl font-semibold">Invitations</h2>
+        <h2 class="text-xl font-semibold">{gettext("Invitations")}</h2>
         <div
           :for={e <- @sharing.invitations}
           id={"invitation-#{e["entityID"]}"}
           class="card border p-4"
         >
           <p>
-            {e["payload"]["senderName"]} invited you. Your share starts in your private Uncategorized category.
+            {gettext("%{person} invited you. Accept once for current and future shared expenses.",
+              person: e["payload"]["senderName"]
+            )}
           </p>
           <button
             phx-click="accept"
             phx-value-id={e["entityID"]}
             phx-value-revision={e["revision"]}
             class="btn"
-            phx-disable-with="Accepting…"
-          >Accept Invitation</button>
+            phx-disable-with={gettext("Accepting…")}
+          >{gettext("Accept Invitation")}</button>
         </div>
       </section>
       <section class="space-y-3">
-        <h2 class="text-xl font-semibold">People</h2>
+        <h2 class="text-xl font-semibold">{gettext("People")}</h2>
         <div
           :for={c <- @sharing.connections}
           id={"person-#{c["id"]}"}
@@ -433,7 +502,7 @@ defmodule MoneyTrackWeb.SharedLive do
             phx-value-id={c["id"]}
             disabled={@balances[c["id"]] == 0}
             class="btn"
-          >Settle Up</button>
+          >{gettext("Settle Up")}</button>
         </div>
       </section>
       <.form
@@ -443,63 +512,71 @@ defmodule MoneyTrackWeb.SharedLive do
         phx-submit="repay"
         class="card border p-4"
       >
-        <h2 class="text-xl font-semibold">Settle Up</h2>
+        <h2 class="text-xl font-semibold">{gettext("Settle Up")}</h2>
         <p>
           {if int_value(@repayment_form.params["balance"]) < 0,
-            do: "You paid the other person",
-            else: "The other person paid you"}. Only records a payment made outside MoneyTrack. Budgets stay unchanged.
+            do: gettext("You paid the other person"),
+            else: gettext("The other person paid you")}. {gettext(
+            "Only records a payment made outside Spendie. Budgets stay unchanged."
+          )}
         </p>
         <.input
           :for={key <- [:id, :connectionID, :balance, :createdAt]}
           field={@repayment_form[key]}
           type="hidden"
         />
-        <.currency_input field={@repayment_form[:amount]} label="Amount (€)" required />
+        <.currency_input field={@repayment_form[:amount]} label={gettext("Amount (€)")} required />
         <.input
           field={@repayment_form[:day]}
           type="date"
           phx-hook="LocalExpenseDay"
           data-entry-id={@repayment_form[:id].value}
           data-new="true"
-          label="Date"
+          label={gettext("Date")}
           required
         />
-        <.button phx-disable-with="Recording…">Record Repayment</.button>
-        <button type="button" phx-click="cancel" class="btn">Cancel</button>
+        <.button phx-disable-with={gettext("Recording…")}>{gettext("Record Repayment")}</.button>
+        <button type="button" phx-click="cancel" class="btn">{gettext("Cancel")}</button>
       </.form>
       <section class="card border p-4">
-        <h2 class="text-xl font-semibold">Share a Saved Expense</h2>
+        <h2 class="text-xl font-semibold">{gettext("Share a Saved Expense")}</h2>
         <.form for={@share_form} id="share-form" phx-submit="share">
           <.input
             field={@share_form[:id]}
             type="select"
-            label="Expense"
-            prompt="Choose a personal expense"
+            label={gettext("Expense")}
+            prompt={gettext("Choose a personal expense")}
             options={@personal_options}
             required
           />
           <.input
             field={@share_form[:recipientID]}
             type="select"
-            label="Existing connection (optional)"
-            prompt="Invite by email"
+            label={gettext("Existing connection (optional)")}
+            prompt={gettext("Invite by email")}
             options={Enum.map(@sharing.connections, &{&1["otherName"], &1["otherID"]})}
           />
-          <.input field={@share_form[:recipientEmail]} type="email" label="Recipient email" />
+          <.input
+            field={@share_form[:recipientEmail]}
+            type="email"
+            label={gettext("Recipient email")}
+          />
           <.input
             field={@share_form[:paidByCreator]}
             type="select"
-            label="Paid by"
-            options={[{"You", "true"}, {"Other person", "false"}]}
+            label={gettext("Paid by")}
+            options={[{gettext("You"), "true"}, {gettext("Other person"), "false"}]}
           />
           <.input
             field={@share_form[:creatorSplit]}
             type="select"
-            label="Your share"
-            options={[{"All", "all"}, {"Half", "half"}, {"None", "none"}]}
+            label={gettext("Your share")}
+            options={[{gettext("All"), "all"}, {gettext("Half"), "half"}, {gettext("None"), "none"}]}
           />
-          <p class="text-sm">Your proposed share counts in the original expense month immediately.</p>
-          <.button phx-disable-with="Sharing…">Share Expense</.button>
+          <p class="text-sm">
+            {gettext("Your proposed share counts in the original expense month immediately.")}
+          </p>
+          <.button phx-disable-with={gettext("Sharing…")}>{gettext("Share Expense")}</.button>
         </.form>
       </section>
       <.form
@@ -510,25 +587,35 @@ defmodule MoneyTrackWeb.SharedLive do
         phx-change="edit_change"
         class="card border p-4"
       >
-        <h2 class="text-xl font-semibold">Edit Shared Expense</h2>
+        <h2 class="text-xl font-semibold">{gettext("Edit Shared Expense")}</h2>
         <.input :for={key <- [:id, :revision]} field={@edit_form[key]} type="hidden" />
-        <.currency_input field={@edit_form[:amount]} label="Amount (€)" required />
-        <.input field={@edit_form[:description]} label="Description" maxlength="500" />
-        <.input field={@edit_form[:day]} label="Date" type="date" required />
+        <.currency_input
+          field={@edit_form[:amount]}
+          label={gettext("Amount (%{currency})", currency: @edit_form[:currency].value || "EUR")}
+          required
+        />
+        <.input
+          field={@edit_form[:currency]}
+          type="select"
+          label={gettext("Currency")}
+          options={["EUR" | MoneyTrack.Currency.currencies()]}
+        />
+        <.input field={@edit_form[:description]} label={gettext("Description")} maxlength="500" />
+        <.input field={@edit_form[:day]} label={gettext("Date")} type="date" required />
         <.input
           field={@edit_form[:paidByCreator]}
           type="select"
-          label="Paid by"
-          options={[{"Original creator", "true"}, {"Other participant", "false"}]}
+          label={gettext("Paid by")}
+          options={[{gettext("Original creator"), "true"}, {gettext("Other participant"), "false"}]}
         />
         <.input
           field={@edit_form[:creatorSplit]}
           type="select"
-          label="Original creator's share"
-          options={[{"All", "all"}, {"Half", "half"}, {"None", "none"}]}
+          label={gettext("Original creator's share")}
+          options={[{gettext("All"), "all"}, {gettext("Half"), "half"}, {gettext("None"), "none"}]}
         />
-        <.button>Save Shared Changes</.button>
-        <button type="button" phx-click="cancel" class="btn">Cancel</button>
+        <.button>{gettext("Save Shared Changes")}</.button>
+        <button type="button" phx-click="cancel" class="btn">{gettext("Cancel")}</button>
       </.form>
       <section
         :for={e <- @sharing.expenses}
@@ -537,12 +624,28 @@ defmodule MoneyTrackWeb.SharedLive do
         class="card border p-4 space-y-2"
       >
         <h2>{e["payload"]["description"]}</h2>
+        <details :if={e["payload"]["conversion"]}>
+          <summary>{gettext("Original currency details")}</summary>
+          <p>
+            {MoneyTrack.Currency.original_input(e["payload"]["conversion"])} {e["payload"][
+              "conversion"
+            ]["originalCurrency"]} · 1 EUR = {e["payload"]["conversion"]["rate"]} · {gettext("ECB")} {e[
+              "payload"
+            ][
+              "conversion"
+            ]["rateDate"]}
+          </p>
+        </details>
         <p>
-          {money(e["payload"]["amount"])} total · {iso_day(e["payload"]["day"])} · {if e["deleted"],
-            do: "Deleted",
-            else: e["payload"]["status"]}
+          {gettext("%{amount} total", amount: money(e["payload"]["amount"]))} · {displayed_day(
+            e["payload"]["day"]
+          )} · {if e["deleted"],
+            do: gettext("Deleted"),
+            else: sharing_status(e["payload"]["status"])}
         </p>
-        <button :if={!e["deleted"]} phx-click="edit" phx-value-id={e["entityID"]} class="btn">Edit Shared Expense</button>
+        <button :if={!e["deleted"]} phx-click="edit" phx-value-id={e["entityID"]} class="btn">{gettext(
+          "Edit Shared Expense"
+        )}</button>
         <button
           :if={!e["deleted"]}
           phx-click="delete"
@@ -550,7 +653,7 @@ defmodule MoneyTrackWeb.SharedLive do
           phx-value-revision={e["revision"]}
           class="btn"
           data-confirm={deletion_message(e, @balances)}
-        >Delete Shared Expense</button>
+        >{gettext("Delete Shared Expense")}</button>
         <.form
           :if={!e["deleted"]}
           for={
@@ -576,29 +679,40 @@ defmodule MoneyTrackWeb.SharedLive do
             type="select"
             name="assignment[categoryID]"
             value={e["payload"]["categoryID"]}
-            label="Your private category"
-            options={Enum.map(@personal.categories, &{&1.name, &1.id})}
+            label={gettext("Your private category")}
+            options={
+              Enum.map(
+                @personal.categories,
+                &{category_label(&1, @personal.plans, @personal.budgets, e["payload"]["day"]["year"]),
+                 &1.id}
+              )
+            }
           />
-          <.button>Save Your Category</.button>
+          <.button>{gettext("Save Your Category")}</.button>
         </.form>
         <details>
-          <summary>Shared History</summary>
+          <summary>{gettext("Shared History")}</summary>
           <p :for={h <- e["payload"]["history"]}>
-            {h["actorName"]} · {h["action"]} · {h["at"]} · {change_text(h["changes"], e["payload"])}
+            {h["actorName"]} · {history_action(h["action"])} · {h["at"]} · {change_text(
+              h["changes"],
+              e["payload"]
+            )}
           </p>
         </details>
       </section>
       <section :if={@sharing.repayments != []} class="space-y-3">
-        <h2 class="text-xl font-semibold">Repayments</h2>
+        <h2 class="text-xl font-semibold">{gettext("Repayments")}</h2>
         <p
           :for={r <- @sharing.repayments}
           :if={is_nil(@person) || r["payload"]["connectionID"] == @person}
         >
           {if r["payload"]["payerID"] == @current_user.id,
-            do: "You paid #{r["payload"]["connection"]["otherName"]}",
-            else: "#{r["payload"]["connection"]["otherName"]} paid you"} {money(
+            do: gettext("You paid %{person}", person: r["payload"]["connection"]["otherName"]),
+            else: gettext("%{person} paid you", person: r["payload"]["connection"]["otherName"])} {money(
             r["payload"]["amount"]
-          )} · {iso_day(r["payload"]["day"])} · Recorded by {r["payload"]["actorName"]}
+          )} · {displayed_day(r["payload"]["day"])} · {gettext("Recorded by %{person}",
+            person: r["payload"]["actorName"]
+          )}
         </p>
       </section>
     </Layouts.app>

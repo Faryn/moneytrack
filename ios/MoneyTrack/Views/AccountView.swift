@@ -37,12 +37,16 @@ struct AccountView: View {
                 }
             } else {
                 Section {
-                    LabeledContent("Storage", value: "On this iPhone")
+                    LabeledContent("Storage", value: String(localized: "On this iPhone"))
                     NavigationLink("Sign In") { SignInView() }
                         .accessibilityIdentifier("account.sign-in")
                 } footer: {
-                    Text("Your entries aren't connected to a MoneyTrack account. Signing in keeps them separate unless you choose to copy them.")
+                    Text("Your entries aren't connected to a Spendie account. Signing in keeps them separate unless you choose to copy them.")
                 }
+            }
+            Section {
+                NavigationLink { PrivacyView() } label: { Label("Privacy", systemImage: "hand.raised") }
+                    .accessibilityIdentifier("account.privacy")
             }
         }
         .navigationTitle("Account")
@@ -57,6 +61,56 @@ struct AccountView: View {
         .alert("Couldn't Sign Out", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(error ?? "") }
+    }
+}
+
+private struct PrivacyNotice: Decodable {
+    struct Part: Decodable, Identifiable {
+        struct Reference: Decodable {
+            let title: String
+            let url: URL
+        }
+        let id: String
+        let title: String
+        let paragraphs: [String]
+        let links: [Reference]?
+    }
+    let title: String
+    let updated: String
+    let summary: String
+    let sections: [Part]
+
+    static func load() -> PrivacyNotice? {
+        let resource = Bundle.main.preferredLocalizations.first == "de" ? "privacy.de" : "privacy"
+        guard let url = Bundle.main.url(forResource: resource, withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(Self.self, from: data)
+    }
+}
+
+private struct PrivacyView: View {
+    private let notice = PrivacyNotice.load()
+    var body: some View {
+        List {
+            if let notice {
+                Section {
+                    Text(notice.summary).accessibilityIdentifier("privacy.summary")
+                    Text("Updated \(notice.updated)").font(.footnote).foregroundStyle(.secondary)
+                } header: { Text(notice.title) }
+                ForEach(notice.sections) { part in
+                    Section(part.title) {
+                        ForEach(part.paragraphs, id: \.self) { Text($0).textSelection(.enabled) }
+                        ForEach(part.links ?? [], id: \.url) { reference in
+                            Link(reference.title, destination: reference.url)
+                        }
+                    }
+                }
+            } else {
+                ContentUnavailableView("Privacy information unavailable", systemImage: "hand.raised", description: Text("Contact your Spendie administrator for information about your data."))
+            }
+        }
+        .navigationTitle("Privacy")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -79,7 +133,7 @@ private struct SignInView: View {
                     .disabled(app.credential != nil).accessibilityIdentifier("login.username")
                 SecureField("Password", text: $password)
                     .textContentType(.password).accessibilityIdentifier("login.password")
-            } footer: { Text("Accounts are created by the administrator. Your password isn't stored by MoneyTrack on this iPhone.") }
+            } footer: { Text("Accounts are created by the administrator. Your password isn't stored by Spendie on this iPhone.") }
             if server.isEmpty {
                 Section { Text("The app's server hasn't been configured. Contact your administrator.").foregroundStyle(.secondary) }
             }
@@ -155,7 +209,7 @@ private struct SyncReviewDetail: View {
     }
     var body: some View {
         List {
-            Section { Text(issue.message) }
+            Section { Text(Bundle.main.localizedString(forKey: issue.message, value: issue.message, table: nil)) }
             Section("On this iPhone") {
                 if let local = try? store.localPayload(entity: issue.entity, id: issue.entityID) {
                     if local.0 == "delete" { Text("Deleted on this iPhone") }
@@ -205,30 +259,32 @@ private struct RecordSummary: View {
         if entity == "budget_plan", let value = try? payload.decoded(AnnualBudgetPlan.self) {
             LabeledContent("Year", value: String(value.year))
             LabeledContent("Whole yearly budget", value: Money.format(value.total))
-            LabeledContent("Guilt-free spending", value: Money.format(value.guiltFree))
+            LabeledContent("Unallocated", value: Money.format(value.unallocated))
             ForEach(value.allocations, id: \.categoryID) { allocation in
-                LabeledContent(store.categories.first { $0.id == allocation.categoryID }?.name ?? "Category", value: Money.format(allocation.amount))
+                LabeledContent(store.categories.first { $0.id == allocation.categoryID }?.name ?? String(localized: "Category"), value: Money.format(allocation.amount))
             }
         } else if entity == "shared_expense", case .object(let fields) = payload {
             if case .integer(let amount) = fields["amount"] { LabeledContent("Total purchase", value: Money.format(amount)) }
             if case .string(let description) = fields["description"] { LabeledContent("Description", value: description) }
             if let day = fields["day"], let date = try? day.decoded(ExpenseDay.self) { LabeledContent("Date", value: date.date.formatted(date: .abbreviated, time: .omitted)) }
-            if case .string(let split) = fields["creatorSplit"] { LabeledContent("Creator's share", value: split.capitalized) }
-            if case .bool(let paid) = fields["paidByCreator"] { LabeledContent("Payer", value: paid ? "Original creator" : "Other participant") }
+            if case .string(let split) = fields["creatorSplit"] {
+                LabeledContent("Creator's share", value: PersonalSplit(rawValue: split)?.title ?? split)
+            }
+            if case .bool(let paid) = fields["paidByCreator"] { LabeledContent("Payer", value: paid ? String(localized: "Original creator") : String(localized: "Other participant")) }
         } else if entity == "repayment", case .object(let fields) = payload {
             if case .integer(let amount) = fields["amount"] { LabeledContent("Repayment", value: Money.format(amount)) }
-            Text("This records a payment made outside MoneyTrack. If the balance changed, discard this draft and review the current balance before recording again.").font(.callout)
+            Text("This records a payment made outside Spendie. If the balance changed, discard this draft and review the current balance before recording again.").font(.callout)
         } else if entity == "shared_assignment", let value = try? payload.decoded(SharedAssignment.self) {
-            LabeledContent("Your private category", value: store.categories.first { $0.id == value.categoryID }?.name ?? "Category unavailable")
+            LabeledContent("Your private category", value: store.categories.first { $0.id == value.categoryID }?.name ?? String(localized: "Category unavailable"))
         } else if entity == "expense", let value = try? payload.decoded(ExpenseValue.self) {
             LabeledContent("Amount", value: Money.format(value.amount))
-            LabeledContent("Category", value: store.categories.first { $0.id == value.categoryID }?.name ?? "Category unavailable")
+            LabeledContent("Category", value: store.categories.first { $0.id == value.categoryID }?.name ?? String(localized: "Category unavailable"))
             LabeledContent("Description", value: value.description)
             LabeledContent("Date", value: value.day.date.formatted(date: .abbreviated, time: .omitted))
         } else if entity == "category", let value = try? payload.decoded(CategoryValue.self) {
             LabeledContent("Name", value: value.name)
         } else if entity == "year_budget", let value = try? payload.decoded(YearBudgetValue.self) {
-            LabeledContent("Category", value: store.categories.first { $0.id == value.categoryID }?.name ?? "Category unavailable")
+            LabeledContent("Category", value: store.categories.first { $0.id == value.categoryID }?.name ?? String(localized: "Category unavailable"))
             LabeledContent("Year", value: String(value.year))
             LabeledContent("Yearly amount", value: Money.format(value.amount))
         }

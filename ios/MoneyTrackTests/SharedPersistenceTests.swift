@@ -4,6 +4,37 @@ import SwiftData
 
 @MainActor
 final class SharedPersistenceTests: XCTestCase {
+    func testEntrySharingCommitsPersonalSourceAndShareTogetherAndSurvivesReopen() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        var store: LedgerStore? = try LedgerStore(container: LedgerPersistence.container(root: root))
+        let category = try store!.saveCategory(name: "Groceries", year: 2026, annualAmount: 120000)
+        let viewer = UUID(), recipient = UUID()
+        let source = try store!.saveExpense(amount: 100, description: "Initial", categoryID: category, day: ExpenseDay(iso: "2026-01-15"))
+        try acknowledgePersonal(store!)
+        try store!.shareExpense(source, viewerID: viewer, username: "Paul", email: "other@example.org", connection: nil, paidByUser: true, split: .half)
+        let op = try XCTUnwrap(store!.prepareNextOperation())
+        var initial = try XCTUnwrap(store!.sharedExpenses.first)
+        let connection = SharingConnection(id: UUID(), otherID: recipient, otherName: "Saskia")
+        initial.status = "accepted"; initial.recipientID = recipient; initial.connection = connection; initial.revision = 2
+        try store!.acknowledge(op.0, record: .init(entity: "shared_expense", entityID: source, revision: 2, deleted: false, payload: try .value(initial)))
+        let sharing = NewExpenseSharing(userID: viewer, username: "Paul", connection: connection)
+        let count = store!.saveCount
+        let id = try store!.saveExpense(amount: 501, description: "rewe", categoryID: category, day: ExpenseDay(iso: "2026-01-15"), sharing: sharing)
+        XCTAssertEqual(store!.saveCount, count + 1)
+        XCTAssertEqual(store!.expenses.first { $0.id == id }?.personalShare, 251)
+        XCTAssertEqual(store!.pendingChanges.map(\.entity), ["expense", "shared_expense"])
+        let frozen = try XCTUnwrap(store!.prepareNextOperation())
+        store = nil
+        let reopened = try LedgerStore(container: LedgerPersistence.container(root: root))
+        XCTAssertEqual(try reopened.prepareNextOperation()?.1, frozen.1)
+        XCTAssertEqual(reopened.expenses.first { $0.id == id }?.personalShare, 251)
+        let readonly = try LedgerStore(container: LedgerPersistence.container(root: root, allowsSave: false))
+        XCTAssertThrowsError(try readonly.saveExpense(amount: 500, description: "Must roll back", categoryID: category, day: ExpenseDay(iso: "2026-01-15"), sharing: sharing))
+        XCTAssertEqual(readonly.pendingChanges.count, 2)
+        XCTAssertFalse(readonly.expenses.contains { $0.description == "Must roll back" })
+    }
+
     func testOfflineProposalBudgetAndFrozenRequestSurviveReopenAndFailedSave() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

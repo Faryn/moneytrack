@@ -74,12 +74,12 @@ enum ConnectionError: LocalizedError {
     case invalidServer, unauthorized, invalidData, invalidCursor, notEmpty, rejected(String)
     var errorDescription: String? {
         switch self {
-        case .invalidServer: "Enter an HTTPS server address. Local HTTP is available only in development."
-        case .unauthorized: "Sign in again to continue syncing. Your saved expenses are still available."
-        case .invalidData: "The server returned incompatible data. Your local changes are preserved."
-        case .invalidCursor: "Synchronization needs to catch up again. Your local changes are preserved."
-        case .notEmpty: "This account already has entries. Sign in with copying turned off to keep the two sets separate."
-        case .rejected(let message): message
+        case .invalidServer: String(localized: "Enter an HTTPS server address. Local HTTP is available only in development.")
+        case .unauthorized: String(localized: "Sign in again to continue syncing. Your saved expenses are still available.")
+        case .invalidData: String(localized: "The server returned incompatible data. Your local changes are preserved.")
+        case .invalidCursor: String(localized: "Synchronization needs to catch up again. Your local changes are preserved.")
+        case .notEmpty: String(localized: "This account already has entries. Sign in with copying turned off to keep the two sets separate.")
+        case .rejected(let message): Bundle.main.localizedString(forKey: message, value: message, table: nil)
         }
     }
 }

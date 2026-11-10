@@ -2,6 +2,31 @@ defmodule MoneyTrackWeb.SessionControllerTest do
   use MoneyTrackWeb.ConnCase
   import MoneyTrack.Fixtures
 
+  test "public pages honor the preferred supported browser language", %{conn: conn} do
+    german = put_req_header(conn, "accept-language", "fr-FR, de-AT;q=0.9, en;q=0.7")
+    login = get(german, "/login")
+    assert get_resp_header(login, "content-language") == ["de"]
+    assert html_response(login, 200) =~ ~r/<html\b[^>]*\blang="de"/
+    assert html_response(login, 200) =~ "Benutzername"
+    assert html_response(get(german, "/privacy"), 200) =~ "Datenschutz bei Spendie"
+
+    fallback = put_req_header(conn, "accept-language", "fr-FR, de;q=0")
+    assert html_response(get(fallback, "/login"), 200) =~ "Username"
+  end
+
+  test "privacy notice is public and includes storage, sharing and retention information", %{
+    conn: conn
+  } do
+    response = conn |> get("/privacy") |> html_response(200)
+    assert response =~ "Spendie Privacy"
+    assert response =~ "not end-to-end encrypted"
+    assert response =~ "Your category assignments and budgets stay private"
+    assert response =~ "Signing out does not delete"
+    assert response =~ "Deletion and retention"
+    assert response =~ "Apple TestFlight &amp; Privacy"
+    refute response =~ "login-form"
+  end
+
   test "whole-year plans require v3 without dropping prepared personal operations", %{conn: conn} do
     user = user()
     {free, _} = category(user, "Uncategorized")

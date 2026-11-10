@@ -1,4 +1,5 @@
 defmodule MoneyTrackWeb.Auth do
+  use Gettext, backend: MoneyTrackWeb.Gettext
   import Plug.Conn
   import Phoenix.Controller
   import Phoenix.LiveView, except: [redirect: 2]
@@ -13,7 +14,7 @@ defmodule MoneyTrackWeb.Auth do
       _ ->
         conn
         |> put_status(401)
-        |> json(%{error: "unauthorized", message: "Sign in to continue syncing."})
+        |> json(%{error: "unauthorized", message: gettext("Sign in to continue syncing.")})
         |> halt()
     end
   end

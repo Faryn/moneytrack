@@ -50,11 +50,11 @@ defmodule MoneyTrack.Sharing.Delivery do
       email =
         new()
         |> to(expense.recipient_email)
-        |> Swoosh.Email.from({"MoneyTrack", Application.fetch_env!(:moneytrack, :mail_from)})
-        |> subject("MoneyTrack sharing invitation")
+        |> Swoosh.Email.from({"Spendie", Application.fetch_env!(:moneytrack, :mail_from)})
+        |> subject("Spendie sharing invitation / Einladung zum Teilen in Spendie")
         |> header("Message-ID", "<#{job.id}@moneytrack.invalid>")
         |> text_body(
-          "#{sender.username} invited you to share an expense on MoneyTrack.\n\nOpen MoneyTrack, sign in, and verify this email address under Account → Email for Sharing. The invitation will appear under Shared.\nAccounts are currently created by the administrator. No payment is made by accepting.\n"
+          "#{sender.username} invited you to share an expense on Spendie.\n\nOpen Spendie, sign in, and verify this email address under Account → Email for Sharing. The invitation will appear under Shared.\nAccounts are currently created by the administrator. No payment is made by accepting.\n\n--- Deutsch ---\n\n#{sender.username} hat dich eingeladen, eine Ausgabe in Spendie zu teilen.\n\nÖffne Spendie, melde dich an und bestätige diese E-Mail-Adresse unter Konto → E-Mail zum Teilen. Die Einladung erscheint unter Geteilt.\nKonten werden derzeit von der Administration eingerichtet. Durch die Annahme wird keine Zahlung ausgelöst.\n"
         )
 
       outcome =

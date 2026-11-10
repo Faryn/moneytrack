@@ -18,6 +18,72 @@ defmodule MoneyTrack.LedgerTest do
     assert Repo.get!(Expense, op["entityID"]).amount == 7800
   end
 
+  test "archiving removes an unused category from the active ledger and preserves its sync history" do
+    user = user()
+    other = user()
+    {record, _} = category(user, "Leisure")
+    id = record["entityID"]
+    booking = expense(id)
+    assert {:ok, _} = Ledger.apply_operation(user, operation("expense", booking))
+    archive = operation("category", Map.put(record["payload"], "archived", true), 1)
+    assert {:error, :not_found} = Ledger.apply_operation(other, archive)
+    assert {:error, {:validation, _}} = Ledger.apply_operation(user, archive)
+
+    delete =
+      operation(
+        "expense",
+        %{"id" => booking["id"], "deletedAt" => "2026-11-08T00:00:00Z"},
+        1,
+        "delete"
+      )
+
+    assert {:ok, _} = Ledger.apply_operation(user, delete)
+    assert {:ok, archived} = Ledger.apply_operation(user, archive)
+    assert {:ok, ^archived} = Ledger.apply_operation(user, archive)
+    assert archived["payload"]["archived"] == true
+    assert archived["revision"] == 2
+    assert Ledger.snapshot(user).categories == []
+    assert Repo.get!(Expense, booking["id"]).category_id == id
+    assert {:error, :not_found} = Ledger.apply_operation(user, operation("expense", expense(id)))
+
+    assert {:error, {:conflict, ^archived}} =
+             Ledger.apply_operation(user, operation("category", record["payload"], 1))
+
+    assert {:ok, renamed} =
+             Ledger.apply_operation(user, operation("category", record["payload"], 2))
+
+    assert renamed["payload"]["archived"] == true
+    assert {:ok, page} = Ledger.changes(user)
+    assert archived in page.changes
+    {replacement, _} = category(user, "Leisure")
+    assert replacement["entityID"] != id
+    assert Enum.map(Ledger.snapshot(user).categories, & &1.id) == [replacement["entityID"]]
+  end
+
+  test "a plan's default and allocated categories cannot be archived" do
+    user = user()
+    {default, _} = category(user, "Uncategorized")
+    {food, _} = category(user, "Food")
+
+    plan = %{
+      "id" => Ecto.UUID.generate(),
+      "year" => 2026,
+      "total" => 10000,
+      "freeCategoryID" => default["entityID"],
+      "allocations" => [%{"categoryID" => food["entityID"], "amount" => 10000}]
+    }
+
+    assert {:ok, _} = Ledger.apply_operation(user, operation("budget_plan", plan))
+
+    for record <- [default, food] do
+      assert {:error, {:validation, _}} =
+               Ledger.apply_operation(
+                 user,
+                 operation("category", Map.put(record["payload"], "archived", true), 1)
+               )
+    end
+  end
+
   test "ownership is enforced for entities, category references, and change cursors" do
     alice = user()
     bob = user()

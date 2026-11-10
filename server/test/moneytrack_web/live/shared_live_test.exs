@@ -37,7 +37,7 @@ defmodule MoneyTrackWeb.SharedLiveTest do
     )
     |> render_submit()
 
-    assert has_element?(av, "#shared-#{expense["entityID"]}", "pending")
+    assert has_element?(av, "#shared-#{expense["entityID"]}", "Awaiting acceptance")
     {:ok, bv, _} = live(init_test_session(conn, %{session_token: bt}), "/shared")
     bv |> element("#invitation-#{expense["entityID"]} button") |> render_click()
     [connection] = Sharing.snapshot(a).connections

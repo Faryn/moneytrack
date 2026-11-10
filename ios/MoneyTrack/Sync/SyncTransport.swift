@@ -13,7 +13,7 @@ protocol SyncTransport: Sendable {
 struct ServerRejection: LocalizedError, Sendable {
     let message: String
     let current: RemoteRecord?
-    var errorDescription: String? { message }
+    var errorDescription: String? { Bundle.main.localizedString(forKey: message, value: message, table: nil) }
 }
 
 struct HTTPTransport: SyncTransport {
@@ -39,12 +39,12 @@ struct HTTPTransport: SyncTransport {
     func push(_ data: Data, credential: SessionCredential) async throws -> RemoteRecord {
         struct Response: Decodable { let record: RemoteRecord }
         return try JSONDecoder().decode(Response.self, from: await request(server: credential.server,
-            path: "api/v3/sync", method: "POST", body: data, token: credential.token)).record
+            path: "api/v5/sync", method: "POST", body: data, token: credential.token)).record
     }
     func pull(cursor: String?, credential: SessionCredential) async throws -> ChangePage {
         let query = cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []
         return try JSONDecoder().decode(ChangePage.self, from: await request(server: credential.server,
-            path: "api/v3/sync", method: "GET", query: query, token: credential.token))
+            path: "api/v5/sync", method: "GET", query: query, token: credential.token))
     }
     func signOut(_ credential: SessionCredential) async throws {
         _ = try await request(server: credential.server, path: "api/v1/session", method: "DELETE", token: credential.token)
@@ -58,6 +58,8 @@ struct HTTPTransport: SyncTransport {
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20)
         request.httpMethod = method; request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // Keep server messages stable in the local sync review queue across language changes.
+        request.setValue("en", forHTTPHeaderField: "Accept-Language")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request)
@@ -66,14 +68,14 @@ struct HTTPTransport: SyncTransport {
         struct Failure: Decodable { let error: String; let message: String; let current: RemoteRecord? }
         let failure = try? JSONDecoder().decode(Failure.self, from: data)
         if response.statusCode == 401 {
-            if token == nil { throw ConnectionError.rejected(failure?.message ?? "Couldn't sign in.") }
+            if token == nil { throw ConnectionError.rejected(failure?.message ?? String(localized: "Couldn't sign in.")) }
             throw ConnectionError.unauthorized
         }
         if response.statusCode == 400 && failure?.error == "invalid_cursor" { throw ConnectionError.invalidCursor }
         if [404, 409, 422].contains(response.statusCode) {
-            throw ServerRejection(message: failure?.message ?? "This change needs review.", current: failure?.current)
+            throw ServerRejection(message: failure?.message ?? String(localized: "This change needs review."), current: failure?.current)
         }
-        throw ConnectionError.rejected(failure?.message ?? "The server is unavailable. Your local changes are preserved.")
+        throw ConnectionError.rejected(failure?.message ?? String(localized: "The server is unavailable. Your local changes are preserved."))
     }
 }
 
@@ -94,9 +96,9 @@ struct AccountEmailStatus: Codable, Equatable, Sendable {
 }
 
 extension SyncTransport {
-    func emailStatus(credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
-    func requestEmail(_ address: String, requestID: UUID, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
-    func verifyEmail(id: UUID, code: String, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected("Email verification is unavailable.") }
+    func emailStatus(credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected(String(localized: "Email verification is unavailable.")) }
+    func requestEmail(_ address: String, requestID: UUID, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected(String(localized: "Email verification is unavailable.")) }
+    func verifyEmail(id: UUID, code: String, credential: SessionCredential) async throws -> AccountEmailStatus { throw ConnectionError.rejected(String(localized: "Email verification is unavailable.")) }
 }
 
 extension HTTPTransport {

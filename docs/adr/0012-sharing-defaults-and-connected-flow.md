@@ -24,3 +24,5 @@ Pending invitation cancellation/decline and removal of accepted sharing are not 
 ## Subsequent budgeting extension
 
 [ADR 0013](0013-whole-year-budget-and-guilt-free-spending.md) changes budgeting to whole-year totals and a guilt-free pool. Incoming Uncategorized shares draw from that pool unless the user allocates budget to the category; the legacy zero-budget bootstrap adds no money. New clients use [API v3](../contracts/annual-budget-v3.md), which retains these sharing operations unchanged.
+
+[ADR 0018](0018-sharing-at-entry-and-once-per-person.md) extends reuse to name-based entry and releases eligible pending expenses in both directions with the first acceptance.

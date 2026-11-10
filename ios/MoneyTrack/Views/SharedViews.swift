@@ -1,32 +1,78 @@
 import SwiftUI
 
+// Presentation only: retain original usernames, descriptions and account identifiers.
+enum SharedDisplay {
+    static func person(_ value: String) -> String {
+        guard !value.contains("@"), value == value.lowercased() else { return value }
+        return value.capitalized
+    }
+    static func title(_ value: String) -> String {
+        guard let first = value.first else { return value }
+        return String(first).uppercased() + value.dropFirst()
+    }
+}
+
+private struct SharedActivityRow: View {
+    let title: String
+    let subtitle: String
+    let amount: Int64?
+    let amountLabel: String
+    var amountColor: Color = .primary
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 16))
+        layout {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.body.weight(.medium)).foregroundStyle(.primary)
+                Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
+            }
+            if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
+            VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 4) {
+                Text(amount.map { Money.format($0) } ?? String(localized: "Unavailable"))
+                    .font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(ListRowForeground(amountColor))
+                Text(amountLabel).font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct SharedHomeView: View {
     @Environment(LedgerStore.self) private var store
     @Environment(AppSession.self) private var app
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var error: String?
     var body: some View {
         List {
             if app.credential == nil {
-                ContentUnavailableView("Sign in to share", systemImage: "person.2", description: Text("Sign in from Account, then share a saved expense through its menu."))
+                ContentUnavailableView("Sign in to share", systemImage: "person.2", description: Text("Sign in from Account to share expenses."))
             } else {
                 if !store.issues.isEmpty {
-                    Section { NavigationLink("Review Changes") { SyncReviewList() } }
+                    Section { NavigationLink("Review changes") { SyncReviewList() } }
                 }
                 if store.pendingChanges.contains(where: { ["shared_expense", "shared_assignment", "repayment"].contains($0.entity) }) {
-                    Section { Label("Shared changes saved on this iPhone · awaiting sync", systemImage: "arrow.triangle.2.circlepath").font(.callout) }
+                    Section {
+                        Label("Waiting to sync", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
                 }
                 if !store.invitations.isEmpty {
                     Section("Invitations") {
                         ForEach(store.invitations) { invitation in
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("\(invitation.senderName) invited you").font(.headline)
-                                Text("Your share starts in your private Uncategorized category.").font(.callout).foregroundStyle(.secondary)
-                                Button("Accept Invitation") {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(SharedDisplay.person(invitation.senderName)).font(.body.weight(.medium))
+                                Text("Accept once for current and future sharing.").font(.subheadline).foregroundStyle(.secondary)
+                                Button("Accept invitation") {
                                     do { try store.acceptInvitation(invitation) } catch { self.error = error.localizedDescription }
                                 }
+                                .buttonStyle(.borderedProminent).controlSize(.small)
                                 .disabled(store.pendingChanges.contains { $0.entity == "shared_expense" && $0.entityID == invitation.id })
                                 .accessibilityIdentifier("sharing.accept.\(invitation.id)")
-                            }
+                            }.padding(.vertical, 4)
                         }
                     }
                 }
@@ -36,10 +82,16 @@ struct SharedHomeView: View {
                             NavigationLink {
                                 SharedPersonView(connection: connection)
                             } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(connection.otherName)
-                                    SharedBalanceLabel(balance: try? store.sharedBalance(connection.id))
-                                }
+                                let layout = typeSize.isAccessibilitySize
+                                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                                    : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+                                layout {
+                                    Text(SharedDisplay.person(connection.otherName))
+                                        .font(.body.weight(.medium)).foregroundStyle(.primary)
+                                    if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
+                                    SharedBalanceLabel(balance: try? store.sharedBalance(connection.id),
+                                                       alignment: typeSize.isAccessibilitySize ? .leading : .trailing)
+                                }.padding(.vertical, 4)
                             }
                             .accessibilityIdentifier("sharing.person.\(connection.otherName)")
                         }
@@ -47,23 +99,26 @@ struct SharedHomeView: View {
                 }
                 let pending = store.sharedExpenses.filter { $0.status == "pending" && !$0.deleted }
                 if !pending.isEmpty {
-                    Section("Awaiting Acceptance") {
+                    Section {
                         ForEach(pending) { value in
                             NavigationLink { ExpenseDetailView(expenseID: value.id) } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(value.otherName)
-                                    Text(value.description.isEmpty ? "Shared expense" : value.description).font(.subheadline)
-                                    Text("Your proposed share already counts in your budget.").font(.caption).foregroundStyle(.secondary)
-                                }
+                                let share = try? value.amounts.personalShare
+                                SharedActivityRow(title: SharedDisplay.person(value.otherName),
+                                    subtitle: SharedDisplay.title(value.description.isEmpty ? String(localized: "Shared expense") : value.description),
+                                    amount: share.map { -$0 }, amountLabel: String(localized: "Your share"),
+                                    amountColor: share.map { $0 > 0 ? AmountColors.negative : .primary } ?? .secondary)
                             }
                         }
+                    } header: { Text("Awaiting acceptance") } footer: {
+                        Text("Your share already counts in your budget.")
                     }
                 }
                 if store.sharingConnections.isEmpty && pending.isEmpty && store.invitations.isEmpty {
-                    ContentUnavailableView("No shared expenses", systemImage: "person.2", description: Text("Open a saved expense and choose Share Expense. Verify your email in Account to receive invitations."))
+                    ContentUnavailableView("No shared expenses", systemImage: "person.2", description: Text("Share a saved expense to connect with someone. Verify your email in Account to receive invitations."))
                 }
             }
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Shared")
         .refreshable { await app.synchronize() }
         .alert("Couldn't Accept Invitation", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
@@ -74,12 +129,23 @@ struct SharedHomeView: View {
 
 struct SharedBalanceLabel: View {
     let balance: Int64?
+    var alignment: HorizontalAlignment = .leading
+    var prominent = false
+    private var status: String {
+        guard let balance else { return String(localized: "Balance unavailable") }
+        return balance == 0 ? String(localized: "Settled up") : balance > 0 ? String(localized: "Owes you") : String(localized: "You owe")
+    }
     var body: some View {
-        if let balance {
-            Text(balance == 0 ? "Settled up" : "\(balance > 0 ? "Owes you" : "You owe") \(Money.format(abs(balance)))")
-                .foregroundStyle(AmountColors.remaining(balance)).monospacedDigit()
-                .accessibilityIdentifier("sharing.balance")
-        } else { Text("Balance unavailable").foregroundStyle(.secondary) }
+        VStack(alignment: alignment, spacing: 4) {
+            Text(status).font(.subheadline).foregroundStyle(.secondary).accessibilityHidden(balance != nil)
+            if let balance {
+                Text(Money.format(abs(balance)))
+                    .font(prominent ? .largeTitle.weight(.semibold) : .body.weight(.semibold))
+                    .foregroundStyle(ListRowForeground(AmountColors.remaining(balance))).monospacedDigit()
+                    .accessibilityLabel(balance == 0 ? "Settled up" : "\(status) \(Money.format(abs(balance)))")
+                    .accessibilityIdentifier("sharing.balance")
+            }
+        }
     }
 }
 
@@ -89,15 +155,21 @@ struct SharedPersonView: View {
     let connection: SharingConnection
     @State private var settling = false
     private var balance: Int64? { try? store.sharedBalance(connection.id) }
+    private var name: String { SharedDisplay.person(connection.otherName) }
     var body: some View {
         List {
             Section {
-                SharedBalanceLabel(balance: balance).font(.title2)
-                Button("Settle Up") { settling = true }.disabled(balance == nil || balance == 0)
-                    .accessibilityIdentifier("sharing.settle")
-                if !store.issues.isEmpty { NavigationLink("Review Changes") { SyncReviewList() } }
+                VStack(alignment: .leading, spacing: 16) {
+                    SharedBalanceLabel(balance: balance, prominent: true)
+                    Button("Settle up", systemImage: "arrow.left.arrow.right") { settling = true }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(balance == nil || balance == 0)
+                        .accessibilityIdentifier("sharing.settle")
+                }.padding(.vertical, 8)
+                if !store.issues.isEmpty { NavigationLink("Review changes") { SyncReviewList() } }
+            } footer: {
                 if store.pendingChanges.contains(where: { ["shared_expense", "shared_assignment", "repayment"].contains($0.entity) }) {
-                    Text("Includes changes waiting to sync.").font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("sharing.pending")
+                    Text("Includes changes waiting to sync.").accessibilityIdentifier("sharing.pending")
                 }
             }
             let expenses = store.sharedExpenses.filter { $0.connection?.id == connection.id }.sorted { $0.day > $1.day }
@@ -105,11 +177,10 @@ struct SharedPersonView: View {
                 Section("Expenses") {
                     ForEach(expenses) { value in
                         NavigationLink { ExpenseDetailView(expenseID: value.id) } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(value.description.isEmpty ? "Expense" : value.description)
-                                Text(value.deleted ? "Deleted expense · history retained" : "\(Money.format(value.amount)) total · \(value.day.date.formatted(date: .abbreviated, time: .omitted))")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
+                            SharedActivityRow(title: SharedDisplay.title(value.description.isEmpty ? String(localized: "Expense") : value.description),
+                                subtitle: value.day.date.formatted(date: .abbreviated, time: .omitted) + (value.deleted ? " · " + String(localized: "Deleted") : ""),
+                                amount: value.amount, amountLabel: value.deleted ? String(localized: "History") : String(localized: "Total"),
+                                amountColor: value.deleted ? .secondary : .primary)
                         }
                     }
                 }
@@ -118,16 +189,19 @@ struct SharedPersonView: View {
             if !repayments.isEmpty {
                 Section("Repayments") {
                     ForEach(repayments) { value in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(value.paidByUser ? "You paid \(connection.otherName)" : "\(connection.otherName) paid you") · \(Money.format(value.amount))")
-                            Text("\(value.day.date.formatted(date: .abbreviated, time: .omitted)) · Recorded by \(value.actorName)")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
+                        SharedActivityRow(title: value.paidByUser ? String(localized: "You paid \(name)") : String(localized: "\(name) paid you"),
+                            subtitle: String(localized: "\(value.day.date.formatted(date: .abbreviated, time: .omitted)) · Recorded by \(SharedDisplay.person(value.actorName))"),
+                            amount: value.paidByUser ? -value.amount : value.amount, amountLabel: String(localized: "Repayment"),
+                            amountColor: value.paidByUser ? AmountColors.negative : AmountColors.positive)
+                            // Match the disclosure gutter reserved by the expense NavigationLinks.
+                            .padding(.trailing, 22)
                     }
                 }
             }
         }
-        .navigationTitle(connection.otherName)
+        .listStyle(.insetGrouped)
+        .navigationTitle(name)
+        .navigationBarTitleDisplayMode(.inline)
         .refreshable { await app.synchronize() }
         .sheet(isPresented: $settling) { NavigationStack { SettleUpForm(connection: connection) } }
     }
@@ -150,7 +224,7 @@ struct ShareExpenseForm: View {
                 if !store.sharingConnections.isEmpty {
                     Picker("Person", selection: $connectionID) {
                         Text("Invite by email").tag(UUID?.none)
-                        ForEach(store.sharingConnections) { c in Text(c.otherName).tag(Optional(c.id)) }
+                        ForEach(store.sharingConnections) { c in Text(SharedDisplay.person(c.otherName)).tag(Optional(c.id)) }
                     }
                 }
                 if connection == nil {
@@ -160,9 +234,9 @@ struct ShareExpenseForm: View {
             }
             Section {
                 Picker("Paid by", selection: $paidByUser) {
-                    Text("You").tag(true); Text(connection?.otherName ?? "Other person").tag(false)
+                    Text("You").tag(true); Text(connection.map { SharedDisplay.person($0.otherName) } ?? String(localized: "Other person")).tag(false)
                 }
-                Picker("Your share", selection: $split) { ForEach(PersonalSplit.allCases, id: \.self) { Text($0.title).tag($0) } }
+                Picker(String(localized: "Your share"), selection: $split) { ForEach(PersonalSplit.allCases, id: \.self) { Text($0.title).tag($0) } }
                     .accessibilityIdentifier("sharing.split")
             }
             if let amounts = try? SharedMath.calculate(amount: expense.amount, split: split, paidByUser: paidByUser) {
@@ -204,35 +278,48 @@ struct SharedExpenseEditor: View {
     @State private var paidByUser: Bool
     @State private var split: PersonalSplit
     @State private var error: String?
+    @State private var rates = ExchangeRates.shared
     init(value: SharedExpenseValue) {
-        _original = State(initialValue: value); _amount = State(initialValue: Money.input(value.amount)); _description = State(initialValue: value.description)
+        _original = State(initialValue: value); _amount = State(initialValue: value.conversion.map { CurrencyConversion.input($0.originalAmount, currency: $0.originalCurrency) } ?? Money.input(value.amount)); _description = State(initialValue: value.description)
         _categoryID = State(initialValue: value.categoryID); _date = State(initialValue: value.day.date)
         _paidByUser = State(initialValue: value.paidByUser); _split = State(initialValue: value.ownSplit)
     }
+    private var converted: CurrencyConversion? {
+        guard let old = original.conversion, let value = try? CurrencyConversion.parse(amount, currency: old.originalCurrency) else { return nil }
+        if value == old.originalAmount { return old }
+        guard let snapshot = rates.snapshot, let rate = snapshot.rates[old.originalCurrency] else { return nil }
+        return CurrencyConversion(originalAmount: value, originalCurrency: old.originalCurrency, rate: rate, rateDate: snapshot.date, source: "ECB")
+    }
+    private var euroAmount: Int64? { original.conversion == nil ? try? Money.parse(amount) : try? converted?.euroCents() }
     var body: some View {
         Form {
             Section {
-                CurrencyField(title: "Amount", text: $amount, identifier: "shared-edit.amount")
+                CurrencyField(title: String(localized: "Amount"), text: $amount, identifier: "shared-edit.amount", currencyCode: original.conversion?.originalCurrency ?? "EUR")
+                if let converted, let euroAmount {
+                    LabeledContent("In euros", value: Money.format(euroAmount))
+                    Text("ECB · \(converted.rateDate)").font(.caption)
+                }
                 TextField("Description", text: $description).accessibilityIdentifier("shared-edit.description")
                 DatePicker("Date", selection: $date, displayedComponents: .date)
-                Picker("Paid by", selection: $paidByUser) { Text("You").tag(true); Text(original.otherName).tag(false) }
-                Picker("Your share", selection: $split) { ForEach(PersonalSplit.allCases, id: \.self) { Text($0.title).tag($0) } }
+                Picker("Paid by", selection: $paidByUser) { Text("You").tag(true); Text(SharedDisplay.person(original.otherName)).tag(false) }
+                Picker(String(localized: "Your share"), selection: $split) { ForEach(PersonalSplit.allCases, id: \.self) { Text($0.title).tag($0) } }
             } header: { Text("Shared Details") } footer: { Text("Both people can see these changes and their history.") }
             Section {
-                Picker("Your category", selection: $categoryID) { ForEach(store.categories) { Text($0.name).tag($0.id) } }
+                Picker("Your category", selection: $categoryID) { ForEach(store.activeCategories) { Text(store.displayName(for: $0, year: ExpenseDay(date: date).year)).tag($0.id) } }
             } footer: { Text("Only you can see or change your category.") }
         }
+        .task { if original.conversion != nil { await rates.refresh() } }
         .navigationTitle("Edit Shared Expense")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     do {
-                        try store.editSharedExpense(original, amount: Money.parse(amount), description: description,
-                            categoryID: categoryID, day: ExpenseDay(date: date), paidByUser: paidByUser, ownSplit: split)
+                        try store.editSharedExpense(original, amount: euroAmount!, description: description,
+                            categoryID: categoryID, day: ExpenseDay(date: date), paidByUser: paidByUser, ownSplit: split, conversion: converted)
                         dismiss()
                     } catch { self.error = error.localizedDescription }
-                }.disabled((try? Money.parse(amount)) == nil).accessibilityIdentifier("shared-edit.save")
+                }.disabled(euroAmount == nil).accessibilityIdentifier("shared-edit.save")
             }
         }
         .alert("Couldn't Save", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK", role: .cancel) {} } message: { Text(error ?? "") }
@@ -254,12 +341,12 @@ struct SettleUpForm: View {
         Form {
             if let balance = confirmedBalance {
                 Section {
-                    Text(balance < 0 ? "You paid \(connection.otherName)" : "\(connection.otherName) paid you")
-                    CurrencyField(title: "Amount", text: $amount, identifier: "settle.amount", focus: $focused)
+                    LabeledContent("Payment", value: balance < 0 ? String(localized: "You paid \(SharedDisplay.person(connection.otherName))") : String(localized: "\(SharedDisplay.person(connection.otherName)) paid you"))
+                    CurrencyField(title: String(localized: "Amount"), text: $amount, identifier: "settle.amount", focus: $focused)
                     DatePicker("Date", selection: $date, displayedComponents: .date)
-                } footer: { Text("Only records a payment made outside MoneyTrack. Both people see the repayment; budgets stay unchanged.") }
+                } footer: { Text("Only records a payment made outside Spendie. Both people see the repayment; budgets stay unchanged.") }
                 if let parsed, parsed <= abs(balance) {
-                    Section("After Recording") { SharedBalanceLabel(balance: balance + (balance < 0 ? parsed : -parsed)) }
+                    Section("After recording") { SharedBalanceLabel(balance: balance + (balance < 0 ? parsed : -parsed)) }
                 }
             }
         }
@@ -275,7 +362,7 @@ struct SettleUpForm: View {
                 Button("Record Repayment") {
                     do {
                         guard let account = app.credential, try store.sharedBalance(connection.id) == confirmedBalance else {
-                            throw ConnectionError.rejected("The balance changed. Close this form and review it before recording.")
+                            throw ConnectionError.rejected(String(localized: "The balance changed. Close this form and review it before recording."))
                         }
                         try store.recordRepayment(connection: connection, viewerID: account.userID, username: account.username,
                             amount: Money.parse(amount), day: ExpenseDay(date: date))

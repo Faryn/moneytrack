@@ -40,7 +40,7 @@ struct KeychainVault: CredentialVault {
         guard status == errSecSuccess || status == errSecItemNotFound else { throw vaultError(status) }
     }
     private func vaultError(_ status: OSStatus) -> NSError {
-        NSError(domain: NSOSStatusErrorDomain, code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Couldn't access the saved account credential."])
+        NSError(domain: NSOSStatusErrorDomain, code: Int(status), userInfo: [NSLocalizedDescriptionKey: String(localized: "Couldn't access the saved account credential.")])
     }
 }
 

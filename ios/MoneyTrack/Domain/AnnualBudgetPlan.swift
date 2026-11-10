@@ -11,7 +11,7 @@ struct AnnualBudgetPlan: Codable, Identifiable, Equatable, Sendable {
     let freeCategoryID: UUID
     var allocations: [CategoryAllocation]
     var allocated: Int64 { allocations.reduce(0) { $0 + $1.amount } }
-    var guiltFree: Int64 { total - allocated }
+    var unallocated: Int64 { total - allocated }
     func validate() throws {
         guard (1900...9999).contains(year), (0...Money.maximum).contains(total),
               allocations.allSatisfy({ (1...Money.maximum).contains($0.amount) && $0.categoryID != freeCategoryID }),
@@ -28,14 +28,15 @@ struct BudgetAmounts: Equatable, Sendable {
 }
 struct AnnualBudgetOverview: Sendable {
     let total: BudgetAmounts
-    let guiltFree: BudgetAmounts
+    let unallocated: Int64
+    let unbudgeted: BudgetAmounts
     let categories: [CategoryBudget]
 }
 enum AnnualBudgetCalculator {
     static func monthlyAllocations(_ plan: AnnualBudgetPlan) throws -> [UUID: [Int64]] {
         try plan.validate()
         let parts = plan.allocations.sorted { $0.categoryID.uuidString < $1.categoryID.uuidString } +
-            [CategoryAllocation(categoryID: plan.freeCategoryID, amount: plan.guiltFree)]
+            [CategoryAllocation(categoryID: plan.freeCategoryID, amount: plan.unallocated)]
         let base = parts.reduce(Int64(0)) { $0 + $1.amount / 12 }
         var capacity = (0..<12).map { plan.total / 12 + (Int64($0) < plan.total % 12 ? 1 : 0) - base }
         var result: [UUID: [Int64]] = [:]
@@ -52,6 +53,7 @@ enum AnnualBudgetCalculator {
     }
     static func overview(_ plan: AnnualBudgetPlan, month: BudgetMonth, categories: [CategoryValue], expenses: [ExpenseValue]) throws -> AnnualBudgetOverview {
         let monthly = try monthlyAllocations(plan)
+        let expenses = expenses.filter { !$0.isIncome }
         func amounts(_ allocation: [Int64], _ entries: [ExpenseValue]) -> BudgetAmounts {
             let yearEntries = entries.filter { $0.day.year == month.year }
             let before = yearEntries.filter { $0.day.month < month.month }.reduce(Int64(0)) { $0 + $1.personalShare }
@@ -59,8 +61,10 @@ enum AnnualBudgetCalculator {
             return BudgetAmounts(allocation: allocation[month.month - 1], carryover: allocation.prefix(month.month - 1).reduce(0,+) - before, spent: spent)
         }
         let allocatedIDs = Set(plan.allocations.map(\.categoryID))
-        let free = amounts(monthly[plan.freeCategoryID]!, expenses.filter { !allocatedIDs.contains($0.categoryID) })
-        let totalMonths = (1...12).map { BudgetCalculator.cumulativeAllocation(annual: plan.total, through: $0) - BudgetCalculator.cumulativeAllocation(annual: plan.total, through: $0 - 1) }
+        let unbudgeted = amounts(Array(repeating: 0, count: 12), expenses.filter { !allocatedIDs.contains($0.categoryID) })
+        let assignedMonths = (0..<12).map { month in
+            plan.allocations.reduce(Int64(0)) { $0 + monthly[$1.categoryID]![month] }
+        }
         let rows = categories.map { category -> CategoryBudget in
             let entries = expenses.filter { $0.categoryID == category.id }
             if let allocation = plan.allocations.first(where: { $0.categoryID == category.id }), let schedule = monthly[category.id] {
@@ -70,6 +74,6 @@ enum AnnualBudgetCalculator {
             let spent = entries.filter { $0.day.year == month.year && $0.day.month == month.month }.reduce(Int64(0)) { $0 + $1.personalShare }
             return CategoryBudget(category: category, annual: nil, allocation: 0, carryover: 0, spent: spent, remaining: 0)
         }
-        return AnnualBudgetOverview(total: amounts(totalMonths, expenses), guiltFree: free, categories: rows)
+        return AnnualBudgetOverview(total: amounts(assignedMonths, expenses), unallocated: plan.unallocated, unbudgeted: unbudgeted, categories: rows)
     }
 }

@@ -1,0 +1,77 @@
+{
+  "title": "Datenschutz bei Spendie",
+  "updated": "2026-11-04",
+  "summary": "Spendie verwendet deine Daten, um Ausgaben zu erfassen, Ausgaben mit Budgets zu vergleichen, deine Geräte zu synchronisieren und geteilte Ausgaben zu verwalten. Spendie verkauft deine Daten nicht und verwendet sie nicht für Werbetracking.",
+  "sections": [
+    {
+      "id": "information",
+      "title": "Welche Daten du eingibst",
+      "paragraphs": [
+        "Dein Haushaltsbuch enthält Beträge, Beschreibungen, Daten, Kategorien und Jahresbudgets. Bei Fremdwährungen bleiben der ursprüngliche Betrag, die Währung und der gespeicherte Wechselkurs erhalten. Geteilte Buchungen enthalten die Beteiligten, die zahlende Person, die Aufteilung, Änderungen und erfasste Rückzahlungen.",
+        "Verbundene Konten verwenden einen Benutzernamen und eine Kontokennung. E-Mail-Adressen werden verwendet, wenn du eine Adresse bestätigst oder jemanden zum Teilen einlädst. Spendie erfasst Zahlungen, die du außerhalb der App tätigst. Die App fragt keine Bank- oder Kartendaten ab und überweist kein Geld."
+      ]
+    },
+    {
+      "id": "device",
+      "title": "Auf deinem Gerät",
+      "paragraphs": [
+        "Die App speichert dein Haushaltsbuch und ausstehende Änderungen auf dem Gerät, damit du offline arbeiten kannst. Das Sitzungstoken liegt im Systemschlüsselbund. Die App sendet dein Passwort bei der Anmeldung an den Server und speichert es nicht.",
+        "Beim Abmelden bleiben das lokale Haushaltsbuch und ausstehende Änderungen bis zur nächsten Anmeldung erhalten. Dein Konto und seine Serverdaten werden beim Abmelden nicht gelöscht."
+      ]
+    },
+    {
+      "id": "sync",
+      "title": "Synchronisierung und Serverzugriff",
+      "paragraphs": [
+        "Wenn du ein Konto verbindest, synchronisiert die App das Haushaltsbuch und Änderungen über HTTPS mit dem eingerichteten Spendie-Server. Der Server speichert Kontodaten, Passwort-Hashes, Sitzungsdaten und synchronisierte Buchungen für die App und die Website.",
+        "Die Daten auf dem Server sind nicht Ende-zu-Ende-verschlüsselt. Die Serveradministration kann für Betrieb und Support auf gespeicherte Daten zugreifen. Andere Konten sehen ihre eigenen Daten und die mit ihnen geteilten Buchungen.",
+        "Beim Betrieb der Website und der Schnittstelle können Anfrage- und Sicherheitsprotokolle anfallen. Diese können unter anderem IP-Adressen, Anfragezeiten und Fehlerdetails enthalten und dienen dem Betrieb, der Sicherheit und der Fehlersuche."
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "Was beim Teilen sichtbar wird",
+      "paragraphs": [
+        "Mit der ersten angenommenen Einladung entsteht eine Verbindung zum Teilen. Beide Konten sehen geteilte Ausgaben, die zahlende Person, die Aufteilung, den Änderungs- und Löschverlauf und erfasste Rückzahlungen. Beide können geteilte Ausgaben bearbeiten. Deine Kategoriezuordnungen und Budgets bleiben privat.",
+        "Wenn der E-Mail-Versand aktiviert ist, verarbeitet der eingerichtete E-Mail-Dienst Bestätigungsnachrichten und Einladungen einschließlich Empfängeradresse und Nachrichteninhalt."
+      ]
+    },
+    {
+      "id": "parsing",
+      "title": "Schnellerfassung und Wechselkurse",
+      "paragraphs": [
+        "Die Schnellerfassung verarbeitet Text auf deinem Gerät. Ausgabentexte werden nicht an einen Cloud-KI-Dienst gesendet. Wenn du mit einem Konto verbunden bist, wird die gespeicherte Buchung mit deinem Spendie-Server synchronisiert.",
+        "Die Wechselkurse stammen von der Europäischen Zentralbank. Die App kann den öffentlichen Kursdienst direkt abrufen und die Kurse auf dem Gerät zwischenspeichern. Die Anfrage enthält keine Ausgaben oder Kontodaten. Die EZB kann übliche Netzwerkdaten wie deine IP-Adresse erhalten. Bereits gespeicherte Umrechnungen ändern sich bei neuen Kursen nicht."
+      ],
+      "links": [
+        {"title": "Datenschutzerklärung der EZB", "url": "https://www.ecb.europa.eu/services/data-protection/privacy-statements/html/ecb.privacy_statement_website.de.html"}
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Werbung, Diagnose und TestFlight",
+      "paragraphs": [
+        "Spendie enthält keine Werbung und keine Analysebibliotheken von Drittanbietern. Zur Fehlersuche kann die App lokale Fehlermeldungen protokollieren.",
+        "Wenn du die App über TestFlight installierst, erfasst Apple Daten zur Betanutzung, Abstürze und Feedback und teilt relevante Informationen mit dem Entwickler. Feedback kann die von dir ausgewählten Bildschirmfotos enthalten. Apple beschreibt diese separate Verarbeitung in seinen Datenschutzinformationen zu TestFlight."
+      ],
+      "links": [
+        {"title": "Apple TestFlight und Datenschutz", "url": "https://www.apple.com/legal/privacy/data/de/test-flight/"}
+      ]
+    },
+    {
+      "id": "retention",
+      "title": "Löschung und Aufbewahrung",
+      "paragraphs": [
+        "Wenn du eine Ausgabe löschst, entfällt ihr Einfluss auf Ausgaben und Schulden im aktiven Haushaltsbuch. Löschvermerke, der gemeinsame Änderungsverlauf und frühere Sicherungen können Daten für Synchronisierung, geteilte Buchungen und Wiederherstellung enthalten. Erfasste Rückzahlungen bleiben von den ausgeglichenen Ausgaben getrennt.",
+        "In dieser Betaversion werden Serversicherungen nicht nach einem festen Zeitplan automatisch gelöscht und können ältere Daten enthalten. Wende dich für Kontolöschung, Auskunft, Export oder Berichtigung an die Administration. Das gilt auch für Anfragen zum gemeinsamen Verlauf und zu Sicherungen."
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Fragen und Anfragen",
+      "paragraphs": [
+        "Spendie ist derzeit eine kleine Betaversion mit administrativ eingerichteten Konten. Wende dich bei Datenschutzfragen oder Anfragen zu deinen Daten an die Person, die dein Konto eingerichtet hat."
+      ]
+    }
+  ]
+}

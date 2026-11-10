@@ -80,3 +80,7 @@ Common [split](shared-expense-examples.json) and [repayment](settlement-examples
 ## Whole-year budget extension
 
 Current native clients use [API v3](annual-budget-v3.md). Shared payloads remain unchanged. V1/V2 accounts with a whole-year plan require upgrade so old clients cannot omit or double-count the new budget model. Uncategorized incoming shares use the private guilt-free pool unless explicitly allocated; a legacy zero-budget bootstrap does not increase the plan total.
+
+## One acceptance per connection and entry creation
+
+[ADR 0018](../adr/0018-sharing-at-entry-and-once-per-person.md) makes acceptance release all eligible pending expenses between the connected accounts in both directions. Participant feeds and histories update atomically; already-accepted stale acceptance is harmless. Native entry persists the source and sharing operation together using the existing source-operation acknowledgment dependency. Names resolve locally to accepted account IDs and do not change the wire authorization contract.

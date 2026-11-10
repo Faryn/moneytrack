@@ -5,10 +5,12 @@ import SwiftData
 @MainActor @Observable
 final class LedgerStore {
     private let context: ModelContext
-    private(set) var categories: [CategoryValue]
-    private(set) var budgets: [YearBudgetValue]
-    private(set) var expenses: [ExpenseValue]
-    private(set) var pendingChanges: [PendingChangeValue]
+    private(set) var categories: [CategoryValue] = []
+    private(set) var archivedCategoryIDs: Set<UUID> = []
+    var activeCategories: [CategoryValue] { categories.filter { !archivedCategoryIDs.contains($0.id) } }
+    private(set) var budgets: [YearBudgetValue] = []
+    private(set) var expenses: [ExpenseValue] = []
+    private(set) var pendingChanges: [PendingChangeValue] = []
     private(set) var issues: [SyncIssue] = []
     private(set) var annualPlans: [AnnualBudgetPlan] = []
     private(set) var sharedExpenses: [SharedExpenseValue] = []
@@ -22,17 +24,6 @@ final class LedgerStore {
         context = ModelContext(container)
         context.autosaveEnabled = false
         fixedToday = today
-        categories = try context.fetch(FetchDescriptor<CategoryRecord>()).map(\.value)
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        budgets = try context.fetch(FetchDescriptor<YearBudgetRecord>()).map(\.value)
-        expenses = try context.fetch(FetchDescriptor<ExpenseRecord>()).filter { $0.deletedAt == nil }
-            .map { try $0.value() }
-            .sorted { $0.day == $1.day ? $0.createdAt > $1.createdAt : $0.day > $1.day }
-        pendingChanges = try context.fetch(FetchDescriptor<PendingChangeRecord>()).map(\.value)
-            .sorted { $0.sequence < $1.sequence }
-        issues = try context.fetch(FetchDescriptor<LedgerSchemaV2.OperationState>()).compactMap {
-            try $0.issueData.map { try JSONDecoder().decode(SyncIssue.self, from: $0) }
-        }
         try reloadAll()
     }
 
@@ -44,8 +35,8 @@ final class LedgerStore {
     }
 
     func overview(month: BudgetMonth) -> [CategoryBudget] {
-        if let plan = annualPlan(year: month.year) { return (try? AnnualBudgetCalculator.overview(plan, month: month, categories: categories, expenses: expenses).categories) ?? [] }
-        return categories.map {
+        if let plan = annualPlan(year: month.year) { return (try? AnnualBudgetCalculator.overview(plan, month: month, categories: activeCategories, expenses: expenses).categories) ?? [] }
+        return activeCategories.map {
             BudgetCalculator.category($0, month: month, annual: budget(for: $0.id, year: month.year)?.amount, expenses: expenses)
         }
     }
@@ -64,17 +55,17 @@ final class LedgerStore {
         guard (1900...9999).contains(year),
               annualAmount == nil || (0...Money.maximum).contains(annualAmount!) else { throw LedgerError.invalidAmount }
         let id = id ?? UUID()
-        guard !categories.contains(where: { $0.id != id && $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame })
+        guard !activeCategories.contains(where: { $0.id != id && $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame })
         else { throw LedgerError.duplicateCategory }
         let category = CategoryValue(id: id, name: name)
         let existingPlan = planSnapshot ?? annualPlan(year: year)
         if let planSnapshot, let current = annualPlan(year: year), current.id != planSnapshot.id {
-            throw ConnectionError.rejected("This year's plan changed. Reopen it before assigning money.")
+            throw ConnectionError.rejected(String(localized: "This year's plan changed. Reopen it before assigning money."))
         }
         let allocationBase = try effectivePlanRevision(snapshot: planSnapshot, expected: expectedPlanRevision)
         var updatedPlan = existingPlan
         if let amount = annualAmount, var plan = updatedPlan {
-            guard id != plan.freeCategoryID else { throw ConnectionError.rejected("The default category uses guilt-free spending.") }
+            guard id != plan.freeCategoryID else { throw ConnectionError.rejected(String(localized: "The default category is reserved for uncategorized entries.")) }
             plan.allocations.removeAll { $0.categoryID == id }
             if amount > 0 { plan.allocations.append(CategoryAllocation(categoryID: id, amount: amount)) }
             plan.allocations.sort { $0.categoryID.uuidString < $1.categoryID.uuidString }
@@ -110,25 +101,30 @@ final class LedgerStore {
     }
 
     @discardableResult
-    func saveExpense(id: UUID? = nil, amount: Int64, description: String, categoryID: UUID?, day: ExpenseDay, expectedRevision: Int64? = nil) throws -> UUID {
+    func saveExpense(id: UUID? = nil, amount: Int64, description: String, categoryID: UUID?, day: ExpenseDay, expectedRevision: Int64? = nil, conversion: CurrencyConversion? = nil, sharing: NewExpenseSharing? = nil, kind: BookingKind? = nil) throws -> UUID {
+        if kind == .income && sharing != nil { throw ConnectionError.rejected(String(localized: "Income cannot be shared.")) }
+        if let sharing {
+            guard id == nil, sharingConnections.contains(sharing.connection), sharing.userID != sharing.connection.otherID else { throw ConnectionError.rejected(String(localized: "Choose an accepted sharing connection.")) }
+        }
         if let id, let shared = sharedExpenses.first(where: { $0.id == id }) {
+            guard kind != .income else { throw LedgerError.sharedEditingUnavailable }
             guard let categoryID else { throw LedgerError.missingCategory }
             if expectedRevision != nil { throw LedgerError.sharedEditingUnavailable }
             try editSharedExpense(shared, amount: amount, description: description, categoryID: categoryID,
                                   day: day, paidByUser: shared.paidByUser, ownSplit: shared.ownSplit)
             return id
         }
-        guard (1...Money.maximum).contains(amount) else { throw LedgerError.invalidAmount }
+        guard (1...Money.maximum).contains(amount), conversion == nil || (try? conversion!.euroCents()) == amount else { throw LedgerError.invalidAmount }
         guard description.count <= 500 else { throw LedgerError.descriptionTooLong }
         let fallback = categoryID == nil ? defaultSpendingCategory(year: day.year) : nil
         let categoryID = categoryID ?? fallback!.id
-        guard categories.contains(where: { $0.id == categoryID }) || fallback != nil else { throw LedgerError.missingCategory }
+        guard activeCategories.contains(where: { $0.id == categoryID }) || fallback != nil else { throw LedgerError.missingCategory }
         let existing = id.flatMap { identifier in expenses.first { $0.id == identifier } }
         if id != nil && existing == nil { throw LedgerError.missingExpense }
         guard existing == nil || existing!.personalShare == existing!.amount else { throw LedgerError.sharedEditingUnavailable }
         let value = ExpenseValue(id: id ?? UUID(), categoryID: categoryID, amount: amount, personalShare: amount,
                                  description: description.trimmingCharacters(in: .whitespacesAndNewlines),
-                                 day: day, createdAt: existing?.createdAt ?? .now)
+                                 day: day, createdAt: existing?.createdAt ?? .now, conversion: conversion, kind: kind ?? existing?.kind)
         var pending: PendingChangeValue!
         let priorPending = pendingChanges.contains { $0.entity == "expense" && $0.entityID == value.id }
         try commit {
@@ -138,17 +134,20 @@ final class LedgerStore {
                 _ = try enqueue(entity: "category", id: fallback.id, action: "upsert", payload: fallback)
                 offset = 1
             }
-            if let record = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == value.id }) {
+            if let record = try expenseRecord(value.id) {
                 guard record.deletedAt == nil else { throw LedgerError.missingExpense }
                 record.amount = amount; record.personalShare = amount; record.categoryID = categoryID
                 record.descriptionText = value.description; record.calendarDay = day.iso
             } else { context.insert(ExpenseRecord(value)) }
+            try putConversion(value.id, value.conversion)
+            try putIncome(value.id, value.isIncome)
             pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value, offset: offset)
             if let expectedRevision, !priorPending { try operationState(pending.id)?.baseRevision = expectedRevision }
+            if let sharing { try queueEntryShare(value, sharing: sharing, sourceOperationID: pending.id, offset: offset + 1) }
         }
         expenses.removeAll { $0.id == value.id }; expenses.append(value)
         expenses.sort { $0.day == $1.day ? $0.createdAt > $1.createdAt : $0.day > $1.day }
-        if fallback != nil { try reloadAll() } else { pendingChanges.append(pending) }
+        if fallback != nil || sharing != nil { try reloadAll() } else { pendingChanges.append(pending) }
         return value.id
     }
 
@@ -159,7 +158,7 @@ final class LedgerStore {
         struct Deletion: Codable { let id: UUID; let deletedAt: Date }
         var pending: PendingChangeValue!
         try commit {
-            guard let record = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == id && $0.deletedAt == nil })
+            guard let record = try expenseRecord(id), record.deletedAt == nil
             else { throw LedgerError.missingExpense }
             let now = Date.now
             record.deletedAt = now
@@ -244,7 +243,7 @@ extension LedgerStore {
                 try putShared("source_ack", pending.entityID, payload: .object(["operationID": .string(id.uuidString), "revision": .integer(record.revision)]), deleted: false)
             }
             try removeOperation(id)
-            try remember(record)
+            let latest = try remember(record)
             let remaining = try context.fetch(FetchDescriptor<PendingChangeRecord>())
                 .filter { $0.entityKind == pending.entity && $0.entityID == pending.entityID }.sorted { $0.sequence < $1.sequence }
             if let next = remaining.first {
@@ -253,8 +252,7 @@ extension LedgerStore {
                 // Depend on our acknowledged revision, never silently on someone else's later edit.
                 if state.baseRevision == nil { state.baseRevision = record.revision }
             } else {
-                let latest = try remoteState(record.entity, record.entityID).flatMap { try JSONDecoder().decode(RemoteRecord.self, from: $0.data) }
-                try applyRemote(latest ?? record)
+                try applyRemote(latest)
             }
         }
         try reloadAll()
@@ -264,8 +262,10 @@ extension LedgerStore {
 
     func receive(_ page: ChangePage) throws {
         try syncCommit {
+            let pendingRecords = try context.fetch(FetchDescriptor<PendingChangeRecord>(sortBy: [SortDescriptor(\.sequence)]))
+            let pendingKeys = Set(pendingRecords.map { RemoteRecord.key($0.entityKind, $0.entityID) })
             for record in page.changes {
-                try remember(record)
+                let latest = try remember(record)
                 if record.entity == "budget_plan" {
                     let value = try record.payload.decoded(AnnualBudgetPlan.self)
                     if let old = annualPlans.first(where: { $0.year == value.year && $0.id != value.id }),
@@ -279,9 +279,8 @@ extension LedgerStore {
                 }
                 if record.entity == "year_budget" {
                     let remote = try record.payload.decoded(YearBudgetValue.self)
-                    let pendingRecords = try context.fetch(FetchDescriptor<PendingChangeRecord>())
                     let budgetRecords = try context.fetch(FetchDescriptor<YearBudgetRecord>())
-                    if let pending = pendingRecords.sorted(by: { $0.sequence < $1.sequence }).first(where: { pending in
+                    if let pending = pendingRecords.first(where: { pending in
                         pending.entityKind == "year_budget" && pending.entityID != record.entityID && budgetRecords.contains {
                             $0.id == pending.entityID && $0.categoryID == remote.categoryID && $0.year == remote.year
                         }
@@ -294,12 +293,7 @@ extension LedgerStore {
                         continue
                     }
                 }
-                let localPending = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains {
-                    $0.entityKind == record.entity && $0.entityID == record.entityID
-                }
-                if !localPending, let latest = try remoteState(record.entity, record.entityID) {
-                    try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: latest.data))
-                }
+                if !pendingKeys.contains(record.key) { try applyRemote(latest) }
             }
             try syncState().cursor = page.cursor
         }
@@ -356,9 +350,11 @@ extension LedgerStore {
             } else if issue.current?.deleted == true && issue.entity == "expense" && latest.0 == "upsert" {
                 let old = try latest.1.decoded(ExpenseValue.self)
                 let value = ExpenseValue(id: UUID(), categoryID: old.categoryID, amount: old.amount,
-                    personalShare: old.personalShare, description: old.description, day: old.day, createdAt: old.createdAt)
+                    personalShare: old.personalShare, description: old.description, day: old.day, createdAt: old.createdAt, conversion: old.conversion, kind: old.kind)
                 if let current = issue.current { try applyRemote(current) }
                 context.insert(ExpenseRecord(value))
+                try putConversion(value.id, value.conversion)
+                try putIncome(value.id, value.isIncome)
                 let pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value)
                 try replaceSequence(pending.id, with: first.sequence, base: 0)
             } else if issue.current?.deleted == true && latest.0 == "delete" {
@@ -408,8 +404,10 @@ extension LedgerStore {
             for original in source.expenses {
                 guard let category = categoryIDs[original.categoryID] else { throw ConnectionError.invalidData }
                 let value = ExpenseValue(id: UUID(), categoryID: category, amount: original.amount, personalShare: original.personalShare,
-                    description: original.description, day: original.day, createdAt: original.createdAt)
+                    description: original.description, day: original.day, createdAt: original.createdAt, conversion: original.conversion, kind: original.kind)
                 context.insert(ExpenseRecord(value))
+                try putConversion(value.id, value.conversion)
+                try putIncome(value.id, value.isIncome)
                 _ = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value, offset: offset)
                 offset += 1
             }
@@ -430,11 +428,11 @@ extension LedgerStore {
             guard let value = annualPlans.first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
             return ("upsert", try .value(value))
         case "expense":
-            guard let value = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
+            guard let value = try expenseRecord(id) else { throw ConnectionError.invalidData }
             if let deleted = value.deletedAt {
                 return ("delete", .object(["id": .string(id.uuidString), "deletedAt": .string(deleted.ISO8601Format())]))
             }
-            return ("upsert", try .value(value.value()))
+            return ("upsert", try .value(expenseValue(value)))
         default:
             if let pending = pendingChanges.last(where: { $0.entity == entity && $0.entityID == id }) {
                 return (pending.action, try JSONDecoder().decode(JSONValue.self, from: pending.payload))
@@ -456,18 +454,26 @@ extension LedgerStore {
     }
     private func remoteState(_ entity: String, _ id: UUID) throws -> LedgerSchemaV2.RemoteState? {
         let key = RemoteRecord.key(entity, id)
-        return try context.fetch(FetchDescriptor<LedgerSchemaV2.RemoteState>()).first { $0.key == key }
+        return try context.fetch(FetchDescriptor<LedgerSchemaV2.RemoteState>(predicate: #Predicate { $0.key == key })).first
     }
     private func syncState() throws -> LedgerSchemaV2.SyncState {
         if let state = try context.fetch(FetchDescriptor<LedgerSchemaV2.SyncState>()).first { return state }
         let state = LedgerSchemaV2.SyncState(); context.insert(state); return state
     }
-    private func remember(_ record: RemoteRecord) throws {
+    @discardableResult
+    private func remember(_ record: RemoteRecord) throws -> RemoteRecord {
         guard record.revision > 0 else { throw ConnectionError.invalidData }
-        let data = try JSONEncoder().encode(record)
         if let saved = try remoteState(record.entity, record.entityID) {
-            if record.revision >= saved.revision { saved.revision = record.revision; saved.data = data }
-        } else { context.insert(LedgerSchemaV2.RemoteState(key: record.key, revision: record.revision, data: data)) }
+            if saved.revision > record.revision {
+                return try JSONDecoder().decode(RemoteRecord.self, from: saved.data)
+            }
+            saved.data = try JSONEncoder().encode(record)
+            saved.revision = record.revision
+        } else {
+            context.insert(LedgerSchemaV2.RemoteState(key: record.key, revision: record.revision,
+                data: try JSONEncoder().encode(record)))
+        }
+        return record
     }
     private func applyRemote(_ record: RemoteRecord) throws {
         switch record.entity {
@@ -492,26 +498,78 @@ extension LedgerStore {
             guard value.id == record.entityID, (1...Money.maximum).contains(value.amount), value.personalShare == value.amount else { throw ConnectionError.invalidData }
             guard (1900...9999).contains(value.day.year) else { throw ConnectionError.invalidData }
             _ = try ExpenseDay(iso: value.day.iso)
-            let saved = try context.fetch(FetchDescriptor<ExpenseRecord>()).first(where: { $0.id == value.id }) ?? ExpenseRecord(value)
+            let saved = try expenseRecord(value.id) ?? ExpenseRecord(value)
             if saved.modelContext == nil { context.insert(saved) }
             saved.categoryID = value.categoryID; saved.amount = value.amount; saved.personalShare = value.personalShare
             saved.descriptionText = value.description; saved.calendarDay = value.day.iso; saved.createdAt = value.createdAt
             saved.deletedAt = record.deleted ? .now : nil
+            try putConversion(value.id, value.conversion)
+            try putIncome(value.id, value.isIncome)
         case "shared_expense", "shared_assignment", "sharing_invitation", "repayment":
             try applySharingRecord(record)
         default: throw ConnectionError.invalidData
         }
+    }
+    private func expenseRecord(_ id: UUID) throws -> ExpenseRecord? {
+        try context.fetch(FetchDescriptor<ExpenseRecord>(predicate: #Predicate { $0.id == id })).first
+    }
+    private func conversionRecord(_ id: UUID) throws -> LedgerSchemaV5.ConversionRecord? {
+        try context.fetch(FetchDescriptor<LedgerSchemaV5.ConversionRecord>(predicate: #Predicate { $0.id == id })).first
+    }
+    private func incomeRecord(_ id: UUID) throws -> LedgerSchemaV6.IncomeRecord? {
+        try context.fetch(FetchDescriptor<LedgerSchemaV6.IncomeRecord>(predicate: #Predicate { $0.id == id })).first
+    }
+    private func putConversion(_ id: UUID, _ conversion: CurrencyConversion?) throws {
+        let saved = try conversionRecord(id)
+        if let conversion {
+            let data = try JSONEncoder().encode(conversion)
+            if let saved { saved.data = data } else { context.insert(LedgerSchemaV5.ConversionRecord(id: id, data: data)) }
+        } else if let saved { context.delete(saved) }
+    }
+    private func putIncome(_ id: UUID, _ isIncome: Bool) throws {
+        let saved = try incomeRecord(id)
+        if isIncome {
+            if saved == nil { context.insert(LedgerSchemaV6.IncomeRecord(id: id)) }
+        } else if let saved { context.delete(saved) }
+    }
+    private func expenseValue(_ record: ExpenseRecord) throws -> ExpenseValue {
+        var value = try record.value()
+        if try incomeRecord(record.id) != nil { value.kind = .income }
+        if let saved = try conversionRecord(record.id) {
+            value.conversion = try JSONDecoder().decode(CurrencyConversion.self, from: saved.data)
+            guard try value.conversion!.euroCents() == value.amount else { throw ConnectionError.invalidData }
+        }
+        return value
     }
     private func syncCommit(_ changes: () throws -> Void) throws {
         do { try changes(); try context.save() }
         catch { context.rollback(); throw error }
     }
     private func reloadAll() throws {
-        annualPlans = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).map { try $0.value() }
         categories = try context.fetch(FetchDescriptor<CategoryRecord>()).map(\.value)
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let categoryKeys = categories.map { RemoteRecord.key("category", $0.id) }
+        let categoryStates = try context.fetch(FetchDescriptor<LedgerSchemaV2.RemoteState>(
+            predicate: #Predicate { categoryKeys.contains($0.key) }
+        ))
+        archivedCategoryIDs = Set(try categoryStates.compactMap { state in
+            let record = try JSONDecoder().decode(RemoteRecord.self, from: state.data)
+            guard case .object(let fields) = record.payload, fields["archived"] == .bool(true) else { return nil }
+            return record.entityID
+        })
+        annualPlans = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).map { try $0.value() }
         budgets = try context.fetch(FetchDescriptor<YearBudgetRecord>()).map(\.value)
-        expenses = try context.fetch(FetchDescriptor<ExpenseRecord>()).filter { $0.deletedAt == nil }.map { try $0.value() }
+        let incomeIDs = Set(try context.fetch(FetchDescriptor<LedgerSchemaV6.IncomeRecord>()).map(\.id))
+        let conversions = Dictionary(uniqueKeysWithValues: try context.fetch(FetchDescriptor<LedgerSchemaV5.ConversionRecord>()).map { ($0.id, $0.data) })
+        expenses = try context.fetch(FetchDescriptor<ExpenseRecord>(predicate: #Predicate { $0.deletedAt == nil })).map { record in
+            var value = try record.value()
+            if incomeIDs.contains(record.id) { value.kind = .income }
+            if let data = conversions[record.id] {
+                value.conversion = try JSONDecoder().decode(CurrencyConversion.self, from: data)
+                guard try value.conversion!.euroCents() == value.amount else { throw ConnectionError.invalidData }
+            }
+            return value
+        }
             .sorted { $0.day == $1.day ? $0.createdAt > $1.createdAt : $0.day > $1.day }
         try reloadSharing()
         let sharedIDs = Set(sharedExpenses.map(\.id))
@@ -535,23 +593,38 @@ extension LedgerStore {
             repayments: repayments.filter { $0.connectionID == connection && $0.id != excludingRepayment }
                 .map { RepaymentAmounts(amount: $0.amount, paidByUser: $0.paidByUser) }).balance
     }
+    private func queueEntryShare(_ source: ExpenseValue, sharing: NewExpenseSharing, sourceOperationID: UUID, offset: Int) throws {
+        let connection = sharing.connection
+        let value = SharedExpenseValue(id: source.id, viewerID: sharing.userID, creatorID: sharing.userID,
+            recipientID: connection.otherID, creatorName: sharing.username, recipientName: connection.otherName,
+            recipientEmail: nil, status: "accepted", amount: source.amount, description: source.description,
+            day: source.day, createdAt: source.createdAt, paidByCreator: sharing.paidByUser, creatorSplit: sharing.split,
+            categoryID: source.categoryID, assignmentRevision: 1, revision: 0, connection: connection,
+            bootstrapRecords: [], history: [], deleted: false, conversion: source.conversion)
+        try putShared("shared_expense", source.id, payload: .value(value), deleted: false)
+        let fields: JSONValue = .object(["id": .string(source.id.uuidString), "command": .string("share"),
+            "recipientID": .string(connection.otherID.uuidString), "sourceOperationID": .string(sourceOperationID.uuidString),
+            "paidByCreator": .bool(sharing.paidByUser), "creatorSplit": .string(sharing.split.rawValue)])
+        _ = try enqueue(entity: "shared_expense", id: source.id, action: "upsert", payload: fields, offset: offset)
+    }
     func shareExpense(_ id: UUID, viewerID: UUID, username: String, email: String,
                       connection: SharingConnection?, paidByUser: Bool, split: PersonalSplit) throws {
         guard let source = expenses.first(where: { $0.id == id }), !sharedExpenses.contains(where: { $0.id == id }) else { throw LedgerError.missingExpense }
+        guard !source.isIncome else { throw ConnectionError.rejected(String(localized: "Income cannot be shared.")) }
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard connection != nil || (email.contains("@") && email.count <= 254) else { throw ConnectionError.rejected("Enter the other person's email address.") }
+        guard connection != nil || (email.contains("@") && email.count <= 254) else { throw ConnectionError.rejected(String(localized: "Enter the other person's email address.")) }
         let value = SharedExpenseValue(id: id, viewerID: viewerID, creatorID: viewerID,
             recipientID: connection?.otherID, creatorName: username, recipientName: connection?.otherName,
             recipientEmail: connection == nil ? email : nil, status: connection == nil ? "pending" : "accepted",
             amount: source.amount, description: source.description, day: source.day, createdAt: source.createdAt,
             paidByCreator: paidByUser, creatorSplit: split, categoryID: source.categoryID, assignmentRevision: 1, revision: 0,
-            connection: connection, bootstrapRecords: [], history: [], deleted: false)
+            connection: connection, bootstrapRecords: [], history: [], deleted: false, conversion: source.conversion)
         var fields: [String: JSONValue] = ["id": .string(id.uuidString), "command": .string("share"),
             "paidByCreator": .bool(paidByUser), "creatorSplit": .string(split.rawValue)]
         if let dependency = pendingChanges.last(where: { $0.entity == "expense" && $0.entityID == id }) {
             fields["sourceOperationID"] = .string(dependency.id.uuidString)
         } else {
-            guard let revision = try remoteState("expense", id)?.revision else { throw ConnectionError.rejected("Sync this expense before sharing.") }
+            guard let revision = try remoteState("expense", id)?.revision else { throw ConnectionError.rejected(String(localized: "Sync this expense before sharing.")) }
             fields["sourceRevision"] = .integer(revision)
         }
         if let connection { fields["recipientID"] = .string(connection.otherID.uuidString) }
@@ -572,13 +645,16 @@ extension LedgerStore {
         try reloadAll()
     }
     func editSharedExpense(_ original: SharedExpenseValue, amount: Int64, description: String, categoryID: UUID,
-                           day: ExpenseDay, paidByUser: Bool, ownSplit: PersonalSplit) throws {
+                           day: ExpenseDay, paidByUser: Bool, ownSplit: PersonalSplit, conversion: CurrencyConversion? = nil) throws {
         guard !original.deleted, sharedExpenses.first(where: { $0.id == original.id })?.deleted == false,
               (1...Money.maximum).contains(amount), description.count <= 500 else { throw LedgerError.invalidAmount }
-        guard categories.contains(where: { $0.id == categoryID }) else { throw LedgerError.missingCategory }
-        let commonChanged = amount != original.amount || description.trimmingCharacters(in: .whitespacesAndNewlines) != original.description ||
+        guard activeCategories.contains(where: { $0.id == categoryID }) else { throw LedgerError.missingCategory }
+        let selectedConversion = conversion ?? (amount == original.amount ? original.conversion : nil)
+        if let selectedConversion { guard try selectedConversion.euroCents() == amount else { throw LedgerError.invalidAmount } }
+        let commonChanged = selectedConversion != original.conversion || amount != original.amount || description.trimmingCharacters(in: .whitespacesAndNewlines) != original.description ||
             day != original.day || paidByUser != original.paidByUser || ownSplit != original.ownSplit
         var value = commonChanged ? original : sharedExpenses.first(where: { $0.id == original.id }) ?? original
+        value.conversion = selectedConversion
         value.amount = commonChanged ? amount : value.amount; value.description = description.trimmingCharacters(in: .whitespacesAndNewlines); value.day = day
         value.paidByCreator = original.isCreator == paidByUser
         value.creatorSplit = original.isCreator ? ownSplit : ownSplit.reversed
@@ -627,7 +703,7 @@ extension LedgerStore {
 
     private func commonCommand(_ value: SharedExpenseValue) throws -> JSONValue {
         .object(["id": .string(value.id.uuidString), "amount": .integer(value.amount), "description": .string(value.description),
-            "day": try .value(value.day), "paidByCreator": .bool(value.paidByCreator), "creatorSplit": .string(value.creatorSplit.rawValue)])
+            "day": try .value(value.day), "paidByCreator": .bool(value.paidByCreator), "creatorSplit": .string(value.creatorSplit.rawValue), "conversion": try .value(value.conversion)])
     }
     private func putShared(_ kind: String, _ id: UUID, payload: JSONValue, deleted: Bool) throws {
         let data = try JSONEncoder().encode(payload), key = RemoteRecord.key(kind, id)
@@ -640,13 +716,12 @@ extension LedgerStore {
             var value = try record.payload.decoded(SharedExpenseValue.self)
             guard value.id == record.entityID, value.viewerID == value.creatorID || value.viewerID == value.recipientID else { throw ConnectionError.invalidData }
             _ = try value.amounts
+            if let conversion = value.conversion { guard try conversion.euroCents() == value.amount else { throw ConnectionError.invalidData } }
             _ = try ExpenseDay(iso: value.day.iso)
             for bootstrap in value.bootstrapRecords {
                 let pending = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains { $0.entityKind == bootstrap.entity && $0.entityID == bootstrap.entityID }
-                try remember(bootstrap)
-                if !pending, let cached = try remoteState(bootstrap.entity, bootstrap.entityID) {
-                    try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data))
-                }
+                let latest = try remember(bootstrap)
+                if !pending { try applyRemote(latest) }
             }
             let assignmentPending = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains { $0.entityKind == "shared_assignment" && $0.entityID == value.id }
             let assignmentKey = RemoteRecord.key("shared_assignment", value.id)
@@ -690,7 +765,7 @@ extension LedgerStore {
         guard let first = selected.first else { throw ConnectionError.invalidData }
         if keepLocal, case .object(let fields) = try JSONDecoder().decode(JSONValue.self, from: first.payload),
            fields["command"] == .string("share") {
-            throw ConnectionError.rejected("This expense already has a sharing record. Use the server version and review its participants.")
+            throw ConnectionError.rejected(String(localized: "This expense already has a sharing record. Use the server version and review its participants."))
         }
         try syncCommit {
             var latest = try localPayload(entity: issue.entity, id: issue.entityID)
@@ -699,7 +774,7 @@ extension LedgerStore {
             }
             for pending in selected { try removeOperation(pending.id) }
             if keepLocal {
-                guard issue.current?.deleted != true else { throw ConnectionError.rejected("This shared expense was deleted. Keep its history and create a new expense if needed.") }
+                guard issue.current?.deleted != true else { throw ConnectionError.rejected(String(localized: "This shared expense was deleted. Keep its history and create a new expense if needed.")) }
                 let pending = try enqueue(entity: issue.entity, id: issue.entityID, action: latest.0, payload: latest.1)
                 try replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
             } else if let cached = try remoteState(issue.entity, issue.entityID) {
@@ -716,14 +791,22 @@ extension LedgerStore {
 extension LedgerStore {
     func annualPlan(year: Int) -> AnnualBudgetPlan? { annualPlans.first { $0.year == year } }
     func wholeBudget(month: BudgetMonth) throws -> AnnualBudgetOverview? {
-        try annualPlan(year: month.year).map { try AnnualBudgetCalculator.overview($0, month: month, categories: categories, expenses: expenses) }
+        try annualPlan(year: month.year).map { try AnnualBudgetCalculator.overview($0, month: month, categories: activeCategories, expenses: expenses) }
     }
     func legacyAllocations(year: Int) -> [CategoryAllocation] {
         budgets.filter { $0.year == year && $0.amount > 0 }.map { CategoryAllocation(categoryID: $0.categoryID, amount: $0.amount) }
     }
+    func displayName(for category: CategoryValue, year: Int) -> String {
+        if let plan = annualPlan(year: year) {
+            return category.id == plan.freeCategoryID ? String(localized: "Uncategorized") : category.name
+        }
+        // Before a plan exists, the default bucket uses the canonical stored name.
+        let hasLegacyBudget = budgets.contains { $0.categoryID == category.id && $0.year == year && $0.amount > 0 }
+        return category.name == "Uncategorized" && !hasLegacyBudget ? String(localized: "Uncategorized") : category.name
+    }
     func defaultSpendingCategory(year: Int) -> CategoryValue {
         if let id = annualPlan(year: year)?.freeCategoryID, let category = categories.first(where: { $0.id == id }) { return category }
-        return categories.first { $0.name.compare("Uncategorized", options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame } ?? CategoryValue(id: UUID(), name: "Uncategorized")
+        return activeCategories.first { $0.name.compare("Uncategorized", options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame } ?? CategoryValue(id: UUID(), name: "Uncategorized")
     }
     func saveAnnualPlan(year: Int, total: Int64, allocations: [CategoryAllocation], expectedRevision: Int64? = nil, confirmedPlan: AnnualBudgetPlan? = nil) throws {
         let existing = annualPlan(year: year)
@@ -731,20 +814,19 @@ extension LedgerStore {
         let ids = Set(allocations.map(\.categoryID))
         var free = existing.flatMap { p in categories.first { $0.id == p.freeCategoryID } } ?? defaultSpendingCategory(year: year)
         if ids.contains(free.id) {
-            guard existing == nil else { throw ConnectionError.rejected("Leave the default category for guilt-free spending.") }
-            if let candidate = categories.first(where: { $0.name == "Guilt-free spending" && !ids.contains($0.id) }) { free = candidate }
-            else {
-                var name = "Guilt-free spending", suffix = 2
-                while categories.contains(where: { $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }) {
-                    name = "Guilt-free spending \(suffix)"; suffix += 1
-                }
-                free = CategoryValue(id: UUID(), name: name)
+            guard existing == nil else { throw ConnectionError.rejected(String(localized: "The default category is reserved for uncategorized entries.")) }
+            var suffix = 2
+            var name = "Uncategorized \(suffix)"
+            while activeCategories.contains(where: { $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }) {
+                suffix += 1
+                name = "Uncategorized \(suffix)"
             }
+            free = CategoryValue(id: UUID(), name: name)
         }
         let value = AnnualBudgetPlan(id: existing?.id ?? UUID(), year: year, total: total, freeCategoryID: free.id,
             allocations: allocations.sorted { $0.categoryID.uuidString < $1.categoryID.uuidString })
         try value.validate()
-        guard allocations.allSatisfy({ a in categories.contains { $0.id == a.categoryID } }) else { throw LedgerError.missingCategory }
+        guard allocations.allSatisfy({ a in activeCategories.contains { $0.id == a.categoryID } }) else { throw LedgerError.missingCategory }
         let prior = pendingChanges.contains { $0.entity == "budget_plan" && $0.entityID == value.id }
         try commit {
             var offset = 0

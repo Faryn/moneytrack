@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class ConnectedAnnualPlanTests: XCTestCase {
-    func testWholePlanGuiltFreeSyncRetryAndConflict() async throws {
+    func testWholePlanAllocationSyncRetryAndConflict() async throws {
         guard ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"] == "http://127.0.0.1:4004" else { throw XCTSkip("Run scripts/check-connected for the temporary backend.") }
         let transport = HTTPTransport(), server = try ServerAddress.parse("http://127.0.0.1:4004")
         let credential = try await transport.signIn(server: server, username: "plan-fixture", password: "fixture-passphrase-2026")
@@ -18,8 +18,9 @@ final class ConnectedAnnualPlanTests: XCTestCase {
         try await pump(a, transport, credential)
         try await pump(b, transport, credential)
         let result = try XCTUnwrap(b.wholeBudget(month: .init(year: 2026, month: 1)))
-        XCTAssertEqual(result.total.remaining, 2000)
-        XCTAssertEqual(result.guiltFree.remaining, 3000)
+        XCTAssertEqual(result.total.remaining, -3000)
+        XCTAssertEqual(result.unallocated, 60000)
+        XCTAssertEqual(result.unbudgeted.remaining, -2000)
         XCTAssertEqual(result.categories.first { $0.id == category }?.remaining, -1000)
         let plan = try XCTUnwrap(a.annualPlans.first)
         try a.saveAnnualPlan(year: 2026, total: 180000, allocations: plan.allocations)

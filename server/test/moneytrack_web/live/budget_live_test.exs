@@ -3,6 +3,25 @@ defmodule MoneyTrackWeb.BudgetLiveTest do
 
   import Phoenix.LiveViewTest
 
+  test "German remains active after a LiveView event", %{conn: conn} do
+    user = MoneyTrack.Fixtures.user()
+    {:ok, token, _} = MoneyTrack.Accounts.create_session(user, "browser", "Test browser")
+
+    conn =
+      conn
+      |> init_test_session(%{session_token: token})
+      |> put_req_header("accept-language", "de-DE")
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    assert has_element?(view, "#budget-heading", "Dein Budget")
+
+    view
+    |> form("#expense-form", expense: %{amount: "0", day: "2026-01-15"})
+    |> render_submit()
+
+    assert render(view) =~ "Gib einen Betrag wie 78,50"
+  end
+
   test "budget overview mounts over LiveView without invented financial figures", %{conn: conn} do
     user = MoneyTrack.Fixtures.user()
     {:ok, token, _} = MoneyTrack.Accounts.create_session(user, "browser", "Test browser")

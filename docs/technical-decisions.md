@@ -86,7 +86,7 @@ Run iOS checks on macOS and server checks on a suitable runner. Prioritize share
 
 ## Can wait
 
-Natural-language parsing, model selection, push-driven sync, receipt storage, shared budgets, additional currencies, and extra Apple platforms can be decided after form entry and reliable synchronization work. Initial category suggestions can use local expense history without an AI dependency.
+On-device Quick Entry now recognizes the documented German/English patterns using Foundation, and initial category suggestions use local history. [ADR 0017](adr/0017-expense-currency-conversion.md) implements foreign-currency entry with fixed EUR reporting and dated ECB rates. Broader language understanding, push-driven sync, receipt storage, shared budgets, additional rate providers/currencies, and extra Apple platforms remain future work.
 
 ## References
 

@@ -5,6 +5,7 @@
 - Read `SPEC.md`, `docs/adr/README.md`, and the relevant accepted ADRs.
 - `docs/data-model-and-sync.md` is a draft. Recommendations and marked assumptions are not automatically accepted decisions.
 - Keep documentation consistent when user decisions change requirements. Preserve accepted ADR history and link later decisions that resolve or supersede earlier open questions.
+- Ship all user-facing text in English and German in the same change. This includes iPhone, iPad, web, accessibility labels, errors, emails, and privacy notices. Use the iOS string catalog and Phoenix Gettext for interface text, and verify both languages for every changed flow. Add server errors displayed by both clients to both catalogs. Keep user-entered text, stored identifiers, and API codes unchanged.
 
 ## Architecture and product constraints
 
@@ -19,7 +20,7 @@
 
 - Store money exactly in minor currency units, never binary floating point. Keep expense calendar dates separate from UTC audit timestamps.
 - Only personal shares consume budget. Repayments, if implemented, clear obligations without creating another expense.
-- Carry both unused and overspent category budgets forward within the calendar year. Editing a yearly amount recalculates that whole year; January starts with zero carryover. Whole-year totals precede category allocations; unallocated spending shares one guilt-free pool. Allocations cannot exceed the total. See ADR 0013 for joint exact-cent allocation and ADR 0006 for legacy rules.
+- Carry both unused and overspent category budgets forward within the calendar year. Editing a yearly amount recalculates that whole year; January starts with zero carryover. Set the yearly total first and aim to assign it all to categories. Unallocated money is available to assign. Spending without a category budget reduces the overall balance. Allocations cannot exceed the total. See ADR 0021 for these rules, ADR 0013 for joint exact-cent rounding, and ADR 0006 for legacy rules.
 - Use the versioned SwiftData store for iOS. Save domain mutations and their outbox entries together; never reset the store on an open/migration failure. The personal sync contract is in ADR 0009; keep prepared operation bytes immutable until acknowledged or explicitly resolved.
 - Shared amount, payer, participants, and split must remain consistent as one revision.
 - Route website and API writes through common contexts. Record mutations, revisions, shared history, and sync events atomically.

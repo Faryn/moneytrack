@@ -37,11 +37,16 @@ defmodule MoneyTrackWeb.Layouts do
     ~H"""
     <header class="navbar border-b border-base-300 px-4 sm:px-6 lg:px-8">
       <div class="flex-1">
-        <a href={~p"/"} class="text-lg font-semibold tracking-tight">MoneyTrack</a>
+        <a href={~p"/"} class="text-lg font-semibold tracking-tight">Spendie</a>
       </div>
-      <.link :if={@current_scope} navigate={~p"/shared"} class="btn btn-ghost mr-3">Shared</.link>
-      <.link :if={@current_scope} navigate={~p"/account/email"} class="btn btn-ghost mr-3">Account</.link>
-      <.link :if={@current_scope} href={~p"/logout"} method="delete" class="btn btn-ghost mr-3">Sign Out</.link>
+      <.link href={~p"/privacy"} class="btn btn-ghost mr-3">{gettext("Privacy")}</.link>
+      <.link :if={@current_scope} navigate={~p"/shared"} class="btn btn-ghost mr-3">{gettext("Shared")}</.link>
+      <.link :if={@current_scope} navigate={~p"/account/email"} class="btn btn-ghost mr-3">{gettext(
+        "Account"
+      )}</.link>
+      <.link :if={@current_scope} href={~p"/logout"} method="delete" class="btn btn-ghost mr-3">{gettext(
+        "Sign Out"
+      )}</.link>
       <.theme_toggle />
     </header>
 
@@ -118,7 +123,7 @@ defmodule MoneyTrackWeb.Layouts do
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
-        aria-label="Use system appearance"
+        aria-label={gettext("Use system appearance")}
       >
         <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
@@ -127,7 +132,7 @@ defmodule MoneyTrackWeb.Layouts do
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
-        aria-label="Use light appearance"
+        aria-label={gettext("Use light appearance")}
       >
         <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
@@ -136,7 +141,7 @@ defmodule MoneyTrackWeb.Layouts do
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
-        aria-label="Use dark appearance"
+        aria-label={gettext("Use dark appearance")}
       >
         <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>

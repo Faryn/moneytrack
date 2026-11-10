@@ -18,7 +18,12 @@ Real deployment identifiers are intentionally omitted; [ADR 0016](0016-private-c
 | [0010](0010-pending-share-budget-treatment.md) | Accepted | Apply the creator's proposed personal share to budgets immediately, including while an invitation is pending |
 | [0011](0011-record-only-settle-up.md) | Accepted | Settle Up asks for a full/partial repayment amount and records it against shared balances; no in-app payments or budget impact |
 | [0012](0012-sharing-defaults-and-connected-flow.md) | Accepted | Private Uncategorized fallback, reuse accepted connections, and immediate repayment recording by either participant; connected shared flow |
-| [0013](0013-whole-year-budget-and-guilt-free-spending.md) | Accepted | Whole yearly total before category allocations; one guilt-free pool; joint exact-cent allocation; reachable bottom expense entry |
+| [0013](0013-whole-year-budget-and-guilt-free-spending.md) | Pool superseded by [0021](0021-allocate-the-full-budget.md) | Whole yearly total before category allocations, joint exact-cent allocation, and reachable bottom expense entry |
 | [0014](0014-expense-action-and-currency-fields.md) | Accepted | Expenses-only floating plus; keyboard Save Expense; aligned EUR fields and exact two-place money presentation |
 | [0015](0015-app-host-deployment.md) | Accepted hosting direction | application host Phoenix/SQLite release; nginx HTTPS on app.example.invalid over Tailscale; private listener and persistent storage |
 | [0016](0016-private-central-server-configuration.md) | Accepted | Central app default from ignored configuration; explicit test isolation; host identifiers excluded from Git |
+| [0017](0017-expense-currency-conversion.md) | Accepted | Fixed EUR reporting amounts; original foreign value and dated ECB rate; cached offline rates; atomic shared conversion and sync v4 |
+| [0018](0018-sharing-at-entry-and-once-per-person.md) | Accepted | One acceptance per person; connected-name Quick Entry; atomic shared creation on iOS and web |
+| [0019](0019-personal-income-bookings.md) | Accepted | Personal income, budget-neutral reporting, sync v5 and SwiftData V6; complete CSV booking import |
+| [0020](0020-category-archiving.md) | Accepted implementation | Archive unused categories with synchronized visibility and retained history |
+| [0021](0021-allocate-the-full-budget.md) | Accepted | Full allocation goal with unallocated money and unbudgeted spending shown separately |

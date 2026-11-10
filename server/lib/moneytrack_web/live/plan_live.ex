@@ -53,7 +53,7 @@ defmodule MoneyTrackWeb.PlanLive do
 
       {:noreply, save(socket, operation(payload, integer(p["revision"]), p["operationID"]))}
     else
-      _ -> {:noreply, assign(socket, error: "Enter a valid yearly total.")}
+      _ -> {:noreply, assign(socket, error: gettext("Enter a valid yearly total."))}
     end
   end
 
@@ -111,7 +111,7 @@ defmodule MoneyTrackWeb.PlanLive do
       _ ->
         {:noreply,
          assign(socket,
-           error: "Enter a category and allocation that fits within the yearly total."
+           error: gettext("Enter a category and allocation that fits within the yearly total.")
          )}
     end
   end
@@ -155,16 +155,16 @@ defmodule MoneyTrackWeb.PlanLive do
       {:error, {:conflict, current}} ->
         socket
         |> assign(
-          error: "This year's plan changed. Review the server plan before replacing it.",
+          error: gettext("This year's plan changed. Review the server plan before replacing it."),
           conflict: %{operation: op, current: current}
         )
         |> reload()
 
       {:error, {:validation, message}} ->
-        assign(socket, error: message)
+        assign(socket, error: MoneyTrackWeb.Language.message(message))
 
       _ ->
-        assign(socket, error: "This plan or category is unavailable.")
+        assign(socket, error: gettext("This plan or category is unavailable."))
     end
   end
 
@@ -210,19 +210,12 @@ defmodule MoneyTrackWeb.PlanLive do
       ids = Enum.map(allocations, & &1["categoryID"])
       candidates = socket.assigns.ledger.categories
 
-      found =
-        Enum.find(candidates, &(&1.name_key == "uncategorized" && &1.id not in ids)) ||
-          Enum.find(candidates, &(&1.name_key == "guilt-free spending" && &1.id not in ids))
+      found = Enum.find(candidates, &(&1.name_key == "uncategorized" && &1.id not in ids))
 
       if found do
         found
       else
-        name =
-          if Enum.any?(candidates, &(&1.name_key == "uncategorized")),
-            do: "Guilt-free spending",
-            else: "Uncategorized"
-
-        name = unique_name(name, candidates)
+        name = unique_name("Uncategorized", candidates)
         id = Ecto.UUID.generate()
 
         {:ok, _} =
@@ -305,7 +298,7 @@ defmodule MoneyTrackWeb.PlanLive do
 
   defp parse(_), do: :error
   defp input_amount(n), do: "#{div(n, 100)}.#{String.pad_leading(to_string(rem(n, 100)), 2, "0")}"
-  defp money(n), do: "€" <> input_amount(n)
+  defp money(cents), do: MoneyTrackWeb.Language.money(cents)
   @impl true
   def render(assigns) do
     assigned =
@@ -317,20 +310,24 @@ defmodule MoneyTrackWeb.PlanLive do
 
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
-      <.link navigate={~p"/?#{%{month: "#{@year}-01"}}"} class="link">Budget</.link>
-      <h1 class="text-2xl font-semibold">Yearly Plan · {@year}</h1>
+      <.link navigate={~p"/?#{%{month: "#{@year}-01"}}"} class="link">{gettext("Budget")}</.link>
+      <h1 class="text-2xl font-semibold">{gettext("Yearly Plan · %{year}", year: @year)}</h1>
       <p :if={@error} id="plan-error" role="alert" class="text-error">{@error}</p>
       <section :if={@conflict} id="plan-conflict" class="card border border-warning p-4">
-        <p>Server yearly total: {money(@conflict.current["payload"]["total"])}</p>
+        <p>
+          {gettext("Server yearly total: %{amount}",
+            amount: money(@conflict.current["payload"]["total"])
+          )}
+        </p>
         <p :for={a <- @conflict.current["payload"]["allocations"]}>
-          {Enum.find_value(@ledger.categories, "Category", fn c ->
+          {Enum.find_value(@ledger.categories, gettext("Category"), fn c ->
             if c.id == a["categoryID"], do: c.name
           end)}: {money(a["amount"])}
         </p>
-        <button phx-click="use_server" class="btn">Use Server Plan</button><button
+        <button phx-click="use_server" class="btn">{gettext("Use Server Plan")}</button><button
           phx-click="keep_local"
           class="btn"
-        >Keep My Plan</button>
+        >{gettext("Keep My Plan")}</button>
       </section>
       <.form
         :if={@form}
@@ -340,41 +337,48 @@ defmodule MoneyTrackWeb.PlanLive do
         phx-change="total_change"
         class="card border p-4"
       >
-        <h2 class="text-xl font-semibold">1. Pick the Whole Yearly Budget</h2>
+        <h2 class="text-xl font-semibold">{gettext("1. Pick the Whole Yearly Budget")}</h2>
         <.input
           :for={key <- [:id, :revision, :allocations, :operationID]}
           field={@form[key]}
           type="hidden"
         />
-        <.currency_input field={@form[:total]} label="Yearly budget (€)" required />
+        <.currency_input field={@form[:total]} label={gettext("Yearly budget (€)")} required />
         <p>
-          Category allocations come from this total. Everything unassigned is guilt-free spending.
+          {gettext(
+            "Assign the full yearly budget to categories. Unallocated money is available to assign."
+          )}
         </p>
         <.button
-          phx-disable-with="Saving…"
-          data-confirm={@plan && "Recalculate this whole calendar year with the new budget?"}
-        >Save Yearly Budget</.button>
+          phx-disable-with={gettext("Saving…")}
+          data-confirm={@plan && gettext("Recalculate this whole calendar year with the new budget?")}
+        >{gettext("Save Yearly Budget")}</.button>
       </.form>
       <section :if={@plan} id="plan-summary" class="card border p-4 space-y-2">
-        <p>Yearly total: {money(@plan.total)}</p><p>Allocated: {money(@assigned)}</p><p>
-          Guilt-free: {money(@plan.total - @assigned)}
+        <p>{gettext("Yearly total: %{amount}", amount: money(@plan.total))}</p><p>
+          {gettext("Allocated: %{amount}", amount: money(@assigned))}
+        </p><p>
+          {gettext("Unallocated: %{amount}", amount: money(@plan.total - @assigned))}
         </p>
+        <p :if={@assigned == @plan.total}>{gettext("Fully allocated")}</p>
       </section>
       <section :if={@plan} class="space-y-3">
-        <h2 class="text-xl font-semibold">2. Assign Parts to Categories</h2>
+        <h2 class="text-xl font-semibold">{gettext("2. Assign Parts to Categories")}</h2>
         <div
           :for={c <- @ledger.categories}
           :if={c.id != @plan.free_category_id}
           id={"allocate-#{c.id}"}
         >
-          <span>{c.name}: {Enum.find_value(@plan.allocations["items"], "Guilt-free pool", fn a ->
+          <span>{c.name}: {Enum.find_value(@plan.allocations["items"], gettext("No budget"), fn a ->
             if a["categoryID"] == c.id, do: money(a["amount"])
           end)}</span>
-          <button phx-click="edit_allocation" phx-value-id={c.id} class="btn">Edit Allocation</button>
+          <button phx-click="edit_allocation" phx-value-id={c.id} class="btn">{gettext(
+            "Edit Allocation"
+          )}</button>
         </div>
-        <button phx-click="edit_allocation" phx-value-id="new" class="btn">Add Category</button>
+        <button phx-click="edit_allocation" phx-value-id="new" class="btn">{gettext("Add Category")}</button>
       </section>
-      <p :if={!@plan}>Save the total first to start assigning category amounts.</p>
+      <p :if={!@plan}>{gettext("Save the total first to start assigning category amounts.")}</p>
       <.form
         :if={@allocation_form}
         for={@allocation_form}
@@ -391,18 +395,20 @@ defmodule MoneyTrackWeb.PlanLive do
         <.input
           :if={@allocation_form.params["new"] == "true"}
           field={@allocation_form[:name]}
-          label="Category name"
+          label={gettext("Category name")}
           required
         />
         <.currency_input
           field={@allocation_form[:amount]}
-          label="Yearly allocation (€); zero uses guilt-free"
+          label={gettext("Yearly allocation (€)")}
         />
-        <.button data-confirm="Recalculate this whole calendar year with these allocations?">Save Allocation</.button><button
+        <.button data-confirm={
+          gettext("Recalculate this whole calendar year with these allocations?")
+        }>{gettext("Save Allocation")}</.button><button
           phx-click="cancel"
           type="button"
           class="btn"
-        >Cancel</button>
+        >{gettext("Cancel")}</button>
       </.form>
     </Layouts.app>
     """

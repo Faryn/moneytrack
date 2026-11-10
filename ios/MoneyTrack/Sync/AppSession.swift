@@ -8,7 +8,7 @@ final class AppSession {
     private(set) var credential: SessionCredential?
     private(set) var isSyncing = false
     private(set) var needsAuthentication = false
-    private(set) var status = "On this iPhone"
+    private(set) var status = String(localized: "On this iPhone")
     private(set) var lastSync: Date?
     private(set) var syncError: String?
     private let vault: any CredentialVault
@@ -35,7 +35,7 @@ final class AppSession {
         let namespace = saved.map { StoreNamespace.serverAccount($0.server, $0.userID) } ?? localNamespace
         let opened = try LedgerStore(container: LedgerPersistence.container(root: root, namespace: namespace), today: fixedToday)
         credential = saved; store = opened
-        status = saved == nil ? "On this iPhone" : "Ready to sync"
+        status = saved == nil ? String(localized: "On this iPhone") : String(localized: "Ready to sync")
         if !monitoring {
             monitoring = true
             monitor.pathUpdateHandler = { [weak self] path in
@@ -51,7 +51,7 @@ final class AppSession {
         let signedIn = try await transport.signIn(server: url, username: username, password: password)
         if let current = credential, current.profileKey != signedIn.profileKey {
             try? await transport.signOut(signedIn)
-            throw ConnectionError.rejected("Sign out before switching to a different account or server. Your saved entries will stay separate.")
+            throw ConnectionError.rejected(String(localized: "Sign out before switching to a different account or server. Your saved entries will stay separate."))
         }
         do {
             try Task.checkCancellation()
@@ -67,7 +67,7 @@ final class AppSession {
             try vault.write(signedIn)
             generation += 1
             credential = signedIn; store = destination; needsAuthentication = false
-            status = "Ready to sync"
+            status = String(localized: "Ready to sync")
             Task { await self.synchronize() }
         } catch {
             try? await transport.signOut(signedIn)
@@ -81,7 +81,7 @@ final class AppSession {
         try vault.clear()
         generation += 1
         credential = nil; store = local; needsAuthentication = false
-        status = "On this iPhone"; lastSync = nil
+        status = String(localized: "On this iPhone"); lastSync = nil
         if let old { try? await transport.signOut(old) }
     }
 
@@ -90,7 +90,7 @@ final class AppSession {
         if isSyncing { requestedAgain = true; return }
         let started = generation
         isSyncing = true
-        status = "Syncing…"
+        status = String(localized: "Syncing…")
         syncError = nil
         defer {
             isSyncing = false
@@ -128,14 +128,14 @@ final class AppSession {
             } while true
             guard generation == started else { return }
             lastSync = .now
-            status = store.issues.isEmpty ? "Up to date" : "Changes need review"
+            status = store.issues.isEmpty ? String(localized: "Up to date") : String(localized: "Changes need review")
         } catch ConnectionError.unauthorized {
             guard generation == started else { return }
             needsAuthentication = true
-            status = "Sign in again to resume syncing"
+            status = String(localized: "Sign in again to resume syncing")
         } catch {
             guard generation == started else { return }
-            status = "Saved on this iPhone · couldn't sync"
+            status = String(localized: "Saved on this iPhone · couldn't sync")
             syncError = error.localizedDescription
         }
     }
@@ -182,7 +182,7 @@ extension AppSession {
         } catch {
             if started == generation, case ConnectionError.unauthorized = error {
                 needsAuthentication = true
-                status = "Sign in to sync"
+                status = String(localized: "Sign in to sync")
             }
             throw error
         }

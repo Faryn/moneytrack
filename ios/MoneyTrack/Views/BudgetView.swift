@@ -29,14 +29,14 @@ struct BudgetView: View {
                 Section {
                     RemainingAmount(amount: totals.remaining, large: true)
                         .padding(.vertical, 8)
-                    BudgetSupportingAmounts(amounts: totals)
+                    BudgetSupportingAmounts(amounts: totals, allocationLabel: plan == nil ? String(localized: "Monthly budget") : String(localized: "Assigned this month"))
                 }
             } else {
                 Section {
                     ContentUnavailableView {
                         Label("Set your yearly budget", systemImage: "chart.pie")
                     } description: {
-                        Text("Pick your whole yearly budget first, then assign parts to categories. The rest is guilt-free spending.")
+                        Text("Set your yearly budget, then assign the full amount to categories.")
                     } actions: {
                         Button("Set Up Budget", action: openYearlyPlan)
                             .accessibilityIdentifier("budget.setup")
@@ -45,16 +45,22 @@ struct BudgetView: View {
             }
             if let whole {
                 Section {
-                    NavigationLink { GuiltFreeDetailView(month: month) } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Guilt-free spending").font(.headline).foregroundStyle(.primary)
-                            Text("\(Money.format(abs(whole.guiltFree.remaining))) \(whole.guiltFree.remaining < 0 ? "over budget" : "left")")
-                                .font(.title2).foregroundStyle(AmountColors.remaining(whole.guiltFree.remaining)).monospacedDigit()
-                                .contentTransition(.numericText()).accessibilityIdentifier("budget.guilt-free.remaining")
-                                .accessibilityValue(Money.format(whole.guiltFree.remaining))
-                            Text("Unassigned budget · \(Money.format(whole.guiltFree.spent)) spent this month").font(.caption).foregroundStyle(.secondary)
-                        }.padding(.vertical, 4)
-                    }.accessibilityIdentifier("budget.guilt-free")
+                    if whole.unallocated > 0 {
+                        LabeledContent("Unallocated this year") {
+                            Text(Money.format(whole.unallocated)).monospacedDigit()
+                                .accessibilityIdentifier("budget.unallocated")
+                        }
+                        Button("Allocate Budget", action: openYearlyPlan)
+                            .accessibilityIdentifier("budget.allocate")
+                    }
+                    if whole.unbudgeted.remaining < 0 {
+                        NavigationLink { UnbudgetedSpendingView(month: month) } label: {
+                            LabeledContent("Unbudgeted spending") {
+                                Text(Money.format(-whole.unbudgeted.spent)).foregroundStyle(AmountColors.negative)
+                                    .monospacedDigit().accessibilityIdentifier("budget.unbudgeted.spent")
+                            }
+                        }.accessibilityIdentifier("budget.unbudgeted")
+                    }
                 }
             }
             if !overview.filter({ $0.id != plan?.freeCategoryID }).isEmpty {
@@ -63,7 +69,7 @@ struct BudgetView: View {
                         NavigationLink {
                             CategoryDetailView(categoryID: item.id, month: month)
                         } label: {
-                            CategoryBudgetRow(item: item, usesGuiltFree: plan != nil && item.annual == nil)
+                            CategoryBudgetRow(item: item, name: store.displayName(for: item.category, year: month.year))
                         }
                         .accessibilityIdentifier("category-\(item.category.name)")
                     }
@@ -84,13 +90,14 @@ struct BudgetView: View {
 
 private struct BudgetSupportingAmounts: View {
     let amounts: BudgetAmounts
+    let allocationLabel: String
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             if !typeSize.isAccessibilitySize {
                 HStack(alignment: .top, spacing: 16) {
-                    metric("Monthly budget", amount: amounts.allocation, color: .primary)
+                    metric(allocationLabel, amount: amounts.allocation, color: .primary)
                     Spacer(minLength: 0)
                     metric("Carried forward", amount: amounts.carryover, color: AmountColors.remaining(amounts.carryover))
                     Spacer(minLength: 0)
@@ -98,7 +105,7 @@ private struct BudgetSupportingAmounts: View {
                 }
             }
             VStack(spacing: 8) {
-                LabeledContent("Monthly budget", value: Money.format(amounts.allocation))
+                LabeledContent(allocationLabel, value: Money.format(amounts.allocation))
                 LabeledContent("Carried forward") {
                     Text(Money.format(amounts.carryover)).foregroundStyle(AmountColors.remaining(amounts.carryover))
                 }
@@ -121,7 +128,7 @@ private struct BudgetSupportingAmounts: View {
 
 private struct CategoryBudgetRow: View {
     let item: CategoryBudget
-    var usesGuiltFree = false
+    let name: String
     @Environment(\.dynamicTypeSize) private var typeSize
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -146,24 +153,22 @@ private struct CategoryBudgetRow: View {
     }
     private var nameAndSpending: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(item.category.name).foregroundStyle(.primary)
-            Text(usesGuiltFree ? "\(Money.format(item.spent)) spent · Guilt-free pool" : item.annual == nil
+            Text(name).foregroundStyle(.primary)
+            Text(item.annual == nil
                  ? "\(Money.format(item.spent)) spent · No yearly budget"
                  : "\(Money.format(item.spent)) spent of \(Money.format(item.available)) available")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.caption).foregroundStyle(ListRowForeground(.secondary))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
     private var balance: some View {
         VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
-            if usesGuiltFree {
-                Text("Guilt-free").font(.subheadline).foregroundStyle(.secondary)
-            } else if item.annual != nil || item.remaining < 0 {
+            if item.annual != nil || item.remaining < 0 {
                 Text(Money.format(abs(item.remaining)))
                     .font(.headline).monospacedDigit()
-                    .foregroundStyle(AmountColors.remaining(item.remaining))
+                    .foregroundStyle(ListRowForeground(AmountColors.remaining(item.remaining)))
                 Text(item.remaining < 0 ? "over budget" : "left")
-                    .font(.caption).foregroundStyle(AmountColors.remaining(item.remaining))
+                    .font(.caption).foregroundStyle(ListRowForeground(AmountColors.remaining(item.remaining)))
             } else {
                 Text("Set budget").font(.subheadline).foregroundStyle(.secondary)
             }
@@ -179,7 +184,7 @@ struct CategoryDetailView: View {
     private var category: CategoryValue? { store.categories.first { $0.id == categoryID } }
     private var item: CategoryBudget? { store.overview(month: month).first { $0.id == categoryID } }
     private var expenses: [ExpenseValue] {
-        store.expenses.filter { $0.categoryID == categoryID && $0.day.year == month.year && $0.day.month == month.month }
+        store.expenses.filter { !$0.isIncome && $0.categoryID == categoryID && $0.day.year == month.year && $0.day.month == month.month }
     }
 
     var body: some View {
@@ -187,8 +192,7 @@ struct CategoryDetailView: View {
             if let item, let category {
                 Section(month.title) {
                     if store.annualPlan(year: month.year) != nil && item.annual == nil {
-                        Text("This category uses guilt-free spending.").foregroundStyle(.secondary)
-                        NavigationLink("View Guilt-free Pool") { GuiltFreeDetailView(month: month) }
+                        Text("No budget assigned to this category.").foregroundStyle(.secondary)
                     } else {
                         if item.annual != nil || item.spent > 0 { RemainingAmount(amount: item.remaining) }
                         LabeledContent("Monthly allocation", value: Money.format(item.allocation))
@@ -206,46 +210,44 @@ struct CategoryDetailView: View {
                         ForEach(expenses) { expense in
                             NavigationLink {
                                 ExpenseDetailView(expenseID: expense.id)
-                            } label: { ExpenseRow(expense: expense, category: category.name) }
+                            } label: { ExpenseRow(expense: expense, category: store.displayName(for: category, year: month.year)) }
                         }
                     }
                 }
             }
         }
-        .navigationTitle(category?.name ?? "Category")
+        .navigationTitle(category.map { store.displayName(for: $0, year: month.year) } ?? String(localized: "Category"))
     }
 }
 
-struct GuiltFreeDetailView: View {
+struct UnbudgetedSpendingView: View {
     @Environment(LedgerStore.self) private var store
     let month: BudgetMonth
-    private var result: BudgetAmounts? { (try? store.wholeBudget(month: month))?.guiltFree }
+    private var result: BudgetAmounts? { (try? store.wholeBudget(month: month))?.unbudgeted }
     private var expenses: [ExpenseValue] {
         let allocated = Set(store.annualPlan(year: month.year)?.allocations.map(\.categoryID) ?? [])
-        return store.expenses.filter { $0.day.year == month.year && $0.day.month == month.month && !allocated.contains($0.categoryID) }
+        return store.expenses.filter { !$0.isIncome && $0.day.year == month.year && $0.day.month == month.month && !allocated.contains($0.categoryID) }
     }
     var body: some View {
         List {
             if let result {
                 Section {
-                    RemainingAmount(amount: result.remaining)
-                    LabeledContent("Monthly allocation", value: Money.format(result.allocation))
-                    LabeledContent("Carried forward", value: Money.format(result.carryover))
-                    LabeledContent("Your spending", value: Money.format(-result.spent))
+                    LabeledContent("Spent this month", value: Money.format(-result.spent))
+                    LabeledContent("Spent this year through this month", value: Money.format(result.remaining))
                 } header: {
                     Text(month.title)
                 } footer: {
-                    Text("Categories without their own allocation share this pool. Overspending in an allocated category stays with that category and reduces the overall balance.")
+                    Text("Spending without a category budget reduces the overall budget balance. Assign a budget to a category to track that spending against its own allocation.")
                 }
             }
-            Section("Expenses from This Pool") {
-                if expenses.isEmpty { Text("No guilt-free expenses this month").foregroundStyle(.secondary) }
+            Section("Expenses Without a Budget") {
+                if expenses.isEmpty { Text("No unbudgeted expenses this month").foregroundStyle(.secondary) }
                 ForEach(expenses) { e in
                     NavigationLink { ExpenseDetailView(expenseID: e.id) } label: {
-                        ExpenseRow(expense: e, category: store.categories.first { $0.id == e.categoryID }?.name ?? "Uncategorized")
+                        ExpenseRow(expense: e, category: store.categories.first { $0.id == e.categoryID }.map { store.displayName(for: $0, year: e.day.year) } ?? String(localized: "Uncategorized"))
                     }
                 }
             }
-        }.navigationTitle("Guilt-free Spending")
+        }.navigationTitle("Unbudgeted Spending")
     }
 }

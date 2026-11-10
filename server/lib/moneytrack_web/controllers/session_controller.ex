@@ -2,9 +2,22 @@ defmodule MoneyTrackWeb.SessionController do
   use MoneyTrackWeb, :controller
   alias MoneyTrack.{Accounts, Ledger}
   alias MoneyTrackWeb.Auth
-  plug :compatible_sync when action in [:sync_push, :sync_pull]
+  plug(:compatible_sync when action in [:sync_push, :sync_pull])
 
   def new(conn, _params), do: render(conn, :new, error: nil)
+
+  def privacy(conn, _params) do
+    notice =
+      Application.app_dir(:moneytrack, privacy_resource()) |> File.read!() |> Jason.decode!()
+
+    render(conn, :privacy, notice: notice, page_title: gettext("Privacy"))
+  end
+
+  defp privacy_resource do
+    if MoneyTrackWeb.Language.current() == "de",
+      do: "priv/privacy.de.json",
+      else: "priv/privacy.json"
+  end
 
   def create(conn, params) do
     with :ok <- Auth.allow_login(conn, params["username"]),
@@ -22,10 +35,12 @@ defmodule MoneyTrackWeb.SessionController do
         conn
         |> put_resp_header("retry-after", to_string(seconds))
         |> put_status(429)
-        |> render(:new, error: "Too many attempts. Please try again shortly.")
+        |> render(:new, error: gettext("Too many attempts. Please try again shortly."))
 
       _ ->
-        conn |> put_status(401) |> render(:new, error: "Username or password is incorrect.")
+        conn
+        |> put_status(401)
+        |> render(:new, error: gettext("Username or password is incorrect."))
     end
   end
 
@@ -51,12 +66,18 @@ defmodule MoneyTrackWeb.SessionController do
         conn
         |> put_resp_header("retry-after", to_string(seconds))
         |> put_status(429)
-        |> json(%{error: "rate_limited", message: "Too many attempts. Please try again shortly."})
+        |> json(%{
+          error: "rate_limited",
+          message: gettext("Too many attempts. Please try again shortly.")
+        })
 
       _ ->
         conn
         |> put_status(401)
-        |> json(%{error: "invalid_credentials", message: "Username or password is incorrect."})
+        |> json(%{
+          error: "invalid_credentials",
+          message: gettext("Username or password is incorrect.")
+        })
     end
   end
 
@@ -77,7 +98,7 @@ defmodule MoneyTrackWeb.SessionController do
         |> put_status(409)
         |> json(%{
           error: "revision_conflict",
-          message: "This item changed on another device. Review both versions.",
+          message: gettext("This item changed on another device. Review both versions."),
           current: current
         })
 
@@ -101,7 +122,12 @@ defmodule MoneyTrackWeb.SessionController do
         failure(conn, 422, "validation_failed", message)
 
       {:error, _} ->
-        failure(conn, 422, "invalid_operation", "Check this item's fields before trying again.")
+        failure(
+          conn,
+          422,
+          "invalid_operation",
+          gettext("Check this item's fields before trying again.")
+        )
     end
   end
 
@@ -121,18 +147,53 @@ defmodule MoneyTrackWeb.SessionController do
   end
 
   defp compatible_sync(conn, _opts) do
+    old_income =
+      !String.starts_with?(conn.request_path, "/api/v5/") &&
+        (Ledger.has_income?(conn.assigns.current_user) ||
+           conn.params["payload"]["kind"] == "income")
+
     old_budget =
       (String.starts_with?(conn.request_path, "/api/v1/") ||
          String.starts_with?(conn.request_path, "/api/v2/")) &&
         (Ledger.has_budget_plan?(conn.assigns.current_user) ||
            conn.params["entity"] == "budget_plan")
 
+    old_currency =
+      !Enum.any?(["/api/v4/", "/api/v5/"], &String.starts_with?(conn.request_path, &1)) &&
+        (Ledger.has_conversion?(conn.assigns.current_user) ||
+           not is_nil(conn.params["payload"]["conversion"]))
+
+    cond do
+      old_income ->
+        conn
+        |> failure(
+          426,
+          "upgrade_required",
+          "Update Spendie for income. Your pending changes are preserved."
+        )
+        |> halt()
+
+      old_currency ->
+        conn
+        |> failure(
+          426,
+          "upgrade_required",
+          "Update Spendie for currency conversion. Your pending changes are preserved."
+        )
+        |> halt()
+
+      true ->
+        check_budget_compatibility(conn, old_budget)
+    end
+  end
+
+  defp check_budget_compatibility(conn, old_budget) do
     if old_budget do
       conn
       |> failure(
         426,
         "upgrade_required",
-        "Update MoneyTrack for whole-year budgets. Your pending changes are preserved."
+        "Update Spendie for whole-year budgets. Your pending changes are preserved."
       )
       |> halt()
     else
@@ -148,7 +209,7 @@ defmodule MoneyTrackWeb.SessionController do
       |> failure(
         426,
         "upgrade_required",
-        "Update MoneyTrack to sync shared activity. Your pending changes are preserved."
+        "Update Spendie to sync shared activity. Your pending changes are preserved."
       )
       |> halt()
     else
@@ -157,5 +218,8 @@ defmodule MoneyTrackWeb.SessionController do
   end
 
   defp failure(conn, status, code, message),
-    do: conn |> put_status(status) |> json(%{error: code, message: message})
+    do:
+      conn
+      |> put_status(status)
+      |> json(%{error: code, message: MoneyTrackWeb.Language.message(message)})
 end

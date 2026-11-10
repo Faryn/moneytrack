@@ -15,7 +15,7 @@ defmodule MoneyTrack.Budget do
     {before, spent} =
       Enum.reduce(expenses, {0, 0}, fn expense, {before, spent} ->
         day = Date.from_iso8601!(expense["day"])
-        share = expense["personalShare"]
+        share = if expense["kind"] == "income", do: 0, else: expense["personalShare"]
 
         unless is_integer(share) and share >= 0 and share <= expense["amount"] do
           raise ArgumentError, "invalid personal share"
@@ -41,12 +41,12 @@ defmodule MoneyTrack.Budget do
     }
   end
 
-  def joint_allocations(total, allocations, free_id) do
+  def joint_allocations(total, allocations, default_id) do
     parts =
       Enum.sort_by(allocations, & &1["categoryID"]) ++
         [
           %{
-            "categoryID" => free_id,
+            "categoryID" => default_id,
             "amount" => total - Enum.sum(Enum.map(allocations, & &1["amount"]))
           }
         ]
@@ -75,14 +75,14 @@ defmodule MoneyTrack.Budget do
     result
   end
 
-  def for_plan(year, month, total, allocations, free_id, expenses) do
-    monthly = joint_allocations(total, allocations, free_id)
+  def for_plan(year, month, total, allocations, default_id, expenses) do
+    monthly = joint_allocations(total, allocations, default_id)
     allocated_ids = Enum.map(allocations, & &1["categoryID"])
 
-    all_months =
-      for m <- 1..12, do: cumulative_allocation(total, m) - cumulative_allocation(total, m - 1)
+    assigned_months =
+      for m <- 0..11, do: Enum.sum(Enum.map(allocated_ids, &Enum.at(monthly[&1], m)))
 
-    free = Enum.reject(expenses, &(&1["categoryID"] in allocated_ids))
+    unbudgeted = Enum.reject(expenses, &(&1["categoryID"] in allocated_ids))
 
     category_results =
       Map.new(allocations, fn a ->
@@ -96,8 +96,9 @@ defmodule MoneyTrack.Budget do
       end)
 
     %{
-      "total" => for_schedule(year, month, all_months, expenses),
-      "guiltFree" => for_schedule(year, month, monthly[free_id], free),
+      "total" => for_schedule(year, month, assigned_months, expenses),
+      "unallocated" => Enum.sum(monthly[default_id]),
+      "unbudgeted" => for_category(year, month, 0, unbudgeted),
       "categories" => category_results
     }
   end

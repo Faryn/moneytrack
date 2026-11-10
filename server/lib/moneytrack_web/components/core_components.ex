@@ -31,6 +31,21 @@ defmodule MoneyTrackWeb.CoreComponents do
 
   alias Phoenix.LiveView.JS
 
+  def category_label(category, plans, budgets, year) do
+    case Enum.find(plans, &(&1.year == year)) do
+      nil ->
+        budgeted =
+          Enum.any?(budgets, &(&1.year == year && &1.category_id == category.id && &1.amount > 0))
+
+        if category.name == "Uncategorized" && !budgeted,
+          do: gettext("Uncategorized"),
+          else: category.name
+
+      plan ->
+        if plan.free_category_id == category.id, do: gettext("Uncategorized"), else: category.name
+    end
+  end
+
   @doc """
   Renders flash notices.
 

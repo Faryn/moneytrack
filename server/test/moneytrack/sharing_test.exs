@@ -51,6 +51,66 @@ defmodule MoneyTrack.SharingTest do
     e
   end
 
+  test "entry sharing is atomic and retry-safe and requires an accepted connection" do
+    {a, b, outsider, email} = people()
+    {pending, _} = share(a, email)
+    _accepted = accept(b, pending)
+    category = pending["payload"]["categoryID"]
+    payload = expense(category, 501)
+    op = operation("expense", payload)
+    assert {:error, :not_found} = Ledger.create_shared_expense(a, op, outsider.id)
+    assert Repo.get(MoneyTrack.Ledger.Expense, payload["id"]) == nil
+    assert {:ok, shared} = Ledger.create_shared_expense(a, op, b.id)
+    assert {:ok, ^shared} = Ledger.create_shared_expense(a, op, b.id)
+    assert shared["payload"]["status"] == "accepted"
+    assert Enum.find(Ledger.snapshot(a).expenses, &(&1.id == payload["id"])).personal_share == 251
+    assert Enum.find(Ledger.snapshot(b).expenses, &(&1.id == payload["id"])).personal_share == 250
+  end
+
+  test "one acceptance grants the connection and releases pending expenses in both directions" do
+    {a, b, outsider, email} = people()
+    a_email = "#{a.username}@example.org"
+    Repo.insert!(%VerifiedEmail{user_id: a.id, address: a_email, verified_at: DateTime.utc_now()})
+    {first, _} = share(a, email)
+    {second, _} = share(a, email)
+    {reverse, _} = share(b, a_email)
+    accepted = accept(b, first)
+    assert Enum.all?(Sharing.snapshot(a).expenses, &(&1["payload"]["status"] == "accepted"))
+    assert Enum.all?(Sharing.snapshot(b).expenses, &(&1["payload"]["status"] == "accepted"))
+    assert length(Ledger.snapshot(b).expenses) == 3
+    assert Repo.aggregate(Sharing.Connection, :count) == 1
+    {:ok, feed} = Ledger.changes(b)
+
+    assert Enum.count(
+             feed.changes,
+             &(&1["entity"] == "shared_expense" && &1["payload"]["status"] == "accepted")
+           ) == 3
+
+    assert {:ok, _} =
+             Ledger.apply_operation(
+               b,
+               operation(
+                 "shared_expense",
+                 %{"id" => second["entityID"], "command" => "accept"},
+                 1
+               )
+             )
+
+    assert {:error, :not_found} =
+             Ledger.apply_operation(
+               outsider,
+               operation(
+                 "shared_expense",
+                 %{"id" => reverse["entityID"], "command" => "accept"},
+                 1
+               )
+             )
+
+    {future, _} = share(a, email)
+    assert future["payload"]["status"] == "accepted"
+    assert future["payload"]["connection"]["id"] == accepted["payload"]["connection"]["id"]
+  end
+
   test "pending budgets, verified acceptance, private categories, replay and connection reuse" do
     {a, b, outsider, email} = people()
     {pending, op} = share(a, email)

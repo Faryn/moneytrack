@@ -21,6 +21,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["category-Restaurants"].waitForExistence(timeout: 5))
         app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
+        app.buttons["expense.quick-details"].tap()
         let amount = app.textFields["expense.amount"]
         XCTAssertTrue(amount.waitForExistence(timeout: 5))
         amount.tap()
@@ -62,7 +63,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         let oldTotal = total.value as? String ?? ""
         total.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap()
         total.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldTotal.count) + "3600")
-        XCTAssertEqual(total.value as? String, "3600")
+        XCTAssertEqual(total.value as? String, "3,600")
         app.buttons["budget.save"].tap(); app.buttons["Update Yearly Budget"].tap()
         app.buttons["category.add"].tap()
         app.textFields["category.name"].tap()
@@ -73,6 +74,7 @@ final class PersonalExpenseFlowTests: XCTestCase {
         app.navigationBars["Yearly Plan"].buttons["Close"].tap()
         app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
+        app.buttons["expense.quick-details"].tap()
         app.textFields["expense.amount"].tap()
         app.textFields["expense.amount"].typeText("150")
         app.buttons["expense.category"].tap()
@@ -87,4 +89,35 @@ final class PersonalExpenseFlowTests: XCTestCase {
         screenshot.lifetime = .keepAlways
         add(screenshot)
     }
+    func testIncomeIsPositiveAndDoesNotConsumeBudget() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--reset-ui-testing-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchEnvironment["MONEYTRACK_TEST_TODAY"] = "2026-01-15"
+        app.launch()
+        XCTAssertTrue(app.buttons["budget.setup"].waitForExistence(timeout: 10))
+        app.buttons["budget.setup"].tap()
+        app.textFields["budget.annual"].tap(); app.textFields["budget.annual"].typeText("1200")
+        app.buttons["budget.save"].tap()
+        app.navigationBars["Yearly Plan"].buttons["Close"].tap()
+        app.tabBars.buttons["Expenses"].tap()
+        app.buttons["expense.add"].tap(); app.buttons["expense.quick-details"].tap()
+        app.buttons["expense.kind"].tap()
+        app.buttons["Income"].tap()
+        app.textFields["expense.amount"].tap(); app.textFields["expense.amount"].typeText("2000")
+        app.textFields["expense.description"].tap(); app.textFields["expense.description"].typeText("Salary")
+        app.buttons["expense.save"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'expense-row-'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.label.contains("Income"))
+        XCTAssertTrue(row.label.contains("+€2,000.00"))
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "Income and separate monthly spending"; shot.lifetime = .keepAlways; add(shot)
+        app.tabBars.buttons["Budget"].tap()
+        XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€0.00")
+        app.tabBars.buttons["Expenses"].tap(); row.tap()
+        app.buttons["expense.actions"].tap()
+        XCTAssertFalse(app.buttons["Share Expense"].exists)
+        app.buttons["Delete Income"].tap(); app.buttons["Delete Income"].tap()
+        XCTAssertFalse(row.exists)
+    }
+
 }

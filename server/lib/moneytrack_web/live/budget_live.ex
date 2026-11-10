@@ -10,7 +10,7 @@ defmodule MoneyTrackWeb.BudgetLive do
     {:ok,
      socket
      |> assign(
-       page_title: "Budget",
+       page_title: gettext("Budget"),
        month: Date.beginning_of_month(Date.utc_today()),
        conflict: nil
      )
@@ -52,7 +52,7 @@ defmodule MoneyTrackWeb.BudgetLive do
     else
       case Enum.find(socket.assigns.ledger.expenses, &(&1.id == id)) do
         nil ->
-          {:noreply, put_flash(socket, :error, "That expense is no longer available.")}
+          {:noreply, put_flash(socket, :error, gettext("That expense is no longer available."))}
 
         expense ->
           payload = Ledger.envelope(expense)["payload"]
@@ -66,7 +66,14 @@ defmodule MoneyTrackWeb.BudgetLive do
                  "id" => id,
                  "operationID" => Ecto.UUID.generate(),
                  "revision" => to_string(expense.revision),
-                 "amount" => input_amount(expense.amount),
+                 "amount" =>
+                   if(expense.conversion,
+                     do: MoneyTrack.Currency.original_input(expense.conversion),
+                     else: input_amount(expense.amount)
+                   ),
+                 "currency" =>
+                   if(expense.conversion, do: expense.conversion["originalCurrency"], else: "EUR"),
+                 "kind" => expense.kind,
                  "description" => expense.description,
                  "categoryID" => expense.category_id,
                  "day" => Date.to_iso8601(expense.expense_date),
@@ -87,7 +94,14 @@ defmodule MoneyTrackWeb.BudgetLive do
   def handle_event("save_expense", %{"expense" => params}, socket) do
     socket = assign(socket, :expense_form, to_form(params, as: :expense))
 
-    with {:ok, cents} <- parse_amount(params["amount"]),
+    old = Enum.find(socket.assigns.ledger.expenses, &(&1.id == params["id"]))
+
+    with {:ok, cents, conversion} <-
+           MoneyTrack.Currency.from_input(
+             params["amount"],
+             params["currency"],
+             old && old.conversion
+           ),
          {:ok, date} <- Date.from_iso8601(params["day"] || ""),
          {revision, ""} <- Integer.parse(params["revision"] || "") do
       payload = %{
@@ -95,17 +109,29 @@ defmodule MoneyTrackWeb.BudgetLive do
         "categoryID" => params["categoryID"],
         "amount" => cents,
         "personalShare" => cents,
+        "conversion" => conversion,
+        "kind" => params["kind"] || "expense",
         "description" => params["description"] || "",
         "day" => %{"year" => date.year, "month" => date.month, "day" => date.day},
         "createdAt" => params["createdAt"]
       }
 
       op = operation("expense", payload, revision, params["operationID"])
-      {:noreply, save_operation(socket, op)}
+
+      {:noreply,
+       save_operation(
+         socket,
+         op,
+         if(params["kind"] == "income", do: nil, else: params["shareWith"])
+       )}
     else
       _ ->
         {:noreply,
-         put_flash(socket, :error, "Enter an amount such as 78,50 or 78.50 and a valid date.")}
+         put_flash(
+           socket,
+           :error,
+           gettext("Enter an amount such as 78,50 or 78.50 and a valid date.")
+         )}
     end
   end
 
@@ -216,7 +242,7 @@ defmodule MoneyTrackWeb.BudgetLive do
          reload(socket)
          |> put_flash(
            :error,
-           "Check the category, year, and yearly amount. Category names must be unique."
+           gettext("Check the category, year, and yearly amount. Category names must be unique.")
          )}
     end
   end
@@ -262,23 +288,32 @@ defmodule MoneyTrackWeb.BudgetLive do
     {:noreply, save_operation(socket, op)}
   end
 
-  defp save_operation(socket, operation) do
-    case Ledger.apply_operation(socket.assigns.current_user, operation) do
+  defp save_operation(socket, operation, share_with \\ nil) do
+    result =
+      if share_with in [nil, ""],
+        do: Ledger.apply_operation(socket.assigns.current_user, operation),
+        else: Ledger.create_shared_expense(socket.assigns.current_user, operation, share_with)
+
+    case result do
       {:ok, _} ->
         socket
         |> assign(:conflict, nil)
         |> reload()
         |> reset_saved_form(operation)
-        |> put_flash(:info, "Saved")
+        |> put_flash(:info, gettext("Saved"))
 
       {:error, {:conflict, current}} when not is_nil(current) ->
         assign(socket, :conflict, %{operation: operation, current: current})
 
       {:error, {:validation, message}} ->
-        put_flash(socket, :error, message)
+        put_flash(socket, :error, MoneyTrackWeb.Language.message(message))
 
       {:error, _} ->
-        put_flash(socket, :error, "Couldn't save. Your entered values are still in the form.")
+        put_flash(
+          socket,
+          :error,
+          gettext("Couldn't save. Your entered values are still in the form.")
+        )
     end
   end
 
@@ -319,7 +354,12 @@ defmodule MoneyTrackWeb.BudgetLive do
       "action" => "upsert"
     }
 
-  defp reload(socket), do: assign(socket, :ledger, Ledger.snapshot(socket.assigns.current_user))
+  defp reload(socket),
+    do:
+      assign(socket,
+        ledger: Ledger.snapshot(socket.assigns.current_user),
+        sharing_connections: MoneyTrack.Sharing.snapshot(socket.assigns.current_user).connections
+      )
 
   defp new_expense(socket) do
     assign(
@@ -330,6 +370,9 @@ defmodule MoneyTrackWeb.BudgetLive do
           "id" => Ecto.UUID.generate(),
           "operationID" => Ecto.UUID.generate(),
           "revision" => "0",
+          "currency" => "EUR",
+          "shareWith" => "",
+          "kind" => "expense",
           "amount" => "",
           "description" => "",
           "categoryID" => "",
@@ -370,7 +413,7 @@ defmodule MoneyTrackWeb.BudgetLive do
         spent =
           ledger.expenses
           |> Enum.filter(
-            &(&1.category_id == c.id && &1.expense_date.year == month.year &&
+            &(&1.kind != "income" && &1.category_id == c.id && &1.expense_date.year == month.year &&
                 &1.expense_date.month == month.month)
           )
           |> Enum.map(& &1.personal_share)
@@ -392,6 +435,7 @@ defmodule MoneyTrackWeb.BudgetLive do
       Enum.map(ledger.expenses, fn e ->
         %{
           "day" => Date.to_iso8601(e.expense_date),
+          "kind" => e.kind,
           "amount" => e.amount,
           "personalShare" => e.personal_share,
           "categoryID" => e.category_id
@@ -418,6 +462,7 @@ defmodule MoneyTrackWeb.BudgetLive do
             e.category_id == category.id,
             do: %{
               "day" => Date.to_iso8601(e.expense_date),
+              "kind" => e.kind,
               "amount" => e.amount,
               "personalShare" => e.personal_share
             }
@@ -436,11 +481,30 @@ defmodule MoneyTrackWeb.BudgetLive do
     end)
   end
 
-  defp money(cents), do: if(cents < 0, do: "−", else: "") <> "€" <> input_amount(abs(cents))
+  defp money(cents), do: MoneyTrackWeb.Language.money(cents)
 
   defp input_amount(cents),
     do:
       "#{div(cents, 100)}.#{cents |> rem(100) |> Integer.to_string() |> String.pad_leading(2, "0")}"
+
+  defp month_title(date) do
+    months = [
+      gettext("January"),
+      gettext("February"),
+      gettext("March"),
+      gettext("April"),
+      gettext("May"),
+      gettext("June"),
+      gettext("July"),
+      gettext("August"),
+      gettext("September"),
+      gettext("October"),
+      gettext("November"),
+      gettext("December")
+    ]
+
+    "#{Enum.at(months, date.month - 1)} #{date.year}"
+  end
 
   defp color(cents) when cents > 0, do: "text-green-700 dark:text-green-300"
   defp color(cents) when cents < 0, do: "text-red-700 dark:text-red-300"
@@ -467,6 +531,16 @@ defmodule MoneyTrackWeb.BudgetLive do
 
   defp parse_amount(_), do: :error
 
+  defp expense_category_options(ledger, day, fallback_year) do
+    year =
+      case Date.from_iso8601(day || "") do
+        {:ok, date} -> date.year
+        _ -> fallback_year
+      end
+
+    Enum.map(ledger.categories, &{category_label(&1, ledger.plans, ledger.budgets, year), &1.id})
+  end
+
   @impl true
   def render(assigns) do
     assigns = assign(assigns, :overview, overview(assigns.ledger, assigns.month))
@@ -483,9 +557,9 @@ defmodule MoneyTrackWeb.BudgetLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
       <section id="budget-overview" class="space-y-6">
-        <h1 id="budget-heading" class="text-3xl font-semibold">Your budget</h1>
+        <h1 id="budget-heading" class="text-3xl font-semibold">{gettext("Your budget")}</h1>
         <form id="month-form" phx-change="month" class="flex items-center gap-3">
-          <label for="month">Month</label>
+          <label for="month">{gettext("Month")}</label>
           <input
             id="month"
             name="month"
@@ -498,7 +572,10 @@ defmodule MoneyTrackWeb.BudgetLive do
           :if={@plan != nil || Enum.any?(@overview, & &1.budget)}
           class="rounded-box bg-base-200 p-6 space-y-2"
         >
-          <p>Remaining budget · {Calendar.strftime(@month, "%B %Y")}</p>
+          <p>{gettext("Remaining budget · %{month}", month: month_title(@month))}</p>
+          <p :if={@whole} id="assigned-this-month">
+            {gettext("%{amount} assigned this month", amount: money(@whole["total"]["allocation"]))}
+          </p>
           <p
             id="total-remaining"
             class={[
@@ -509,20 +586,27 @@ defmodule MoneyTrackWeb.BudgetLive do
             {money(@total_remaining)}
           </p>
           <p class="text-sm">
-            Includes positive and negative carryover since January. Only your share counts.
+            {gettext(
+              "Includes positive and negative carryover since January. Only your share counts."
+            )}
           </p>
         </div>
         <p :if={!(@plan != nil || Enum.any?(@overview, & &1.budget))}>
-          No budget yet. Pick your whole yearly budget, then allocate parts to categories.
+          {gettext("No budget yet. Pick your whole yearly budget, then allocate parts to categories.")}
         </p>
-        <.link navigate={~p"/plan?#{%{year: @month.year}}"} class="btn">Yearly Plan</.link>
-        <div :if={@whole} id="guilt-free" class="card border p-5 space-y-2">
-          <h2 class="text-xl font-semibold">Guilt-free Spending</h2>
-          <p id="guilt-free-remaining" class={color(@whole["guiltFree"]["remaining"])}>
-            {money(@whole["guiltFree"]["remaining"])} left
+        <.link navigate={~p"/plan?#{%{year: @month.year}}"} class="btn">{gettext("Yearly Plan")}</.link>
+        <div :if={@whole && @whole["unallocated"] > 0} class="card border p-5 space-y-2">
+          <h2 class="text-xl font-semibold">{gettext("Unallocated this year")}</h2>
+          <p id="unallocated-amount">{money(@whole["unallocated"])}</p>
+          <.link navigate={~p"/plan?#{%{year: @month.year}}"} class="link">{gettext("Allocate Budget")}</.link>
+        </div>
+        <div :if={@whole && @whole["unbudgeted"]["remaining"] < 0} class="card border p-5 space-y-2">
+          <h2 class="text-xl font-semibold">{gettext("Unbudgeted spending")}</h2>
+          <p id="unbudgeted-spent" class={color(-@whole["unbudgeted"]["spent"])}>
+            {gettext("%{amount} this month", amount: money(-@whole["unbudgeted"]["spent"]))}
           </p>
           <p>
-            {money(@whole["guiltFree"]["spent"])} spent from the unassigned pool. Category overspending stays with its category.
+            {gettext("Spending without a category budget reduces your overall remaining balance.")}
           </p>
         </div>
         <ul class="divide-y divide-base-300">
@@ -536,25 +620,45 @@ defmodule MoneyTrackWeb.BudgetLive do
             class="py-4 flex flex-wrap justify-between gap-3"
           >
             <div>
-              <h2 class="font-semibold">{item.category.name}</h2>
+              <h2 class="font-semibold">
+                {category_label(item.category, @ledger.plans, @ledger.budgets, @month.year)}
+              </h2>
               <p class="text-sm">
-                {money(item.result["spent"])} spent · {if @plan && !item.budget,
-                  do: "Guilt-free pool",
-                  else: money(item.result["allocation"] + item.result["carryover"]) <> " available"}
+                {gettext("%{amount} spent", amount: money(item.result["spent"]))} · {if @plan &&
+                                                                                          !item.budget,
+                                                                                        do:
+                                                                                          gettext(
+                                                                                            "No budget assigned"
+                                                                                          ),
+                                                                                        else:
+                                                                                          gettext(
+                                                                                            "%{amount} available",
+                                                                                            amount:
+                                                                                              money(
+                                                                                                item.result[
+                                                                                                  "allocation"
+                                                                                                ] +
+                                                                                                  item.result[
+                                                                                                    "carryover"
+                                                                                                  ]
+                                                                                              )
+                                                                                          )}
               </p>
-              <.link :if={@plan} navigate={~p"/plan?#{%{year: @month.year}}"} class="link">Edit allocation</.link>
+              <.link :if={@plan} navigate={~p"/plan?#{%{year: @month.year}}"} class="link">{gettext(
+                "Edit allocation"
+              )}</.link>
               <button
                 :if={!@plan}
                 type="button"
                 phx-click="edit_budget"
                 phx-value-id={item.category.id}
                 class="link"
-              >Edit yearly budget</button>
+              >{gettext("Edit yearly budget")}</button>
             </div>
             <p :if={!@plan || item.budget} class={color(item.result["remaining"])}>
               {money(abs(item.result["remaining"]))} {if item.result["remaining"] < 0,
-                do: "over budget",
-                else: "left"}
+                do: gettext("over budget"),
+                else: gettext("left")}
             </p>
           </li>
         </ul>
@@ -565,31 +669,36 @@ defmodule MoneyTrackWeb.BudgetLive do
         class="border border-warning rounded-box p-5 space-y-3"
         role="alert"
       >
-        <h2 class="font-semibold">This item changed elsewhere</h2>
+        <h2 class="font-semibold">{gettext("This item changed elsewhere")}</h2>
         <p>
-          Your attempted values are preserved in the form. The server version is {if @conflict.current[
-                                                                                       "deleted"
-                                                                                     ],
-                                                                                     do: "deleted",
-                                                                                     else:
-                                                                                       "still available"}.
+          {if @conflict.current["deleted"],
+            do:
+              gettext(
+                "Your attempted values are preserved in the form. The server version was deleted."
+              ),
+            else:
+              gettext(
+                "Your attempted values are preserved in the form. The server version is still available."
+              )}
         </p>
         <p :if={@conflict.current["payload"]["amount"]}>
-          Server amount: {money(@conflict.current["payload"]["amount"])}
+          {gettext("Server amount: %{amount}", amount: money(@conflict.current["payload"]["amount"]))}
         </p>
         <p :if={@conflict.current["payload"]["description"]}>
-          Server description: {@conflict.current["payload"]["description"]}
+          {gettext("Server description: %{description}",
+            description: @conflict.current["payload"]["description"]
+          )}
         </p>
-        <button type="button" class="btn" phx-click="use_server">Use Server Version</button>
+        <button type="button" class="btn" phx-click="use_server">{gettext("Use Server Version")}</button>
         <button
           type="button"
           class="btn btn-primary"
           phx-click="keep_mine"
-          phx-disable-with="Saving…"
+          phx-disable-with={gettext("Saving…")}
         >
           {if @conflict.current["deleted"],
-            do: "Save My Changes as a New Expense",
-            else: "Keep My Changes"}
+            do: gettext("Save My Changes as a New Expense"),
+            else: gettext("Keep My Changes")}
         </button>
       </section>
       <section
@@ -597,9 +706,11 @@ defmodule MoneyTrackWeb.BudgetLive do
         class="space-y-4 pt-8"
         id="yearly-plan"
       >
-        <h2 class="text-xl font-semibold">Yearly Plan</h2>
+        <h2 class="text-xl font-semibold">{gettext("Yearly Plan")}</h2>
         <p class="text-sm">
-          Changing a yearly amount recalculates that entire year. Carryover resets on January 1.
+          {gettext(
+            "Changing a yearly amount recalculates that entire year. Carryover resets on January 1."
+          )}
         </p>
         <.form
           for={@budget_form}
@@ -614,35 +725,37 @@ defmodule MoneyTrackWeb.BudgetLive do
           <.input
             field={@budget_form[:categoryID]}
             type="select"
-            label="Category"
-            prompt="New category"
+            label={gettext("Category")}
+            prompt={gettext("New category")}
             options={Enum.map(@ledger.categories, &{&1.name, &1.id})}
           />
-          <.input field={@budget_form[:name]} label="New category name" />
+          <.input field={@budget_form[:name]} label={gettext("New category name")} />
           <.input
             field={@budget_form[:year]}
             type="number"
-            label="Year"
+            label={gettext("Year")}
             min="1900"
             max="9999"
             required
           />
           <.currency_input
             field={@budget_form[:amount]}
-            label="Yearly amount (€)"
+            label={gettext("Yearly amount (€)")}
             required
           />
           <button
             type="submit"
             class="btn btn-primary"
-            phx-disable-with="Saving…"
-            data-confirm="Save this budget and recalculate all twelve months of the selected year?"
-          >Save Yearly Budget</button>
-          <button type="button" class="btn btn-ghost" phx-click="new_budget">New Category</button>
+            phx-disable-with={gettext("Saving…")}
+            data-confirm={
+              gettext("Save this budget and recalculate all twelve months of the selected year?")
+            }
+          >{gettext("Save Yearly Budget")}</button>
+          <button type="button" class="btn btn-ghost" phx-click="new_budget">{gettext("New Category")}</button>
         </.form>
       </section>
       <section class="space-y-4 pt-8" id="expenses">
-        <h2 class="text-xl font-semibold">Expenses</h2>
+        <h2 class="text-xl font-semibold">{gettext("Bookings")}</h2>
         <.form
           for={@expense_form}
           id="expense-form"
@@ -655,14 +768,46 @@ defmodule MoneyTrackWeb.BudgetLive do
             field={@expense_form[field]}
             type="hidden"
           />
-          <.currency_input field={@expense_form[:amount]} label="Amount (€)" required />
-          <.input field={@expense_form[:description]} label="Description" maxlength="500" />
+          <.input
+            field={@expense_form[:kind]}
+            type="select"
+            label={gettext("Type")}
+            options={[{gettext("Expense"), "expense"}, {gettext("Income"), "income"}]}
+          />
+          <.currency_input
+            field={@expense_form[:amount]}
+            label={gettext("Amount (%{currency})", currency: @expense_form[:currency].value || "EUR")}
+            required
+          />
+          <.input
+            field={@expense_form[:currency]}
+            type="select"
+            label={gettext("Currency")}
+            options={["EUR" | MoneyTrack.Currency.currencies()]}
+          />
+          <p class="text-sm text-base-content/70">
+            {gettext(
+              "Foreign amounts are converted to euros using the latest available ECB reference rate when saved. Original amount and rate remain in details."
+            )}
+          </p>
+          <.input
+            :if={
+              @expense_form[:revision].value == "0" && @expense_form[:kind].value != "income" &&
+                @sharing_connections != []
+            }
+            field={@expense_form[:shareWith]}
+            type="select"
+            label={gettext("Share with")}
+            prompt={gettext("Personal")}
+            options={Enum.map(@sharing_connections, &{&1["otherName"], &1["otherID"]})}
+          />
+          <.input field={@expense_form[:description]} label={gettext("Description")} maxlength="500" />
           <.input
             field={@expense_form[:categoryID]}
             type="select"
-            label="Category"
-            prompt="Choose a category"
-            options={Enum.map(@ledger.categories, &{&1.name, &1.id})}
+            label={gettext("Category")}
+            prompt={gettext("Choose a category")}
+            options={expense_category_options(@ledger, @expense_form[:day].value, @month.year)}
             required
           />
           <.input
@@ -671,11 +816,24 @@ defmodule MoneyTrackWeb.BudgetLive do
             phx-hook="LocalExpenseDay"
             data-entry-id={@expense_form[:id].value}
             data-new={@expense_form[:revision].value == "0"}
-            label="Date"
+            label={gettext("Date")}
             required
           />
-          <button type="submit" class="btn btn-primary" phx-disable-with="Saving…">Save Expense</button>
-          <button type="button" class="btn btn-ghost" phx-click="cancel_expense">New Expense</button>
+          <button type="submit" class="btn btn-primary" phx-disable-with={gettext("Saving…")}>{if @expense_form[
+                                                                                                    :kind
+                                                                                                  ].value ==
+                                                                                                    "income",
+                                                                                                  do:
+                                                                                                    gettext(
+                                                                                                      "Save Income"
+                                                                                                    ),
+                                                                                                  else:
+                                                                                                    gettext(
+                                                                                                      "Save Expense"
+                                                                                                    )}</button>
+          <button type="button" class="btn btn-ghost" phx-click="cancel_expense">{gettext(
+            "New Booking"
+          )}</button>
         </.form>
         <ul class="divide-y divide-base-300">
           <li
@@ -690,26 +848,55 @@ defmodule MoneyTrackWeb.BudgetLive do
             class="py-4 space-y-2"
           >
             <div class="flex justify-between gap-4">
-              <span>{expense.description}</span><span class="text-red-700 dark:text-red-300">{money(
-                -expense.personal_share
-              )}</span>
+              <span>{expense.description}</span><span class={
+                color(if expense.kind == "income", do: expense.amount, else: -expense.personal_share)
+              }>
+                {if expense.kind == "income",
+                  do: "+" <> money(expense.amount),
+                  else: money(-expense.personal_share)}
+              </span>
             </div>
-            <p class="text-sm">{Date.to_iso8601(expense.expense_date)}</p>
+            <p class="text-sm">
+              {MoneyTrackWeb.Language.date(expense.expense_date)} · {if expense.kind == "income",
+                do: gettext("Income"),
+                else: gettext("Expense")} · {Enum.find_value(@ledger.categories, "", fn c ->
+                if c.id == expense.category_id,
+                  do: category_label(c, @ledger.plans, @ledger.budgets, expense.expense_date.year)
+              end)}
+            </p>
+            <details :if={expense.conversion}>
+              <summary>{gettext("Original currency details")}</summary>
+              <p>
+                {MoneyTrack.Currency.original_input(expense.conversion)} {expense.conversion[
+                  "originalCurrency"
+                ]} · 1 EUR = {expense.conversion["rate"]} · {gettext("ECB")} {expense.conversion[
+                  "rateDate"
+                ]}
+              </p>
+            </details>
             <button
               type="button"
               class="btn btn-sm"
               phx-click="edit_expense"
               phx-value-id={expense.id}
-            >Edit</button>
-            <.link navigate={~p"/shared?#{%{expense: expense.id}}"} class="btn btn-sm">Sharing</.link>
+            >{gettext("Edit")}</button>
+            <.link
+              :if={expense.kind != "income"}
+              navigate={~p"/shared?#{%{expense: expense.id}}"}
+              class="btn btn-sm"
+            >{gettext("Sharing")}</.link>
             <button
               type="button"
               class="btn btn-sm"
               phx-click="delete_expense"
               phx-value-id={expense.id}
               phx-value-revision={expense.revision}
-              data-confirm="Delete this expense and restore its budget impact?"
-            >Delete</button>
+              data-confirm={
+                if expense.kind == "income",
+                  do: gettext("Delete this income booking?"),
+                  else: gettext("Delete this expense and restore its budget impact?")
+              }
+            >{gettext("Delete")}</button>
           </li>
         </ul>
       </section>

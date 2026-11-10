@@ -34,6 +34,9 @@ defmodule MoneyTrackWeb.EmailController do
 
     conn
     |> put_status(status)
-    |> json(%{error: to_string(reason), message: EmailVerification.message(reason)})
+    |> json(%{
+      error: to_string(reason),
+      message: reason |> EmailVerification.message() |> MoneyTrackWeb.Language.message()
+    })
   end
 end

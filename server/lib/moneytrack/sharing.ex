@@ -22,12 +22,13 @@ defmodule MoneyTrack.Sharing do
     email = Repo.get_by(VerifiedEmail, user_id: user.id)
 
     Repo.exists?(
-      from e in SharedExpense, where: e.creator_id == ^user.id or e.recipient_id == ^user.id
+      from(e in SharedExpense, where: e.creator_id == ^user.id or e.recipient_id == ^user.id)
     ) ||
       (email != nil &&
          Repo.exists?(
-           from e in SharedExpense,
+           from(e in SharedExpense,
              where: e.recipient_email == ^email.address and e.status == "pending"
+           )
          ))
   end
 
@@ -108,6 +109,7 @@ defmodule MoneyTrack.Sharing do
 
     source = Repo.get_by(Expense, id: id, user_id: user.id)
     if is_nil(source) || source.deleted_at, do: Repo.rollback(:not_found)
+    if source.kind == "income", do: Repo.rollback({:validation, "Income cannot be shared."})
 
     if op["payload"]["sourceRevision"] != source.revision,
       do: Repo.rollback({:validation, "The expense changed. Sync it before sharing."})
@@ -129,6 +131,7 @@ defmodule MoneyTrack.Sharing do
         recipient_email: email,
         connection_id: connection && connection.id,
         status: if(connection, do: "accepted", else: "pending"),
+        conversion: source.conversion,
         amount: source.amount,
         description: source.description,
         expense_date: source.expense_date,
@@ -164,30 +167,76 @@ defmodule MoneyTrack.Sharing do
     unless verified && verified.address == e.recipient_email && e.creator_id != user.id,
       do: Repo.rollback(:not_found)
 
-    if e.deleted_at || e.status != "pending", do: Repo.rollback(:not_found)
     unless op["action"] == "upsert", do: Repo.rollback(:invalid_operation)
-    # An invitation shows no financial fields. Acceptance always takes the current common record.
-    if op["expectedRevision"] != e.revision,
-      do: Repo.rollback({:validation, "The invitation changed. Refresh before accepting."})
+    if e.deleted_at, do: Repo.rollback(:not_found)
 
-    c = find_connection(e.creator_id, user.id) || new_connection(e.creator_id, user.id)
+    if e.status == "accepted" && e.recipient_id == user.id do
+      expense_envelope(user, e)
+    else
+      unless e.status == "pending", do: Repo.rollback(:not_found)
 
-    updated =
-      e
-      |> change(
-        recipient_id: user.id,
-        connection_id: c.id,
-        status: "accepted",
-        revision: e.revision + 1
+      if op["expectedRevision"] != e.revision,
+        do: Repo.rollback({:validation, "The invitation changed. Refresh before accepting."})
+
+      accept_connection(user, verified, e)
+    end
+  end
+
+  defp accept_connection(user, verified, selected) do
+    creator = Repo.get!(User, selected.creator_id)
+    c = find_connection(creator.id, user.id) || new_connection(creator.id, user.id)
+
+    pending =
+      Repo.all(
+        from(e in SharedExpense,
+          where:
+            e.creator_id == ^creator.id and e.recipient_email == ^verified.address and
+              e.status == "pending" and is_nil(e.deleted_at)
+        )
       )
-      |> Repo.update!()
 
-    ensure_assignment(user, updated)
-    add_history(updated, user, "accepted", %{})
-    creator = Repo.get!(User, e.creator_id)
-    Ledger.append_change(creator, expense_envelope(creator, updated))
-    updated |> invitation_envelope() |> then(&Ledger.append_change(user, &1))
-    expense_envelope(user, updated)
+    creator_email = Repo.get_by(VerifiedEmail, user_id: creator.id)
+
+    reverse =
+      if creator_email do
+        Repo.all(
+          from(e in SharedExpense,
+            where:
+              e.creator_id == ^user.id and e.recipient_email == ^creator_email.address and
+                e.status == "pending" and is_nil(e.deleted_at)
+          )
+        )
+      else
+        []
+      end
+
+    accepted =
+      Enum.map(pending ++ reverse, fn e ->
+        recipient = if e.creator_id == creator.id, do: user, else: creator
+        author = if e.creator_id == creator.id, do: creator, else: user
+
+        updated =
+          e
+          |> change(
+            recipient_id: recipient.id,
+            connection_id: c.id,
+            status: "accepted",
+            revision: e.revision + 1
+          )
+          |> Repo.update!()
+
+        ensure_assignment(recipient, updated)
+        add_history(updated, user, "accepted", %{})
+        Ledger.append_change(author, expense_envelope(author, updated))
+        Ledger.append_change(recipient, invitation_envelope(updated))
+
+        if e.id != selected.id,
+          do: Ledger.append_change(recipient, expense_envelope(recipient, updated))
+
+        updated
+      end)
+
+    expense_envelope(user, Enum.find(accepted, &(&1.id == selected.id)))
   end
 
   defp edit(user, id, op) do
@@ -207,6 +256,11 @@ defmodule MoneyTrack.Sharing do
                do: invalid!("Enter a valid shared amount and description.")
 
         %{
+          conversion:
+            MoneyTrack.Currency.validate!(
+              if(Map.has_key?(p, "conversion"), do: p["conversion"], else: e.conversion),
+              p["amount"]
+            ),
           amount: p["amount"],
           description: String.trim(p["description"]),
           expense_date: day!(p["day"]),
@@ -232,9 +286,10 @@ defmodule MoneyTrack.Sharing do
   def email_verified(user, address) do
     for e <-
           Repo.all(
-            from e in SharedExpense,
+            from(e in SharedExpense,
               where:
                 e.recipient_email == ^address and e.status == "pending" and is_nil(e.deleted_at)
+            )
           ),
         e.creator_id != user.id,
         do: emit_invitation(user, e)
@@ -273,9 +328,10 @@ defmodule MoneyTrack.Sharing do
 
     history =
       Repo.all(
-        from h in History,
+        from(h in History,
           where: h.expense_id == ^e.id,
           order_by: [asc: h.inserted_at, asc: h.revision]
+        )
       )
 
     payload =
@@ -362,6 +418,7 @@ defmodule MoneyTrack.Sharing do
 
   defp common(e),
     do: %{
+      "conversion" => e.conversion,
       "amount" => e.amount,
       "description" => e.description,
       "day" => day_value(e.expense_date),
@@ -384,25 +441,26 @@ defmodule MoneyTrack.Sharing do
 
     expenses =
       Repo.all(
-        from e in SharedExpense, where: e.creator_id == ^user.id or e.recipient_id == ^user.id
+        from(e in SharedExpense, where: e.creator_id == ^user.id or e.recipient_id == ^user.id)
       )
 
     invitations =
       if email,
         do:
           Repo.all(
-            from e in SharedExpense,
+            from(e in SharedExpense,
               where:
                 e.recipient_email == ^email.address and e.status == "pending" and
                   is_nil(e.deleted_at) and e.creator_id != ^user.id
+            )
           ),
         else: []
 
     connections =
-      Repo.all(from c in Connection, where: c.user_low == ^user.id or c.user_high == ^user.id)
+      Repo.all(from(c in Connection, where: c.user_low == ^user.id or c.user_high == ^user.id))
 
     ids = Enum.map(connections, & &1.id)
-    repayments = Repo.all(from r in Repayment, where: r.connection_id in ^ids)
+    repayments = Repo.all(from(r in Repayment, where: r.connection_id in ^ids))
 
     %{
       expenses: Enum.map(expenses, &expense_envelope(user, &1)),
@@ -414,8 +472,9 @@ defmodule MoneyTrack.Sharing do
 
   def projected_expenses(user) do
     Repo.all(
-      from e in SharedExpense,
+      from(e in SharedExpense,
         where: (e.creator_id == ^user.id or e.recipient_id == ^user.id) and is_nil(e.deleted_at)
+      )
     )
     |> Enum.map(fn e ->
       assignment = Repo.get_by!(Assignment, expense_id: e.id, user_id: user.id)
@@ -432,6 +491,7 @@ defmodule MoneyTrack.Sharing do
         client_created_at: e.client_created_at,
         inserted_at: e.inserted_at,
         revision: e.revision,
+        conversion: e.conversion,
         currency: "EUR"
       }
     end)
@@ -440,14 +500,15 @@ defmodule MoneyTrack.Sharing do
   def balance(user, connection_id) do
     expenses =
       Repo.all(
-        from e in SharedExpense,
+        from(e in SharedExpense,
           where:
             e.connection_id == ^connection_id and e.status == "accepted" and is_nil(e.deleted_at)
+        )
       )
       |> Enum.map(&amounts(user, &1))
 
     repayments =
-      Repo.all(from r in Repayment, where: r.connection_id == ^connection_id)
+      Repo.all(from(r in Repayment, where: r.connection_id == ^connection_id))
       |> Enum.map(&%{"amount" => &1.amount, "paidByUser" => &1.payer_id == user.id})
 
     SharedMath.summarize(expenses, repayments)["balance"]
@@ -488,7 +549,7 @@ defmodule MoneyTrack.Sharing do
   defp ensure_assignment(user, e) do
     if is_nil(Repo.get_by(Assignment, expense_id: e.id, user_id: user.id)) do
       category =
-        Repo.get_by(Category, user_id: user.id, name_key: "uncategorized") ||
+        Repo.get_by(Category, user_id: user.id, name_key: "uncategorized", archived: false) ||
           Repo.insert!(%Category{
             user_id: user.id,
             name: "Uncategorized",
@@ -537,11 +598,12 @@ defmodule MoneyTrack.Sharing do
   defp verified_user(email),
     do:
       Repo.one(
-        from v in VerifiedEmail,
+        from(v in VerifiedEmail,
           join: u in User,
           on: u.id == v.user_id,
           where: v.address == ^email,
           select: u
+        )
       )
 
   defp allowed?(user, e),
@@ -579,7 +641,10 @@ defmodule MoneyTrack.Sharing do
 
   defp owned_category!(user, id) do
     id = uuid!(id)
-    if Repo.get_by(Category, id: id, user_id: user.id), do: id, else: Repo.rollback(:not_found)
+
+    if Repo.get_by(Category, id: id, user_id: user.id, archived: false),
+      do: id,
+      else: Repo.rollback(:not_found)
   end
 
   defp uuid!(value) do

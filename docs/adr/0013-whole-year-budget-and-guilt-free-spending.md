@@ -1,6 +1,6 @@
 # ADR 0013: Whole-year budget first, then category allocations
 
-- Status: Accepted
+- Status: Accepted for total-first budgeting and exact-cent rounding. [ADR 0021](0021-allocate-the-full-budget.md) supersedes the spending pool.
 - Date: 2026-11-01
 
 The user changed budgeting to start with one yearly total, then allocate parts to categories. The unassigned part is guilt-free spending. They confirmed that spending in categories without allocations, including uncategorized spending, draws from one guilt-free pool. Overspending in an allocated category remains with that category and reduces the overall balance; it does not automatically consume the guilt-free pool.

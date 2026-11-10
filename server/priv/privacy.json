@@ -1,0 +1,77 @@
+{
+  "title": "Spendie Privacy",
+  "updated": "2026-11-04",
+  "summary": "Spendie uses your information to record expenses, compare spending with budgets, synchronize your devices, and manage sharing. It does not sell your information or use it for advertising tracking.",
+  "sections": [
+    {
+      "id": "information",
+      "title": "Information you enter",
+      "paragraphs": [
+        "Your ledger contains expense amounts, descriptions, dates, categories and yearly budgets. Foreign-currency entries also retain their original amount, currency and saved exchange rate. Shared records include the participants, payer, split, changes and recorded repayments.",
+        "Connected accounts use a username and account identifier. Email addresses are used when you verify an address or invite someone to share. Spendie records payments made elsewhere; it does not request bank account or payment card details or move money."
+      ]
+    },
+    {
+      "id": "device",
+      "title": "On your device",
+      "paragraphs": [
+        "The iOS app keeps a local ledger and pending changes so you can work offline. Your login session token is stored in the iOS Keychain. Your password is sent to the server when you sign in and is not saved by the app.",
+        "Signing out retains that account's local ledger and pending changes for your next sign-in. Signing out does not delete your account or its server data."
+      ]
+    },
+    {
+      "id": "sync",
+      "title": "Synchronization and server access",
+      "paragraphs": [
+        "When you connect an account, its ledger and changes synchronize with the configured Spendie server over HTTPS. The server stores account information, password hashes, session information and synchronized records to provide the app and website.",
+        "Server storage is not end-to-end encrypted. The server administrator can access stored information for operating and supporting the service. Other ordinary accounts can access only their own information and records shared with them.",
+        "Operating the website and API can produce request and security logs, including connection information such as IP addresses, request times and error details. These are used to operate, secure and troubleshoot the service."
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "What sharing exposes",
+      "paragraphs": [
+        "Accepting the first invitation establishes a sharing connection. Shared expenses, their payer and split, edit/delete history and recorded repayments are visible to both participating accounts. Either participant can edit shared expenses. Your category assignments and budgets stay private to your account.",
+        "When email delivery is enabled, the configured email service handles verification messages and invitations, including the recipient address and message contents."
+      ]
+    },
+    {
+      "id": "parsing",
+      "title": "Quick Entry and exchange rates",
+      "paragraphs": [
+        "Quick Entry recognizes text on your device. Expense text is not sent to a cloud AI service. Saving a connected expense still synchronizes the resulting expense record with your Spendie server.",
+        "Exchange rates come from the European Central Bank. The app may request the public rate feed directly and cache it on your device. That request does not include your expenses or account information; the ECB can receive ordinary network information such as your IP address. Saved expense conversions are not changed when rates refresh."
+      ],
+      "links": [
+        {"title": "ECB privacy statement", "url": "https://www.ecb.europa.eu/services/data-protection/privacy-statements/website/html/index.en.html"}
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Advertising, diagnostics and TestFlight",
+      "paragraphs": [
+        "Spendie does not include advertising or third-party analytics SDKs. The app can write local operational error messages for troubleshooting.",
+        "When you install through TestFlight, Apple collects beta usage, crash and feedback information and shares relevant information with the developer. Feedback screenshots can include whatever you choose to show. Apple's TestFlight privacy information explains that separate processing."
+      ],
+      "links": [
+        {"title": "Apple TestFlight & Privacy", "url": "https://www.apple.com/legal/privacy/data/en/test-flight/"}
+      ]
+    },
+    {
+      "id": "retention",
+      "title": "Deletion and retention",
+      "paragraphs": [
+        "Deleting an expense removes its spending and debt effect from the active ledger. Deletion markers, shared change history and earlier backups can retain information needed for synchronization, shared records and recovery. Recorded repayments are separate from the expenses they settle.",
+        "Server backups have no automatic deletion schedule in this beta and may retain earlier data. Contact the administrator for account deletion, data access, export or correction requests, including requests concerning shared history and backups."
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Questions and requests",
+      "paragraphs": [
+        "Spendie is currently a small, administrator-provisioned beta. For privacy questions or requests about your information, contact the administrator who created your account."
+      ]
+    }
+  ]
+}

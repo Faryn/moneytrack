@@ -49,7 +49,7 @@ defmodule MoneyTrackWeb.EmailLive do
   defp result(socket, {:error, reason}),
     do:
       assign(socket,
-        error: EmailVerification.message(reason),
+        error: reason |> EmailVerification.message() |> MoneyTrackWeb.Language.message(),
         status: EmailVerification.status(socket.assigns.current_user)
       )
 
@@ -57,27 +57,29 @@ defmodule MoneyTrackWeb.EmailLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
-      <.link navigate={~p"/"} class="link">Back to Budget</.link>
-      <h1 class="text-2xl font-semibold">Email for Sharing</h1>
+      <.link navigate={~p"/"} class="link">{gettext("Back to Budget")}</.link>
+      <h1 class="text-2xl font-semibold">{gettext("Email for Sharing")}</h1>
       <p class="text-base-content/70">
-        Verify mailbox ownership for sharing invitations. Keep signing in with your username and password. Email isn't used for password recovery.
+        {gettext(
+          "Verify mailbox ownership for sharing invitations. Keep signing in with your username and password. Email isn't used for password recovery."
+        )}
       </p>
       <div :if={@status.verifiedEmail} id="verified-email" class="alert border-success">
         <.icon name="hero-check-badge" />
-        <span>Verified: {@status.verifiedEmail}</span>
+        <span>{gettext("Verified: %{email}", email: @status.verifiedEmail)}</span>
       </div>
       <div :if={!@status.verifiedEmail}>
         <.form for={@email_form} id="email-form" phx-submit="request">
           <.input
             field={@email_form[:address]}
             type="email"
-            label="Email address"
+            label={gettext("Email address")}
             autocomplete="email"
             required
           />
-          <.button phx-disable-with="Sending…">{if @status.verificationID,
-            do: "Send New Code",
-            else: "Send Verification Code"}</.button>
+          <.button phx-disable-with={gettext("Sending…")}>{if @status.verificationID,
+            do: gettext("Send New Code"),
+            else: gettext("Send Verification Code")}</.button>
         </.form>
         <.form
           :if={@status.verificationID}
@@ -87,12 +89,15 @@ defmodule MoneyTrackWeb.EmailLive do
           class="mt-6"
         >
           <p>
-            Enter the eight-digit code sent to {@status.pendingEmail}. It expires after 30 minutes and allows five attempts. Only the newest code works.
+            {gettext(
+              "Enter the eight-digit code sent to %{email}. It expires after 30 minutes and allows five attempts. Only the newest code works.",
+              email: @status.pendingEmail
+            )}
           </p>
           <.input
             field={@code_form[:code]}
             type="text"
-            label="Verification code"
+            label={gettext("Verification code")}
             inputmode="numeric"
             autocomplete="one-time-code"
             minlength="8"
@@ -100,7 +105,7 @@ defmodule MoneyTrackWeb.EmailLive do
             pattern="[0-9]{8}"
             required
           />
-          <.button phx-disable-with="Verifying…">Verify Email</.button>
+          <.button phx-disable-with={gettext("Verifying…")}>{gettext("Verify Email")}</.button>
         </.form>
       </div>
       <p :if={@error} id="email-error" role="alert" class="text-error">{@error}</p>

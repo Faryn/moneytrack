@@ -122,9 +122,28 @@ enum LedgerSchemaV4: VersionedSchema {
     }
 }
 
+enum LedgerSchemaV5: VersionedSchema {
+    static var versionIdentifier: Schema.Version { .init(5, 0, 0) }
+    static var models: [any PersistentModel.Type] { LedgerSchemaV4.models + [ConversionRecord.self] }
+    @Model final class ConversionRecord {
+        @Attribute(.unique) var id: UUID
+        var data: Data
+        init(id: UUID, data: Data) { self.id = id; self.data = data }
+    }
+}
+
+enum LedgerSchemaV6: VersionedSchema {
+    static var versionIdentifier: Schema.Version { .init(6, 0, 0) }
+    static var models: [any PersistentModel.Type] { LedgerSchemaV5.models + [IncomeRecord.self] }
+    @Model final class IncomeRecord {
+        @Attribute(.unique) var id: UUID
+        init(id: UUID) { self.id = id }
+    }
+}
+
 enum LedgerMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self, LedgerSchemaV4.self] }
-    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self), .lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self), .lightweight(fromVersion: LedgerSchemaV3.self, toVersion: LedgerSchemaV4.self)] }
+    static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self, LedgerSchemaV4.self, LedgerSchemaV5.self, LedgerSchemaV6.self] }
+    static var stages: [MigrationStage] { [.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self), .lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self), .lightweight(fromVersion: LedgerSchemaV3.self, toVersion: LedgerSchemaV4.self), .lightweight(fromVersion: LedgerSchemaV4.self, toVersion: LedgerSchemaV5.self), .lightweight(fromVersion: LedgerSchemaV5.self, toVersion: LedgerSchemaV6.self)] }
 }
 
 typealias CategoryRecord = LedgerSchemaV1.CategoryRecord
@@ -157,7 +176,7 @@ enum LedgerPersistence {
         ).appending(path: "MoneyTrack", directoryHint: .isDirectory)
         let directory = base.appending(path: namespace.directoryName, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schema = Schema(versionedSchema: LedgerSchemaV4.self)
+        let schema = Schema(versionedSchema: LedgerSchemaV6.self)
         let configuration = ModelConfiguration(
             "MoneyTrack", schema: schema, url: directory.appending(path: "ledger.store"),
             allowsSave: allowsSave, cloudKitDatabase: .none

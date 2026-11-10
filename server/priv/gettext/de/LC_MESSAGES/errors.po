@@ -1,0 +1,95 @@
+msgid ""
+msgstr ""
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "can't be blank"
+msgstr "darf nicht leer sein"
+
+msgid "has already been taken"
+msgstr "ist bereits vergeben"
+
+msgid "is invalid"
+msgstr "ist ungültig"
+
+msgid "must be accepted"
+msgstr "muss bestätigt werden"
+
+msgid "has invalid format"
+msgstr "hat ein ungültiges Format"
+
+msgid "has an invalid entry"
+msgstr "enthält einen ungültigen Eintrag"
+
+msgid "is reserved"
+msgstr "ist reserviert"
+
+msgid "does not match confirmation"
+msgstr "stimmt nicht mit der Bestätigung überein"
+
+msgid "is still associated with this entry"
+msgstr "ist noch mit diesem Eintrag verknüpft"
+
+msgid "are still associated with this entry"
+msgstr "sind noch mit diesem Eintrag verknüpft"
+
+msgid "should have %{count} item(s)"
+msgid_plural "should have %{count} item(s)"
+msgstr[0] "muss %{count} Eintrag haben"
+msgstr[1] "muss %{count} Einträge haben"
+
+msgid "should be %{count} character(s)"
+msgid_plural "should be %{count} character(s)"
+msgstr[0] "muss %{count} Zeichen lang sein"
+msgstr[1] "muss %{count} Zeichen lang sein"
+
+msgid "should be %{count} byte(s)"
+msgid_plural "should be %{count} byte(s)"
+msgstr[0] "muss %{count} Byte lang sein"
+msgstr[1] "muss %{count} Bytes lang sein"
+
+msgid "should have at least %{count} item(s)"
+msgid_plural "should have at least %{count} item(s)"
+msgstr[0] "muss mindestens %{count} Eintrag haben"
+msgstr[1] "muss mindestens %{count} Einträge haben"
+
+msgid "should be at least %{count} character(s)"
+msgid_plural "should be at least %{count} character(s)"
+msgstr[0] "muss mindestens %{count} Zeichen lang sein"
+msgstr[1] "muss mindestens %{count} Zeichen lang sein"
+
+msgid "should be at least %{count} byte(s)"
+msgid_plural "should be at least %{count} byte(s)"
+msgstr[0] "muss mindestens %{count} Byte lang sein"
+msgstr[1] "muss mindestens %{count} Bytes lang sein"
+
+msgid "should have at most %{count} item(s)"
+msgid_plural "should have at most %{count} item(s)"
+msgstr[0] "muss höchstens %{count} Eintrag haben"
+msgstr[1] "muss höchstens %{count} Einträge haben"
+
+msgid "should be at most %{count} character(s)"
+msgid_plural "should be at most %{count} character(s)"
+msgstr[0] "muss höchstens %{count} Zeichen lang sein"
+msgstr[1] "muss höchstens %{count} Zeichen lang sein"
+
+msgid "should be at most %{count} byte(s)"
+msgid_plural "should be at most %{count} byte(s)"
+msgstr[0] "muss höchstens %{count} Byte lang sein"
+msgstr[1] "muss höchstens %{count} Bytes lang sein"
+
+msgid "must be less than %{number}"
+msgstr "muss kleiner als %{number} sein"
+
+msgid "must be greater than %{number}"
+msgstr "muss größer als %{number} sein"
+
+msgid "must be less than or equal to %{number}"
+msgstr "muss höchstens %{number} sein"
+
+msgid "must be greater than or equal to %{number}"
+msgstr "muss mindestens %{number} sein"
+
+msgid "must be equal to %{number}"
+msgstr "muss gleich %{number} sein"

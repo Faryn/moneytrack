@@ -10,12 +10,13 @@ final class AnnualPlanPersistenceTests: XCTestCase {
         let namespace = StoreNamespace.account(UUID())
         var store: LedgerStore? = try LedgerStore(container: LedgerPersistence.container(root: root, namespace: namespace))
         try store!.saveAnnualPlan(year: 2026, total: 120000, allocations: [])
-        XCTAssertEqual(store!.annualPlans.first?.guiltFree, 120000)
+        XCTAssertEqual(store!.annualPlans.first?.unallocated, 120000)
         _ = try store!.saveExpense(amount: 5000, description: "Coffee and friends", categoryID: nil, day: ExpenseDay(iso: "2026-01-15"))
         let food = try store!.saveCategory(name: "Food", year: 2026, annualAmount: 60000)
         let result = try XCTUnwrap(store!.wholeBudget(month: .init(year: 2026, month: 1)))
-        XCTAssertEqual(result.total.remaining, 5000)
-        XCTAssertEqual(result.guiltFree.remaining, 0)
+        XCTAssertEqual(result.total.remaining, 0)
+        XCTAssertEqual(result.unallocated, 60000)
+        XCTAssertEqual(result.unbudgeted.remaining, -5000)
         XCTAssertEqual(result.categories.first { $0.id == food }?.remaining, 5000)
         let pending = store!.pendingChanges.count
         XCTAssertThrowsError(try store!.saveCategory(name: "Too much", year: 2026, annualAmount: 70000))
@@ -23,7 +24,7 @@ final class AnnualPlanPersistenceTests: XCTestCase {
         XCTAssertFalse(store!.categories.contains { $0.name == "Too much" })
         store = nil
         let reopened = try LedgerStore(container: LedgerPersistence.container(root: root, namespace: namespace))
-        XCTAssertEqual(try reopened.wholeBudget(month: .init(year: 2026, month: 1))?.guiltFree.remaining, 0)
+        XCTAssertEqual(try reopened.wholeBudget(month: .init(year: 2026, month: 1))?.unbudgeted.remaining, -5000)
         XCTAssertEqual(reopened.expenses.count, 1)
         let readOnly = try LedgerStore(container: LedgerPersistence.container(root: root, namespace: namespace, allowsSave: false))
         XCTAssertThrowsError(try readOnly.saveAnnualPlan(year: 2026, total: 240000, allocations: readOnly.annualPlans[0].allocations))
@@ -53,7 +54,33 @@ final class AnnualPlanPersistenceTests: XCTestCase {
         XCTAssertEqual(migrated.overview(month: .init(year: 2026, month: 1)).first?.remaining, 10000)
         XCTAssertEqual(try migrated.prepareNextOperation()?.1, bytes)
         try migrated.saveAnnualPlan(year: 2026, total: 120000, allocations: migrated.legacyAllocations(year: 2026))
-        XCTAssertEqual(migrated.annualPlans.first?.guiltFree, 0)
+        XCTAssertEqual(migrated.annualPlans.first?.unallocated, 0)
+        XCTAssertEqual(try migrated.prepareNextOperation()?.1, bytes)
+    }
+    func testV4MigrationPreservesLegacyBudgetAndPreparedBytes() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let namespace = StoreNamespace.account(UUID()), category = CategoryValue(id: UUID(), name: "Old category")
+        let directory = root.appending(path: namespace.directoryName)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let bytes = Data("prepared-v4-request-untouched".utf8), opID = UUID()
+        try autoreleasepool {
+            let schema = Schema(versionedSchema: LedgerSchemaV4.self)
+            let config = ModelConfiguration("MoneyTrack", schema: schema, url: directory.appending(path: "ledger.store"), cloudKitDatabase: .none)
+            let container = try ModelContainer(for: schema, configurations: [config])
+            let context = ModelContext(container); context.autosaveEnabled = false
+            context.insert(CategoryRecord(category))
+            context.insert(YearBudgetRecord(.init(id: UUID(), categoryID: category.id, year: 2026, amount: 120000)))
+            context.insert(PendingChangeRecord(.init(id: opID, entityID: category.id, entity: "category", action: "upsert", sequence: 1, payload: Data("{}".utf8))))
+            let state = LedgerSchemaV2.OperationState(id: opID, baseRevision: 1); state.wireData = bytes; context.insert(state)
+            try context.save()
+        }
+        let migrated = try LedgerStore(container: LedgerPersistence.container(root: root, namespace: namespace))
+        XCTAssertTrue(migrated.annualPlans.isEmpty)
+        XCTAssertEqual(migrated.overview(month: .init(year: 2026, month: 1)).first?.remaining, 10000)
+        XCTAssertEqual(try migrated.prepareNextOperation()?.1, bytes)
+        try migrated.saveAnnualPlan(year: 2026, total: 120000, allocations: migrated.legacyAllocations(year: 2026))
+        XCTAssertEqual(migrated.annualPlans.first?.unallocated, 0)
         XCTAssertEqual(try migrated.prepareNextOperation()?.1, bytes)
     }
     func testNaturalYearCollisionResolvesToCanonicalPlanAndCopyRemapsReferences() throws {

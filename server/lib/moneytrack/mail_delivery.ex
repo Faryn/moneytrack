@@ -81,11 +81,11 @@ defmodule MoneyTrack.MailDelivery do
           email =
             new()
             |> to(address)
-            |> Swoosh.Email.from({"MoneyTrack", Application.fetch_env!(:moneytrack, :mail_from)})
-            |> subject("Your MoneyTrack verification code")
+            |> Swoosh.Email.from({"Spendie", Application.fetch_env!(:moneytrack, :mail_from)})
+            |> subject("Your Spendie verification code / Dein Spendie-Bestätigungscode")
             |> header("Message-ID", "<#{job.id}@moneytrack.invalid>")
             |> text_body(
-              "Your MoneyTrack verification code is #{code}.\n\nIt expires after 30 minutes. Use only the most recently requested code.\nIf you didn't request this, you can ignore this message."
+              "Your Spendie verification code is #{code}.\n\nIt expires after 30 minutes. Use only the most recently requested code.\nIf you didn't request this, you can ignore this message.\n\n--- Deutsch ---\n\nDein Spendie-Bestätigungscode lautet #{code}.\n\nEr ist 30 Minuten gültig. Verwende nur den zuletzt angeforderten Code.\nWenn du keinen Code angefordert hast, kannst du diese Nachricht ignorieren."
             )
 
           # Adapter error values may contain the full message. Never log or persist them.

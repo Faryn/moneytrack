@@ -8,6 +8,27 @@ final class LedgerStoreTests: XCTestCase {
         FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
     }
 
+    func testForeignAmountAndFrozenOutboxSurviveReopenAndSharing() throws {
+        let root = directory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        var store: LedgerStore? = try LedgerStore(container: LedgerPersistence.container(root: root))
+        let category = try store!.saveCategory(name: "Travel", year: 2026, annualAmount: 120000)
+        let conversion = CurrencyConversion(originalAmount: 1000, originalCurrency: "JPY", rate: "150", rateDate: "2026-11-03", source: "ECB")
+        let id = try store!.saveExpense(amount: 667, description: "Sushi", categoryID: category, day: ExpenseDay(iso: "2026-11-04"), conversion: conversion)
+        let before = store!.pendingChanges
+        XCTAssertThrowsError(try store!.saveExpense(id: id, amount: 668, description: "Sushi", categoryID: category, day: ExpenseDay(iso: "2026-11-04"), conversion: conversion))
+        XCTAssertEqual(store!.pendingChanges, before)
+        let frozen = try store!.prepareNextOperation()?.1
+        store = nil
+        let reopened = try LedgerStore(container: LedgerPersistence.container(root: root))
+        XCTAssertEqual(reopened.expenses.first?.conversion, conversion)
+        XCTAssertEqual(try reopened.prepareNextOperation()?.1, frozen)
+        try reopened.shareExpense(id, viewerID: UUID(), username: "owner", email: "other@example.org", connection: nil, paidByUser: true, split: .half)
+        XCTAssertEqual(reopened.expenses.first?.conversion, conversion)
+        XCTAssertEqual(reopened.expenses.first?.personalShare, 334)
+        XCTAssertEqual(try reopened.sharedExpenses.first?.amounts.balance, 333)
+    }
+
     func testSaveEditDeleteAndOutboxSurviveReopening() throws {
         let root = directory()
         defer { try? FileManager.default.removeItem(at: root) }

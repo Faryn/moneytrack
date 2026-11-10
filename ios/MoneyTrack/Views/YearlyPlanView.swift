@@ -19,12 +19,17 @@ struct YearlyPlanView: View {
         Form {
             Section { Stepper("Year \(String(year))", value: $year, in: 1900...9999) }
             Section {
-                CurrencyField(title: "Yearly budget", text: $total, identifier: "budget.annual")
+                CurrencyField(title: String(localized: "Yearly budget"), text: $total, identifier: "budget.annual", groupsThousands: true)
                 if let parsed {
                     LabeledContent("Per month on average", value: Money.format(parsed / 12))
                     LabeledContent("Assigned to categories", value: Money.format(allocated))
-                    LabeledContent("Guilt-free spending") {
-                        Text(Money.format(parsed - allocated)).foregroundStyle(AmountColors.remaining(parsed - allocated))
+                    LabeledContent("Unallocated") {
+                        Text(Money.format(parsed - allocated))
+                            .foregroundStyle(parsed < allocated ? AmountColors.negative : .primary)
+                    }
+                    if plan != nil && parsed == allocated {
+                        Label("Fully allocated", systemImage: "checkmark.circle")
+                            .foregroundStyle(AmountColors.positive)
                     }
                 }
                 Button(plan == nil ? "Set Yearly Budget" : "Save Yearly Budget") {
@@ -35,23 +40,21 @@ struct YearlyPlanView: View {
                     Text("Reduce category allocations before lowering the total this far.").foregroundStyle(AmountColors.negative)
                 }
             } header: { Text("1. Your Whole Year") } footer: {
-                Text("Pick the total first. Category budgets are parts of this amount; everything unassigned is guilt-free spending. Unspent and overspent amounts carry within the year.")
-                if plan == nil && !allocations.isEmpty { Text("Prefilled from your existing category budgets. Saving keeps those allocations and makes any extra guilt-free.") }
+                Text("Set the total first, then assign the full amount to categories. Unspent and overspent category balances carry within the year.")
+                if plan == nil && !allocations.isEmpty { Text("Prefilled from your existing category budgets. Any increase is available to allocate.") }
             }
             Section {
                 if let plan {
-                    ForEach(store.categories.filter { $0.id != plan.freeCategoryID }) { category in
+                    ForEach(store.activeCategories.filter { $0.id != plan.freeCategoryID }) { category in
                         NavigationLink { CategoryEditor(category: category, year: year) } label: {
-                            LabeledContent(category.name, value: plan.allocations.first { $0.categoryID == category.id }.map { Money.format($0.amount) } ?? "Guilt-free pool")
+                            LabeledContent(category.name, value: plan.allocations.first { $0.categoryID == category.id }.map { Money.format($0.amount) } ?? String(localized: "No budget"))
                         }.disabled(parsed != plan.total)
                     }
                     NavigationLink { CategoryEditor(year: year) } label: { Label("Add Category", systemImage: "plus") }
                         .disabled(parsed != plan.total)
                         .accessibilityIdentifier("category.add")
                 } else { Text("Save the yearly total to start assigning category amounts.").foregroundStyle(.secondary) }
-            } header: { Text("2. Assign to Categories") } footer: {
-                Text("Categories without an allocation draw from the guilt-free pool. Category overspending stays visible against that category.")
-            }
+            } header: { Text("2. Assign to Categories") }
         }
         .navigationTitle("Yearly Plan")
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close", systemImage: "xmark") { dismiss() } } }
@@ -105,18 +108,18 @@ struct CategoryEditor: View {
             Section { TextField("Category name", text: $name).textInputAutocapitalization(.words).accessibilityIdentifier("category.name") }
             if let snapshot, !reserved {
                 Section {
-                    CurrencyField(title: "Yearly allocation", text: $annual, identifier: "category.annual")
+                    CurrencyField(title: String(localized: "Yearly allocation"), text: $annual, identifier: "category.annual", groupsThousands: true)
                     if let parsed {
                         let previous = snapshot.allocations.first { $0.categoryID == category?.id }?.amount ?? 0
-                        let free = snapshot.guiltFree + previous - parsed
-                        LabeledContent("Guilt-free after allocation", value: Money.format(free))
-                        if free < 0 { Text("This allocation exceeds the yearly total.").foregroundStyle(AmountColors.negative) }
+                        let unallocated = snapshot.unallocated + previous - parsed
+                        LabeledContent("Unallocated after saving", value: Money.format(unallocated))
+                        if unallocated < 0 { Text("This allocation exceeds the yearly total.").foregroundStyle(AmountColors.negative) }
                     }
                 } header: { Text("Part of Your \(String(year)) Budget") } footer: {
-                    Text("Leave empty or enter zero to use the guilt-free pool. This amount comes from the yearly total; it doesn't add to it.")
+                    Text("Enter zero to remove this category’s allocation and return the amount to Unallocated.")
                 }
             } else {
-                Section { Text(reserved ? "This default category draws from guilt-free spending." : "Set the whole yearly budget in Yearly Plan before assigning category amounts.").foregroundStyle(.secondary) }
+                Section { Text(reserved ? "This category is reserved for uncategorized entries." : "Set the whole yearly budget in Yearly Plan before assigning category amounts.").foregroundStyle(.secondary) }
             }
         }
         .navigationTitle(category == nil ? "New Category" : "Edit Category")
@@ -135,7 +138,7 @@ struct CategoryEditor: View {
         }
         .confirmationDialog("Recalculate \(String(year))?", isPresented: $confirm, titleVisibility: .visible) {
             Button("Update Yearly Allocation") { save() }
-        } message: { Text("The category and guilt-free balances for this year will be recalculated. The yearly total stays the same.") }
+        } message: { Text("This recalculates the category and overall balances for the year.") }
         .alert("Couldn't Save Category", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK", role: .cancel) {} } message: { Text(error ?? "") }
     }
     private func save() {

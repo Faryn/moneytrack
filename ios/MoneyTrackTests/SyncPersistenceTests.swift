@@ -14,6 +14,29 @@ final class SyncPersistenceTests: XCTestCase {
         .init(entity: "category", entityID: category.id, revision: revision, deleted: false, payload: try .value(category))
     }
 
+    func testArchivedCategoryLeavesActiveListsAndPreservesPreparedRename() throws {
+        let root = directory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let container = try LedgerPersistence.container(root: root)
+        let store = try LedgerStore(container: container)
+        let category = CategoryValue(id: UUID(), name: "Leisure")
+        try store.receive(.init(changes: [remote(category, revision: 1)], cursor: "created", hasMore: false))
+        try store.saveCategory(id: category.id, name: "My leisure", year: 2026, annualAmount: nil)
+        let prepared = try XCTUnwrap(store.prepareNextOperation())
+        let archived = RemoteRecord(entity: "category", entityID: category.id, revision: 2, deleted: false,
+            payload: .object(["id": .string(category.id.uuidString), "name": .string(category.name), "archived": .bool(true)]))
+        try store.receive(.init(changes: [archived], cursor: "archived", hasMore: false))
+        XCTAssertTrue(store.activeCategories.isEmpty)
+        XCTAssertTrue(store.overview(month: .init(year: 2026, month: 1)).isEmpty)
+        let reopened = try LedgerStore(container: container)
+        XCTAssertTrue(reopened.activeCategories.isEmpty)
+        XCTAssertEqual(reopened.categories.first?.name, "My leisure")
+        XCTAssertEqual(try reopened.prepareNextOperation()?.1, prepared.1)
+        XCTAssertThrowsError(try reopened.saveExpense(amount: 100, description: "New expense", categoryID: category.id, day: ExpenseDay(iso: "2026-11-08")))
+        try reopened.receive(.init(changes: [remote(category, revision: 3)], cursor: "restored", hasMore: false))
+        XCTAssertEqual(reopened.activeCategories.map(\.id), [category.id])
+    }
+
     func testPopulatedV1MigratesWithoutLosingPendingPayloadsOrTombstones() throws {
         let root = directory()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -93,6 +116,41 @@ final class SyncPersistenceTests: XCTestCase {
         XCTAssertTrue(reopened.pendingChanges.isEmpty)
         XCTAssertEqual(reopened.saveCount, 0)
         XCTAssertEqual(try LedgerStore(container: LedgerPersistence.container(root: root)).cursor, "good")
+    }
+
+    func testPullPreservesDeletionAndPreparedEditAcrossMixedRevisionsInOnePage() throws {
+        let root = directory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try autoreleasepool {
+            let container = try LedgerPersistence.container(root: root)
+            let store = try LedgerStore(container: container)
+            let category = CategoryValue(id: UUID(), name: "Restaurants")
+            let day = try ExpenseDay(iso: "2026-11-08")
+            func expense(_ name: String) -> ExpenseValue {
+                .init(id: UUID(), categoryID: category.id, amount: 500, personalShare: 500,
+                      description: name, day: day, createdAt: Date(timeIntervalSince1970: 0))
+            }
+            func record(_ value: ExpenseValue, revision: Int64, deleted: Bool = false) throws -> RemoteRecord {
+                .init(entity: "expense", entityID: value.id, revision: revision, deleted: deleted, payload: try .value(value))
+            }
+            let edited = expense("Original")
+            try store.receive(.init(changes: [remote(category, revision: 1), record(edited, revision: 1)], cursor: "initial", hasMore: false))
+            try store.saveExpense(id: edited.id, amount: 600, description: "Local edit", categoryID: category.id, day: day)
+            let prepared = try XCTUnwrap(store.prepareNextOperation())
+
+            let removed = expense("Deleted during catch-up")
+            let old = try record(removed, revision: 1)
+            let deletion = try record(removed, revision: 2, deleted: true)
+            let remoteEditDeletion = try record(edited, revision: 2, deleted: true)
+            try store.receive(.init(changes: [old, deletion, old, remoteEditDeletion], cursor: "mixed", hasMore: false))
+
+            let reopened = try LedgerStore(container: container)
+            XCTAssertEqual(reopened.expenses.map(\.description), ["Local edit"])
+            XCTAssertEqual(try reopened.recordRevision("expense", removed.id), 2)
+            XCTAssertEqual(try reopened.recordRevision("expense", edited.id), 2)
+            XCTAssertEqual(try reopened.prepareNextOperation()?.1, prepared.1)
+            XCTAssertEqual(try reopened.cursor, "mixed")
+        }
     }
 
     func testImportIsExplicitAtomicAndDoesNotDuplicateOrModifyTheSource() throws {
@@ -215,5 +273,98 @@ final class SyncPersistenceTests: XCTestCase {
         for invalid in ["http://example.test", "https://user:password@example.test", "https://example.test/path", "https://example.test?token=secret", "https://example.test#fragment", "not-a-url"] {
             XCTAssertThrowsError(try ServerAddress.parse(invalid), invalid)
         }
+    }
+}
+
+
+@MainActor
+final class IncomePersistenceTests: XCTestCase {
+    private func root() -> URL { FileManager.default.temporaryDirectory.appending(path: UUID().uuidString) }
+
+    func testIncomePersistsAndDoesNotChangeSpendingOrCarryover() throws {
+        let directory = root()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var store: LedgerStore? = try LedgerStore(container: LedgerPersistence.container(root: directory))
+        let category = try store!.saveCategory(name: "Gehalt", year: 2026, annualAmount: nil)
+        try store!.saveAnnualPlan(year: 2026, total: 120000, allocations: [])
+        let before = try XCTUnwrap(store!.wholeBudget(month: .init(year: 2026, month: 2)))
+        let id = try store!.saveExpense(amount: 200000, description: "Salary", categoryID: category,
+            day: ExpenseDay(iso: "2026-01-31"), kind: .income)
+        XCTAssertEqual(try store!.wholeBudget(month: .init(year: 2026, month: 2))?.total, before.total)
+        XCTAssertEqual(try store!.wholeBudget(month: .init(year: 2026, month: 2))?.unbudgeted, before.unbudgeted)
+        XCTAssertEqual(store!.expenses.first?.signedAmount, 200000)
+        store = nil
+        let reopened = try LedgerStore(container: LedgerPersistence.container(root: directory))
+        XCTAssertTrue(try XCTUnwrap(reopened.expenses.first).isIncome)
+        try reopened.saveExpense(id: id, amount: 210000, description: "Updated", categoryID: category, day: ExpenseDay(iso: "2026-01-31"))
+        XCTAssertTrue(try XCTUnwrap(reopened.expenses.first).isIncome)
+        let copy = try LedgerStore(container: LedgerPersistence.container(root: directory, namespace: .account(UUID())))
+        try copy.importLocal(reopened)
+        XCTAssertTrue(try XCTUnwrap(copy.expenses.first).isIncome)
+        try reopened.deleteExpense(id)
+        XCTAssertTrue(reopened.expenses.isEmpty)
+    }
+
+    func testIncomePullAndDeletionAreIdempotentAndBadTypeRollsBack() throws {
+        let directory = root()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try LedgerStore(container: LedgerPersistence.container(root: directory))
+        let category = CategoryValue(id: UUID(), name: "Gehalt")
+        let income = ExpenseValue(id: UUID(), categoryID: category.id, amount: 200000, personalShare: 200000,
+            description: "Salary", day: try ExpenseDay(iso: "2026-01-31"), createdAt: Date(timeIntervalSince1970: 0), kind: .income)
+        let remote = RemoteRecord(entity: "expense", entityID: income.id, revision: 1, deleted: false, payload: try .value(income))
+        let page = ChangePage(changes: [.init(entity: "category", entityID: category.id, revision: 1, deleted: false, payload: try .value(category)), remote], cursor: "income", hasMore: false)
+        try store.receive(page); try store.receive(page)
+        XCTAssertEqual(store.expenses, [income])
+        XCTAssertEqual(store.overview(month: .init(year: 2026, month: 1)).first?.spent, 0)
+        var invalid = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(income)) as? [String: Any])
+        invalid["kind"] = "refund"
+        let invalidValue = try JSONDecoder().decode(JSONValue.self, from: JSONSerialization.data(withJSONObject: invalid))
+        XCTAssertThrowsError(try store.receive(.init(changes: [.init(entity: "expense", entityID: income.id, revision: 2, deleted: false, payload: invalidValue)], cursor: "bad", hasMore: false)))
+        XCTAssertEqual(store.expenses, [income])
+        let tombstone = RemoteRecord(entity: "expense", entityID: income.id, revision: 2, deleted: true, payload: try .value(income))
+        try store.receive(.init(changes: [tombstone], cursor: "deleted", hasMore: false))
+        try store.receive(.init(changes: [tombstone], cursor: "deleted", hasMore: false))
+        XCTAssertTrue(store.expenses.isEmpty)
+    }
+
+    func testV5MigrationPreservesPreparedBytesAndExpenseDirection() throws {
+        let directory = root(), namespace = StoreNamespace.account(UUID())
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let path = directory.appending(path: namespace.directoryName)
+        try FileManager.default.createDirectory(at: path, withIntermediateDirectories: true)
+        let category = CategoryValue(id: UUID(), name: "Food"), opID = UUID()
+        let expense = ExpenseValue(id: UUID(), categoryID: category.id, amount: 1200, personalShare: 1200,
+            description: "Food", day: try ExpenseDay(iso: "2026-01-01"), createdAt: Date(timeIntervalSince1970: 0))
+        let bytes = Data("prepared-before-income".utf8)
+        do {
+            let schema = Schema(versionedSchema: LedgerSchemaV5.self)
+            let config = ModelConfiguration("MoneyTrack", schema: schema, url: path.appending(path: "ledger.store"), cloudKitDatabase: .none)
+            let container = try ModelContainer(for: schema, configurations: [config])
+            let context = ModelContext(container); context.autosaveEnabled = false
+            context.insert(CategoryRecord(category)); context.insert(ExpenseRecord(expense))
+            context.insert(PendingChangeRecord(.init(id: opID, entityID: expense.id, entity: "expense", action: "upsert", sequence: 1, payload: Data("{}".utf8))))
+            let state = LedgerSchemaV2.OperationState(id: opID, baseRevision: 1); state.wireData = bytes; context.insert(state)
+            try context.save()
+        }
+        let migrated = try LedgerStore(container: LedgerPersistence.container(root: directory, namespace: namespace))
+        XCTAssertEqual(migrated.expenses, [expense])
+        XCTAssertEqual(try migrated.prepareNextOperation()?.1, bytes)
+    }
+
+    func testIncomeSaveFailureRollsBackMarkerDomainAndOutbox() throws {
+        let directory = root()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        do {
+            let store = try LedgerStore(container: LedgerPersistence.container(root: directory))
+            _ = try store.saveCategory(name: "Gehalt", year: 2026, annualAmount: nil)
+        }
+        let container = try LedgerPersistence.container(root: directory, allowsSave: false)
+        let store = try LedgerStore(container: container), before = store.pendingChanges.count
+        XCTAssertThrowsError(try store.saveExpense(amount: 200000, description: "Salary", categoryID: store.categories.first!.id,
+            day: ExpenseDay(iso: "2026-01-31"), kind: .income))
+        XCTAssertTrue(store.expenses.isEmpty)
+        XCTAssertEqual(store.pendingChanges.count, before)
+        XCTAssertTrue(try ModelContext(container).fetch(FetchDescriptor<LedgerSchemaV6.IncomeRecord>()).isEmpty)
     }
 }

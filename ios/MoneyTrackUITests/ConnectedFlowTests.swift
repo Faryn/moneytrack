@@ -27,6 +27,7 @@ final class ConnectedFlowTests: XCTestCase {
         app.navigationBars["Yearly Plan"].buttons["Close"].tap()
         app.tabBars.buttons["Expenses"].tap()
         app.buttons["expense.add"].tap()
+        app.buttons["expense.quick-details"].tap()
         app.textFields["expense.amount"].tap(); app.textFields["expense.amount"].typeText("78")
         app.textFields["expense.description"].tap(); app.textFields["expense.description"].typeText("Theodor")
         app.buttons["expense.save"].tap()
@@ -87,7 +88,10 @@ final class ConnectedFlowTests: XCTestCase {
         XCTAssertEqual(app.staticTexts["budget.remaining"].value as? String, "€61.00")
         app.tabBars.buttons["Shared"].tap()
         let person = app.buttons["sharing.person.shared-b-fixture"]
-        XCTAssertTrue(person.waitForExistence(timeout: 20)); person.tap()
+        XCTAssertTrue(person.waitForExistence(timeout: 20))
+        let peopleScreen = XCTAttachment(screenshot: app.screenshot())
+        peopleScreen.name = "Shared people with aligned balances"; peopleScreen.lifetime = .keepAlways; add(peopleScreen)
+        person.tap()
         XCTAssertTrue(app.staticTexts["Owes you €39.00"].waitForExistence(timeout: 10))
         app.buttons["sharing.settle"].tap()
         let settlement = app.textFields["settle.amount"]

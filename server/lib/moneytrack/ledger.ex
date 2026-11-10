@@ -64,7 +64,7 @@ defmodule MoneyTrack.Ledger do
 
       case result do
         {:ok, {record, changed}} ->
-          if changed do
+          if changed && !Repo.in_transaction?() do
             for id <- MoneyTrack.Sharing.listeners(user, operation["entity"], entity_id),
                 do: Phoenix.PubSub.broadcast(MoneyTrack.PubSub, "ledger:#{id}", :ledger_changed)
           end
@@ -81,20 +81,74 @@ defmodule MoneyTrack.Ledger do
 
   def apply_operation(_, _), do: {:error, :invalid_operation}
 
+  def create_shared_expense(%User{} = user, operation, recipient_id) do
+    if operation["entity"] != "expense" || operation["action"] != "upsert" ||
+         operation["expectedRevision"] != 0 do
+      {:error, :invalid_operation}
+    else
+      <<bytes::binary-size(16), _::binary>> =
+        :crypto.hash(:sha256, "entry-sharing:" <> operation["operationID"])
+
+      {:ok, share_id} = Ecto.UUID.load(bytes)
+
+      result =
+        Repo.transaction(fn ->
+          source =
+            case apply_operation(user, operation) do
+              {:ok, source} -> source
+              {:error, reason} -> Repo.rollback(reason)
+            end
+
+          share = %{
+            "entity" => "shared_expense",
+            "entityID" => source["entityID"],
+            "operationID" => share_id,
+            "action" => "upsert",
+            "expectedRevision" => 0,
+            "payload" => %{
+              "id" => source["entityID"],
+              "command" => "share",
+              "sourceRevision" => source["revision"],
+              "recipientID" => recipient_id,
+              "paidByCreator" => true,
+              "creatorSplit" => "half"
+            }
+          }
+
+          case apply_operation(user, share) do
+            {:ok, record} -> record
+            {:error, reason} -> Repo.rollback(reason)
+          end
+        end)
+
+      case result do
+        {:ok, record} ->
+          for id <- MoneyTrack.Sharing.listeners(user, "shared_expense", record["entityID"]),
+              do: Phoenix.PubSub.broadcast(MoneyTrack.PubSub, "ledger:#{id}", :ledger_changed)
+
+          {:ok, record}
+
+        other ->
+          other
+      end
+    end
+  end
+
   def changes(%User{} = user, cursor \\ nil) do
     with {:ok, after_sequence, through} <- decode_cursor(user, cursor) do
       through =
         through ||
-          Repo.one(from c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence)) ||
+          Repo.one(from(c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence))) ||
           0
 
       rows =
         Repo.all(
-          from c in UserChange,
+          from(c in UserChange,
             where:
               c.user_id == ^user.id and c.sequence > ^after_sequence and c.sequence <= ^through,
             order_by: c.sequence,
             limit: 101
+          )
         )
 
       page = Enum.take(rows, 100)
@@ -123,14 +177,20 @@ defmodule MoneyTrack.Ledger do
       Repo.transaction(fn ->
         %{
           categories:
-            Repo.all(from c in Category, where: c.user_id == ^user.id, order_by: c.name_key),
-          plans: Repo.all(from p in BudgetPlan, where: p.user_id == ^user.id),
-          budgets: Repo.all(from b in YearBudget, where: b.user_id == ^user.id),
+            Repo.all(
+              from(c in Category,
+                where: c.user_id == ^user.id and not c.archived,
+                order_by: c.name_key
+              )
+            ),
+          plans: Repo.all(from(p in BudgetPlan, where: p.user_id == ^user.id)),
+          budgets: Repo.all(from(b in YearBudget, where: b.user_id == ^user.id)),
           expenses:
             Repo.all(
-              from e in Expense,
+              from(e in Expense,
                 where: e.user_id == ^user.id and is_nil(e.deleted_at),
                 order_by: [desc: e.expense_date, desc: e.inserted_at]
+              )
             ) ++ MoneyTrack.Sharing.projected_expenses(user)
         }
       end)
@@ -138,7 +198,11 @@ defmodule MoneyTrack.Ledger do
     snapshot
   end
 
-  def envelope(%Category{} = c), do: record("category", c, %{"id" => c.id, "name" => c.name})
+  def envelope(%Category{} = c) do
+    payload = %{"id" => c.id, "name" => c.name}
+    payload = if c.archived, do: Map.put(payload, "archived", true), else: payload
+    record("category", c, payload)
+  end
 
   def envelope(%YearBudget{} = b),
     do:
@@ -160,11 +224,12 @@ defmodule MoneyTrack.Ledger do
       })
 
   def envelope(%Expense{} = e) do
-    record("expense", e, %{
+    payload = %{
       "id" => e.id,
       "categoryID" => e.category_id,
       "amount" => e.amount,
       "personalShare" => e.personal_share,
+      "conversion" => e.conversion,
       "description" => e.description,
       "day" => %{
         "year" => e.expense_date.year,
@@ -172,10 +237,35 @@ defmodule MoneyTrack.Ledger do
         "day" => e.expense_date.day
       },
       "createdAt" => DateTime.to_iso8601(e.client_created_at)
-    })
+    }
+
+    payload = if e.kind == "income", do: Map.put(payload, "kind", "income"), else: payload
+    record("expense", e, payload)
   end
 
-  def has_budget_plan?(user), do: Repo.exists?(from p in BudgetPlan, where: p.user_id == ^user.id)
+  def has_income?(user) do
+    Repo.exists?(from(e in Expense, where: e.user_id == ^user.id and e.kind == "income")) ||
+      Repo.exists?(
+        from(c in UserChange,
+          where:
+            c.user_id == ^user.id and
+              fragment("json_extract(?, '$.payload.kind') = 'income'", c.record)
+        )
+      )
+  end
+
+  def has_conversion?(user) do
+    Repo.exists?(from(e in Expense, where: e.user_id == ^user.id and not is_nil(e.conversion))) ||
+      Repo.exists?(
+        from(e in MoneyTrack.Sharing.SharedExpense,
+          where:
+            (e.creator_id == ^user.id or e.recipient_id == ^user.id) and not is_nil(e.conversion)
+        )
+      )
+  end
+
+  def has_budget_plan?(user),
+    do: Repo.exists?(from(p in BudgetPlan, where: p.user_id == ^user.id))
 
   defp record(entity, value, payload),
     do: %{
@@ -189,7 +279,7 @@ defmodule MoneyTrack.Ledger do
   @doc false
   def append_change(user, record) do
     sequence =
-      (Repo.one(from c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence)) || 0) +
+      (Repo.one(from(c in UserChange, where: c.user_id == ^user.id, select: max(c.sequence))) || 0) +
         1
 
     Repo.insert!(%UserChange{user_id: user.id, sequence: sequence, record: record})
@@ -210,7 +300,9 @@ defmodule MoneyTrack.Ledger do
 
     if schema == YearBudget && is_integer(op["payload"]["year"]) &&
          Repo.exists?(
-           from p in BudgetPlan, where: p.user_id == ^user.id and p.year == ^op["payload"]["year"]
+           from(p in BudgetPlan,
+             where: p.user_id == ^user.id and p.year == ^op["payload"]["year"]
+           )
          ) do
       Repo.rollback(
         {:validation,
@@ -236,6 +328,33 @@ defmodule MoneyTrack.Ledger do
         change(existing, deleted_at: DateTime.utc_now())
       else
         attrs = attributes(user, op["entity"], op["payload"])
+
+        if schema == Category && attrs[:archived] == true do
+          if is_nil(existing), do: Repo.rollback(:not_found)
+          ensure_category_unused!(user, id)
+        end
+
+        attrs =
+          if schema == Expense && existing && existing.conversion &&
+               !Map.has_key?(op["payload"], "conversion") do
+            if attrs.amount != existing.amount,
+              do:
+                Repo.rollback(
+                  {:validation,
+                   "Edit the original currency amount to change a converted expense."}
+                )
+
+            Map.put(attrs, :conversion, existing.conversion)
+          else
+            attrs
+          end
+
+        if schema == Expense && existing && existing.kind == "income" &&
+             !Map.has_key?(op["payload"], "kind"),
+           do:
+             Repo.rollback(
+               {:validation, "Choose Income or Expense explicitly when editing income."}
+             )
 
         if schema == YearBudget do
           if existing &&
@@ -318,13 +437,18 @@ defmodule MoneyTrack.Ledger do
   defp attributes(_user, "category", payload) do
     name = payload["name"]
 
-    unless keys?(payload, ~w(id name)) && is_binary(name) &&
+    unless keys?(Map.delete(payload, "archived"), ~w(id name)) &&
+             is_boolean(Map.get(payload, "archived", false)) && is_binary(name) &&
              String.length(String.trim(name)) in 1..100,
            do: Repo.rollback({:validation, "Enter a category name of 1–100 characters."})
 
     name = String.trim(name)
     key = name |> String.normalize(:nfd) |> String.replace(~r/\p{Mn}/u, "") |> String.downcase()
-    %{name: name, name_key: key}
+    attrs = %{name: name, name_key: key}
+
+    if Map.has_key?(payload, "archived"),
+      do: Map.put(attrs, :archived, payload["archived"]),
+      else: attrs
   end
 
   defp attributes(user, "year_budget", payload) do
@@ -366,7 +490,7 @@ defmodule MoneyTrack.Ledger do
            do:
              Repo.rollback(
                {:validation,
-                "Allocations must fit within the yearly total. Leave the default category for guilt-free spending."}
+                "Allocations must fit within the yearly total. The default category is reserved for uncategorized entries."}
              )
 
     %{
@@ -380,7 +504,11 @@ defmodule MoneyTrack.Ledger do
   defp attributes(user, "expense", payload) do
     day = payload["day"]
 
-    unless keys?(payload, ~w(id categoryID amount personalShare description day createdAt)) &&
+    unless keys?(
+             Map.drop(payload, ["conversion", "kind"]),
+             ~w(id categoryID amount personalShare description day createdAt)
+           ) &&
+             Map.get(payload, "kind", "expense") in ["expense", "income"] &&
              valid_money?(payload["amount"], false) &&
              payload["personalShare"] === payload["amount"] && is_binary(payload["description"]) &&
              String.length(payload["description"]) <= 500 &&
@@ -413,13 +541,45 @@ defmodule MoneyTrack.Ledger do
       description: String.trim(payload["description"]),
       expense_date: date,
       client_created_at: created,
+      kind: Map.get(payload, "kind", "expense"),
+      conversion: MoneyTrack.Currency.validate!(payload["conversion"], payload["amount"]),
       currency: "EUR"
     }
   end
 
+  defp ensure_category_unused!(user, id) do
+    active_expense =
+      Repo.exists?(
+        from(e in Expense,
+          where: e.user_id == ^user.id and e.category_id == ^id and is_nil(e.deleted_at)
+        )
+      )
+
+    active_shared =
+      Repo.exists?(
+        from(a in MoneyTrack.Sharing.Assignment,
+          join: e in MoneyTrack.Sharing.SharedExpense,
+          on: e.id == a.expense_id,
+          where: a.user_id == ^user.id and a.category_id == ^id and is_nil(e.deleted_at)
+        )
+      )
+
+    legacy_budget =
+      Repo.exists?(from(b in YearBudget, where: b.user_id == ^user.id and b.category_id == ^id))
+
+    planned =
+      Repo.all(from(p in BudgetPlan, where: p.user_id == ^user.id))
+      |> Enum.any?(fn p ->
+        p.free_category_id == id || Enum.any?(p.allocations["items"], &(&1["categoryID"] == id))
+      end)
+
+    if active_expense || active_shared || legacy_budget || planned,
+      do: Repo.rollback({:validation, "This category is still used by a booking or budget."})
+  end
+
   defp owned_category!(user, id) do
     with {:ok, id} <- Ecto.UUID.cast(id),
-         %Category{} <- Repo.get_by(Category, id: id, user_id: user.id),
+         %Category{} <- Repo.get_by(Category, id: id, user_id: user.id, archived: false),
          do: id,
          else: (_ -> Repo.rollback(:not_found))
   end

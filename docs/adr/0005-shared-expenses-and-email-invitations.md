@@ -42,3 +42,5 @@ Removal of sharing, pending invitation budget treatment, invitation lifetime, re
 ## Connected sharing implementation
 
 [ADR 0012](0012-sharing-defaults-and-connected-flow.md) accepts the private Uncategorized fallback, connection reuse, and immediate repayment recording by either participant. The [v2 contract](../contracts/shared-sync-v2.md) records the connected implementation and remaining limitations.
+
+[ADR 0018](0018-sharing-at-entry-and-once-per-person.md) subsequently allows sharing during entry with an accepted person and makes initial acceptance cover the connection, including eligible pending expenses.

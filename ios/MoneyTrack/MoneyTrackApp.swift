@@ -36,7 +36,7 @@ private struct StoreBootstrapView: View {
                     Button("Try Again", action: openStore)
                 }
             } else {
-                ProgressView("Opening MoneyTrack")
+                ProgressView("Opening Spendie")
             }
         }
         .task { if app == nil { openStore() } }

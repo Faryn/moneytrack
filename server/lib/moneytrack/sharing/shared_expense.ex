@@ -7,6 +7,7 @@ defmodule MoneyTrack.Sharing.SharedExpense do
     field :recipient_email, :string
     field :connection_id, :binary_id
     field :status, :string
+    field :conversion, :map
     field :amount, :integer
     field :description, :string
     field :expense_date, :date

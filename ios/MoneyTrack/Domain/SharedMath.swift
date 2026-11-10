@@ -3,7 +3,7 @@ import Foundation
 enum PersonalSplit: String, Codable, CaseIterable, Sendable {
     case all, half, none
     var title: String {
-        switch self { case .all: "All"; case .half: "Half"; case .none: "None" }
+        switch self { case .all: String(localized: "All"); case .half: String(localized: "Half"); case .none: String(localized: "None") }
     }
 }
 struct SharedAmounts: Equatable, Sendable {
@@ -42,7 +42,7 @@ struct SharedBalanceSummary: Equatable, Sendable {
 
 enum SharedCalculationError: LocalizedError {
     case totalOverflow
-    var errorDescription: String? { "The combined shared amount is too large to display." }
+    var errorDescription: String? { String(localized: "The combined shared amount is too large to display.") }
 }
 
 extension SharedMath {

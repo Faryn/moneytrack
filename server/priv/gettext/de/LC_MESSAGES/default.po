@@ -1,0 +1,834 @@
+msgid ""
+msgstr ""
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "%{amount} assigned this month"
+msgstr "Diesen Monat zugewiesen: %{amount}"
+
+msgid "%{amount} available"
+msgstr "%{amount} verfügbar"
+
+msgid "%{amount} spent"
+msgstr "%{amount} ausgegeben"
+
+msgid "%{amount} this month"
+msgstr "%{amount} in diesem Monat"
+
+msgid "%{amount} total"
+msgstr "%{amount} insgesamt"
+
+msgid "%{person} invited you. Accept once for current and future shared expenses."
+msgstr "%{person} hat dich eingeladen. Einmal annehmen, um aktuelle und künftige Ausgaben zu teilen."
+
+msgid "%{person} paid you"
+msgstr "%{person} hat dir Geld gezahlt"
+
+msgid "1. Pick the Whole Yearly Budget"
+msgstr "1. Jahresbudget festlegen"
+
+msgid "2. Assign Parts to Categories"
+msgstr "2. Auf Kategorien verteilen"
+
+#. Also used when presenting a domain or protocol error.
+msgid "A plan belongs to one calendar year."
+msgstr "Ein Plan gehört zu genau einem Kalenderjahr."
+
+#. Also used when presenting a domain or protocol error.
+msgid "A yearly budget belongs to one category and calendar year."
+msgstr "Ein Jahresbudget gehört zu genau einer Kategorie und einem Kalenderjahr."
+
+msgid "Accept Invitation"
+msgstr "Einladung annehmen"
+
+msgid "Accepted"
+msgstr "Angenommen"
+
+msgid "Accepting…"
+msgstr "Einladung wird angenommen …"
+
+msgid "Account"
+msgstr "Konto"
+
+msgid "Accounts are created by the administrator."
+msgstr "Konten werden von der Administration eingerichtet."
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "Add Category"
+msgstr "Kategorie hinzufügen"
+
+msgid "After deletion: %{balance}."
+msgstr "Nach dem Löschen: %{balance}."
+
+msgid "All"
+msgstr "Alles"
+
+msgid "Allocate Budget"
+msgstr "Budget verteilen"
+
+msgid "Allocated: %{amount}"
+msgstr "Verteilt: %{amount}"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Allocations must fit within the yearly total. The default category is reserved for uncategorized entries."
+msgstr "Die Zuweisungen dürfen das Jahresbudget nicht überschreiten. Die Standardkategorie ist für Buchungen ohne Kategorie reserviert."
+
+msgid "Amount (%{currency})"
+msgstr "Betrag (%{currency})"
+
+msgid "Amount (€)"
+msgstr "Betrag (€)"
+
+msgid "Amount: %{amount}"
+msgstr "Betrag: %{amount}"
+
+msgid "April"
+msgstr "April"
+
+msgid "Assign the full yearly budget to categories. Unallocated money is available to assign."
+msgstr "Verteile das gesamte Jahresbudget auf Kategorien. Nicht verteilte Beträge stehen zur Zuweisung bereit."
+
+msgid "Attempting to reconnect"
+msgstr "Verbindung wird wiederhergestellt"
+
+msgid "August"
+msgstr "August"
+
+msgid "Awaiting acceptance"
+msgstr "Annahme ausstehend"
+
+msgid "Back to Budget"
+msgstr "Zurück zum Budget"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Bad Request"
+msgstr "Ungültige Anfrage"
+
+msgid "Bookings"
+msgstr "Buchungen"
+
+msgid "Budget"
+msgstr "Budget"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Category"
+msgstr "Kategorie"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Category allocations must be positive amounts."
+msgstr "Kategoriebudgets müssen positive Beträge sein."
+
+msgid "Category name"
+msgstr "Kategoriename"
+
+msgid "Changing a yearly amount recalculates that entire year. Carryover resets on January 1."
+msgstr "Eine Änderung am Jahresbudget berechnet das gesamte Jahr neu. Der Übertrag beginnt am 1. Januar wieder bei null."
+
+msgid "Check the category, year, and yearly amount. Category names must be unique."
+msgstr "Prüfe Kategorie, Jahr und Jahresbetrag. Kategorienamen müssen eindeutig sein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Check the fields. Category names and category/year budgets must be unique."
+msgstr "Prüfe die Eingaben. Kategorienamen müssen eindeutig sein und pro Kategorie und Jahr darf es nur ein Budget geben."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Check the original amount and exchange rate."
+msgstr "Prüfe den ursprünglichen Betrag und den Wechselkurs."
+
+msgid "Check this item's fields before trying again."
+msgstr "Prüfe die Eingaben und versuche es erneut."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Choose Income or Expense explicitly when editing income."
+msgstr "Wähle beim Bearbeiten einer Einnahme ausdrücklich Einnahme oder Ausgabe aus."
+
+msgid "Choose a category"
+msgstr "Kategorie auswählen"
+
+msgid "Choose a personal expense"
+msgstr "Private Ausgabe auswählen"
+
+msgid "Choose a personal expense to share."
+msgstr "Wähle eine private Ausgabe zum Teilen aus."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Choose a valid calendar date."
+msgstr "Wähle ein gültiges Datum aus."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Choose another person."
+msgstr "Wähle eine andere Person aus."
+
+msgid "Couldn't save. Your entered values are still in the form."
+msgstr "Speichern fehlgeschlagen. Deine Eingaben bleiben im Formular erhalten."
+
+msgid "Currency"
+msgstr "Währung"
+
+msgid "Currency: EUR"
+msgstr "Währung: EUR"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Date: %{date}"
+msgstr "Datum: %{date}"
+
+msgid "December"
+msgstr "Dezember"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Delete Shared Expense"
+msgstr "Geteilte Ausgabe löschen"
+
+msgid "Delete this expense and restore its budget impact?"
+msgstr "Diese Ausgabe löschen und den Betrag dem Budget wieder gutschreiben?"
+
+msgid "Delete this expense? Its spending and obligation are removed; recorded repayments remain."
+msgstr "Diese Ausgabe löschen? Die Ausgabe und die daraus entstandene Schuld entfallen. Erfasste Rückzahlungen bleiben erhalten."
+
+msgid "Delete this income booking?"
+msgstr "Diese Einnahme löschen?"
+
+msgid "Deleted"
+msgstr "Gelöscht"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Description: %{description}"
+msgstr "Beschreibung: %{description}"
+
+msgid "ECB"
+msgstr "EZB"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Edit Allocation"
+msgstr "Zuweisung bearbeiten"
+
+msgid "Edit Shared Expense"
+msgstr "Geteilte Ausgabe bearbeiten"
+
+msgid "Edit allocation"
+msgstr "Zuweisung bearbeiten"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Edit the original currency amount to change a converted expense."
+msgstr "Bearbeite den Betrag in der ursprünglichen Währung, um eine umgerechnete Ausgabe zu ändern."
+
+msgid "Edit yearly budget"
+msgstr "Jahresbudget bearbeiten"
+
+msgid "Edited"
+msgstr "Bearbeitet"
+
+msgid "Email address"
+msgstr "E-Mail-Adresse"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Email delivery hasn't been configured for this server."
+msgstr "Auf diesem Server ist kein E-Mail-Versand eingerichtet."
+
+msgid "Email for Sharing"
+msgstr "E-Mail zum Teilen"
+
+msgid "Enter a category and allocation that fits within the yearly total."
+msgstr "Gib eine Kategorie und einen Betrag ein, der in das Jahresbudget passt."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a category name of 1–100 characters."
+msgstr "Gib einen Kategorienamen mit 1 bis 100 Zeichen ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid amount and currency."
+msgstr "Gib einen gültigen Betrag und eine gültige Währung ein."
+
+msgid "Enter a valid amount and date."
+msgstr "Gib einen gültigen Betrag und ein gültiges Datum ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid email address."
+msgstr "Gib eine gültige E-Mail-Adresse ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid personal expense, date, and category."
+msgstr "Gib eine gültige private Ausgabe mit Datum und Kategorie ein."
+
+msgid "Enter a valid repayment amount and date."
+msgstr "Gib einen gültigen Rückzahlungsbetrag und ein gültiges Datum ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid repayment amount."
+msgstr "Gib einen gültigen Rückzahlungsbetrag ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid shared amount and description."
+msgstr "Gib einen gültigen Betrag und eine Beschreibung für die geteilte Ausgabe ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a valid yearly budget in exact cents."
+msgstr "Gib ein gültiges Jahresbudget mit höchstens zwei Nachkommastellen ein."
+
+msgid "Enter a valid yearly total."
+msgstr "Gib ein gültiges Jahresbudget ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter a yearly total and valid category allocations."
+msgstr "Gib ein Jahresbudget und gültige Kategoriebeträge ein."
+
+msgid "Enter an amount such as 78,50 or 78.50 and a valid date."
+msgstr "Gib einen Betrag wie 78,50 oder 78.50 und ein gültiges Datum ein."
+
+msgid "Enter the eight-digit code sent to %{email}. It expires after 30 minutes and allows five attempts. Only the newest code works."
+msgstr "Gib den achtstelligen Code ein, den wir an %{email} gesendet haben. Er ist 30 Minuten gültig. Du hast fünf Versuche. Nur der neueste Code funktioniert."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Enter the other person's email address."
+msgstr "Gib die E-Mail-Adresse der anderen Person ein."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Exchange rates are unavailable for this currency."
+msgstr "Für diese Währung sind keine Wechselkurse verfügbar."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Exchange rates are unavailable. Try again when connected."
+msgstr "Wechselkurse sind nicht verfügbar. Versuche es erneut, wenn du online bist."
+
+msgid "Existing connection (optional)"
+msgstr "Bestehende Verbindung (optional)"
+
+msgid "Expense"
+msgstr "Ausgabe"
+
+msgid "February"
+msgstr "Februar"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Forbidden"
+msgstr "Zugriff verweigert"
+
+msgid "Foreign amounts are converted to euros using the latest available ECB reference rate when saved. Original amount and rate remain in details."
+msgstr "Fremdwährungsbeträge werden beim Speichern zum neuesten verfügbaren EZB-Referenzkurs in Euro umgerechnet. Ursprünglicher Betrag und Kurs bleiben in den Details erhalten."
+
+msgid "Fully allocated"
+msgstr "Vollständig verteilt"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Gone"
+msgstr "Nicht mehr verfügbar"
+
+msgid "Half"
+msgstr "Hälfte"
+
+msgid "Includes positive and negative carryover since January. Only your share counts."
+msgstr "Enthält positive und negative Überträge seit Januar. Nur dein Anteil zählt."
+
+msgid "Income"
+msgstr "Einnahme"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Income cannot be shared."
+msgstr "Einnahmen können nicht geteilt werden."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Internal Server Error"
+msgstr "Interner Serverfehler"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Invalid saved conversion."
+msgstr "Gespeicherte Umrechnung ungültig."
+
+msgid "Invitations"
+msgstr "Einladungen"
+
+msgid "Invite by email"
+msgstr "Per E-Mail einladen"
+
+msgid "January"
+msgstr "Januar"
+
+msgid "July"
+msgstr "Juli"
+
+msgid "June"
+msgstr "Juni"
+
+msgid "Keep My Changes"
+msgstr "Meine Änderungen behalten"
+
+msgid "Keep My Plan"
+msgstr "Meinen Plan behalten"
+
+msgid "March"
+msgstr "März"
+
+msgid "May"
+msgstr "Mai"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Method Not Allowed"
+msgstr "Methode nicht zulässig"
+
+msgid "Month"
+msgstr "Monat"
+
+msgid "New Booking"
+msgstr "Neue Buchung"
+
+msgid "New Category"
+msgstr "Neue Kategorie"
+
+msgid "New category"
+msgstr "Neue Kategorie"
+
+msgid "New category name"
+msgstr "Name der neuen Kategorie"
+
+msgid "No budget"
+msgstr "Kein Budget"
+
+msgid "No budget assigned"
+msgstr "Kein Budget zugewiesen"
+
+msgid "No budget yet. Pick your whole yearly budget, then allocate parts to categories."
+msgstr "Noch kein Budget. Lege zuerst dein Jahresbudget fest und verteile es dann auf Kategorien."
+
+msgid "None"
+msgstr "Nichts"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Not Found"
+msgstr "Nicht gefunden"
+
+msgid "November"
+msgstr "November"
+
+msgid "October"
+msgstr "Oktober"
+
+msgid "Only records a payment made outside Spendie. Budgets stay unchanged."
+msgstr "Erfasst eine Zahlung, die außerhalb von Spendie erfolgt ist. Budgets bleiben unverändert."
+
+msgid "Original creator"
+msgstr "Erstellende Person"
+
+msgid "Original creator's share"
+msgstr "Anteil der erstellenden Person"
+
+msgid "Original currency details"
+msgstr "Details zur ursprünglichen Währung"
+
+msgid "Original: %{amount} %{currency} · ECB %{date}"
+msgstr "Ursprünglich: %{amount} %{currency} · EZB %{date}"
+
+msgid "Other participant"
+msgstr "Andere beteiligte Person"
+
+msgid "Other person"
+msgstr "Andere Person"
+
+msgid "Owes you %{amount}"
+msgstr "Schuldet dir %{amount}"
+
+msgid "Paid by"
+msgstr "Bezahlt von"
+
+msgid "Paid by: %{person}"
+msgstr "Bezahlt von: %{person}"
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "People"
+msgstr "Personen"
+
+msgid "Personal"
+msgstr "Privat"
+
+msgid "Privacy"
+msgstr "Datenschutz"
+
+msgid "Recalculate this whole calendar year with the new budget?"
+msgstr "Dieses Kalenderjahr mit dem neuen Budget neu berechnen?"
+
+msgid "Recalculate this whole calendar year with these allocations?"
+msgstr "Dieses Kalenderjahr mit diesen Zuweisungen neu berechnen?"
+
+msgid "Recipient email"
+msgstr "E-Mail-Adresse der eingeladenen Person"
+
+msgid "Record Repayment"
+msgstr "Rückzahlung erfassen"
+
+msgid "Recorded by %{person}"
+msgstr "Erfasst von %{person}"
+
+msgid "Recording…"
+msgstr "Wird erfasst …"
+
+msgid "Remaining budget · %{month}"
+msgstr "Verbleibendes Budget · %{month}"
+
+msgid "Repayments"
+msgstr "Rückzahlungen"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Request Timeout"
+msgstr "Zeitüberschreitung"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Restart synchronization without discarding local changes."
+msgstr "Starte die Synchronisierung erneut. Lokale Änderungen bleiben erhalten."
+
+msgid "Save Allocation"
+msgstr "Zuweisung speichern"
+
+msgid "Save Expense"
+msgstr "Ausgabe speichern"
+
+msgid "Save Income"
+msgstr "Einnahme speichern"
+
+msgid "Save My Changes as a New Expense"
+msgstr "Meine Änderungen als neue Ausgabe speichern"
+
+msgid "Save Shared Changes"
+msgstr "Gemeinsame Änderungen speichern"
+
+msgid "Save Yearly Budget"
+msgstr "Jahresbudget speichern"
+
+msgid "Save Your Category"
+msgstr "Deine Kategorie speichern"
+
+msgid "Save the total first to start assigning category amounts."
+msgstr "Speichere zuerst das Gesamtbudget, um Beträge auf Kategorien zu verteilen."
+
+msgid "Save this budget and recalculate all twelve months of the selected year?"
+msgstr "Dieses Budget speichern und alle zwölf Monate des gewählten Jahres neu berechnen?"
+
+msgid "Saved"
+msgstr "Gespeichert"
+
+msgid "Saving…"
+msgstr "Wird gespeichert …"
+
+msgid "Send New Code"
+msgstr "Neuen Code senden"
+
+msgid "Send Verification Code"
+msgstr "Bestätigungscode senden"
+
+msgid "Sending…"
+msgstr "Wird gesendet …"
+
+msgid "September"
+msgstr "September"
+
+msgid "Server amount: %{amount}"
+msgstr "Betrag auf dem Server: %{amount}"
+
+msgid "Server description: %{description}"
+msgstr "Beschreibung auf dem Server: %{description}"
+
+msgid "Server version"
+msgstr "Serverversion"
+
+msgid "Server yearly total: %{amount}"
+msgstr "Jahresbudget auf dem Server: %{amount}"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Service Unavailable"
+msgstr "Dienst nicht verfügbar"
+
+msgid "Settle Up"
+msgstr "Saldo ausgleichen"
+
+msgid "Settled up"
+msgstr "Ausgeglichen"
+
+msgid "Share Expense"
+msgstr "Ausgabe teilen"
+
+msgid "Share a Saved Expense"
+msgstr "Gespeicherte Ausgabe teilen"
+
+msgid "Share of %{person}: %{split}"
+msgstr "Anteil von %{person}: %{split}"
+
+msgid "Share with"
+msgstr "Teilen mit"
+
+msgid "Shared"
+msgstr "Geteilt"
+
+msgid "Shared History"
+msgstr "Gemeinsamer Verlauf"
+
+msgid "Sharing"
+msgstr "Teilen"
+
+msgid "Sharing…"
+msgstr "Wird geteilt …"
+
+msgid "Sign In"
+msgstr "Anmelden"
+
+msgid "Sign Out"
+msgstr "Abmelden"
+
+msgid "Sign in"
+msgstr "Anmelden"
+
+msgid "Sign in to continue syncing."
+msgstr "Melde dich an, um weiter zu synchronisieren."
+
+msgid "Something went wrong!"
+msgstr "Es ist ein Fehler aufgetreten."
+
+msgid "Spending without a category budget reduces your overall remaining balance."
+msgstr "Ausgaben ohne Kategoriebudget verringern das verbleibende Gesamtbudget."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Start a new verification request."
+msgstr "Fordere einen neuen Bestätigungscode an."
+
+msgid "That expense is no longer available."
+msgstr "Diese Ausgabe ist nicht mehr verfügbar."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The code is incorrect or expired. Request a new code after five attempts."
+msgstr "Der Code ist falsch oder abgelaufen. Fordere nach fünf Versuchen einen neuen Code an."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The expense changed. Sync it before sharing."
+msgstr "Die Ausgabe wurde geändert. Synchronisiere sie, bevor du sie teilst."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The expense creation timestamp cannot change."
+msgstr "Der Erstellungszeitpunkt der Ausgabe kann nicht geändert werden."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The invitation changed. Refresh before accepting."
+msgstr "Die Einladung wurde geändert. Aktualisiere sie vor der Annahme."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The original amount, exchange rate and euro amount must agree."
+msgstr "Ursprünglicher Betrag, Wechselkurs und Eurobetrag müssen zusammenpassen."
+
+msgid "The other person paid you"
+msgstr "Die andere Person hat dir Geld gezahlt"
+
+msgid "The pending invitation will no longer be available."
+msgstr "Die offene Einladung ist danach nicht mehr verfügbar."
+
+#. Also used when presenting a domain or protocol error.
+msgid "The shared balance changed. Refresh activity and record the repayment again."
+msgstr "Der gemeinsame Saldo hat sich geändert. Aktualisiere die Buchungen und erfasse die Rückzahlung erneut."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This account already has a verified email address."
+msgstr "Dieses Konto hat bereits eine bestätigte E-Mail-Adresse."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This category is still used by a booking or budget."
+msgstr "Diese Kategorie wird noch von einer Buchung oder einem Budget verwendet."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This currency does not use fractional units."
+msgstr "Diese Währung erlaubt keine Nachkommastellen."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This email address couldn't be verified for this account."
+msgstr "Diese E-Mail-Adresse konnte für das Konto nicht bestätigt werden."
+
+msgid "This item changed elsewhere"
+msgstr "Dieser Eintrag wurde anderswo geändert"
+
+msgid "This item changed on another device. Review both versions."
+msgstr "Dieser Eintrag wurde auf einem anderen Gerät geändert. Prüfe beide Versionen."
+
+msgid "This item is unavailable or its fields need review."
+msgstr "Dieser Eintrag ist nicht verfügbar oder seine Eingaben müssen geprüft werden."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This item or its category is unavailable to this account."
+msgstr "Dieser Eintrag oder seine Kategorie ist für dieses Konto nicht verfügbar."
+
+msgid "This plan or category is unavailable."
+msgstr "Dieser Plan oder diese Kategorie ist nicht verfügbar."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This saved request has different content. Review your changes."
+msgstr "Diese gespeicherte Anfrage hat einen anderen Inhalt. Prüfe deine Änderungen."
+
+msgid "This shared item changed. Review before replacing it."
+msgstr "Diese geteilte Buchung wurde geändert. Prüfe sie, bevor du sie ersetzt."
+
+#. Also used when presenting a domain or protocol error.
+msgid "This year now has a whole budget. Review Yearly Plan and discard the old category-only update."
+msgstr "Dieses Jahr hat jetzt ein Gesamtbudget. Prüfe den Jahresplan und verwirf die alte Änderung am Kategoriebudget."
+
+msgid "This year's plan changed. Review the server plan before replacing it."
+msgstr "Der Plan für dieses Jahr hat sich geändert. Prüfe die Serverversion, bevor du sie ersetzt."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Too Many Requests"
+msgstr "Zu viele Anfragen"
+
+msgid "Too many attempts. Please try again shortly."
+msgstr "Zu viele Versuche. Versuche es in Kürze erneut."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Too many requests. Please try again later."
+msgstr "Zu viele Anfragen. Versuche es später erneut."
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Unallocated this year"
+msgstr "Dieses Jahr nicht verteilt"
+
+msgid "Unallocated: %{amount}"
+msgstr "Nicht verteilt: %{amount}"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Unauthorized"
+msgstr "Anmeldung erforderlich"
+
+msgid "Unbudgeted spending"
+msgstr "Ausgaben ohne Budget"
+
+msgid "Uncategorized"
+msgstr "Ohne Kategorie"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Unprocessable Entity"
+msgstr "Anfrage konnte nicht verarbeitet werden"
+
+#. Also used when presenting a domain or protocol error.
+msgid "Update Spendie for currency conversion. Your pending changes are preserved."
+msgstr "Aktualisiere Spendie für die Währungsumrechnung. Ausstehende Änderungen bleiben erhalten."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Update Spendie for income. Your pending changes are preserved."
+msgstr "Aktualisiere Spendie für Einnahmen. Ausstehende Änderungen bleiben erhalten."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Update Spendie for whole-year budgets. Your pending changes are preserved."
+msgstr "Aktualisiere Spendie für Jahresbudgets. Ausstehende Änderungen bleiben erhalten."
+
+#. Also used when presenting a domain or protocol error.
+msgid "Update Spendie to sync shared activity. Your pending changes are preserved."
+msgstr "Aktualisiere Spendie, um geteilte Buchungen zu synchronisieren. Ausstehende Änderungen bleiben erhalten."
+
+msgid "Updated %{date}"
+msgstr "Aktualisiert am %{date}"
+
+msgid "Use Server Plan"
+msgstr "Serverplan übernehmen"
+
+msgid "Use Server Version"
+msgstr "Serverversion übernehmen"
+
+msgid "Use dark appearance"
+msgstr "Dunkles Erscheinungsbild verwenden"
+
+msgid "Use light appearance"
+msgstr "Helles Erscheinungsbild verwenden"
+
+msgid "Use system appearance"
+msgstr "Systemeinstellung für das Erscheinungsbild verwenden"
+
+msgid "Username"
+msgstr "Benutzername"
+
+msgid "Username or password is incorrect."
+msgstr "Benutzername oder Passwort ist falsch."
+
+msgid "Verification code"
+msgstr "Bestätigungscode"
+
+msgid "Verified: %{email}"
+msgstr "Bestätigt: %{email}"
+
+msgid "Verify Email"
+msgstr "E-Mail bestätigen"
+
+msgid "Verify mailbox ownership for sharing invitations. Keep signing in with your username and password. Email isn't used for password recovery."
+msgstr "Bestätige deine E-Mail-Adresse für Einladungen zum Teilen. Melde dich weiterhin mit Benutzernamen und Passwort an. Die Adresse dient nicht zur Passwortwiederherstellung."
+
+msgid "Verifying…"
+msgstr "Wird bestätigt …"
+
+msgid "We can't find the internet"
+msgstr "Keine Internetverbindung"
+
+msgid "Year"
+msgstr "Jahr"
+
+msgid "Yearly Plan"
+msgstr "Jahresplan"
+
+msgid "Yearly Plan · %{year}"
+msgstr "Jahresplan · %{year}"
+
+msgid "Yearly allocation (€)"
+msgstr "Jahreszuweisung (€)"
+
+msgid "Yearly amount (€)"
+msgstr "Jahresbetrag (€)"
+
+msgid "Yearly budget (€)"
+msgstr "Jahresbudget (€)"
+
+msgid "Yearly total: %{amount}"
+msgstr "Jahresbudget: %{amount}"
+
+msgid "You"
+msgstr "Du"
+
+msgid "You owe %{amount}"
+msgstr "Du schuldest %{amount}"
+
+msgid "You paid %{person}"
+msgstr "Du hast %{person} Geld gezahlt"
+
+msgid "You paid the other person"
+msgstr "Du hast der anderen Person Geld gezahlt"
+
+msgid "Your attempted values are preserved in the form. The server version is still available."
+msgstr "Deine Eingaben bleiben im Formular erhalten. Die Serverversion ist weiterhin verfügbar."
+
+msgid "Your attempted values are preserved in the form. The server version was deleted."
+msgstr "Deine Eingaben bleiben im Formular erhalten. Die Serverversion wurde gelöscht."
+
+msgid "Your budget"
+msgstr "Dein Budget"
+
+msgid "Your private category"
+msgstr "Deine private Kategorie"
+
+msgid "Your proposed share counts in the original expense month immediately."
+msgstr "Dein vorgeschlagener Anteil zählt sofort im ursprünglichen Monat der Ausgabe."
+
+msgid "Your share"
+msgstr "Dein Anteil"
+
+msgid "close"
+msgstr "schließen"
+
+msgid "left"
+msgstr "übrig"
+
+msgid "over budget"
+msgstr "über Budget"

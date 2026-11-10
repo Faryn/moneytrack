@@ -31,3 +31,7 @@ V3 adds shared expense/invitation/assignment/repayment projections and source-ac
 ## Whole-year plans in V4
 
 V4 adds AnnualPlanRecord with a complete annual total, reserved private default-category UUID, and category allocations. It leaves V1/V2/V3 definitions frozen. Plan mutations, any new category, and pending operations commit together. Legacy category budgets remain intact until an explicit plan save; they are prefilled without inventing extra budget. Copying into an empty account remaps both default and allocated category references. Concurrent plans for the same year resolve to the canonical server ID without duplicate financial plans. See [API v3](contracts/annual-budget-v3.md).
+
+## Personal income
+
+[ADR 0019](adr/0019-personal-income-bookings.md) adds SwiftData V6 income markers keyed by booking UUID, leaving V1–V5 schemas unchanged. The existing expense entity carries optional kind through API v5; omitted kind remains expense. Save markers with domain/outbox changes, retain them through reopen, pull, conflict copy and account copy, and keep old prepared bytes immutable. Income is excluded from spending and budgets.

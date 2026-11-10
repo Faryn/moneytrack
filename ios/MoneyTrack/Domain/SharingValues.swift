@@ -34,14 +34,15 @@ struct SharedExpenseValue: Codable, Identifiable, Equatable, Sendable {
     var bootstrapRecords: [RemoteRecord]
     var history: [SharedHistory]
     var deleted: Bool
+    var conversion: CurrencyConversion? = nil
     var isCreator: Bool { viewerID == creatorID }
-    var otherName: String { isCreator ? recipientName ?? recipientEmail ?? "Other person" : creatorName }
+    var otherName: String { isCreator ? recipientName ?? recipientEmail ?? String(localized: "Other person") : creatorName }
     var ownSplit: PersonalSplit { isCreator ? creatorSplit : creatorSplit.reversed }
     var paidByUser: Bool { isCreator == paidByCreator }
     var amounts: SharedAmounts { get throws { try SharedMath.calculate(amount: amount, split: ownSplit, paidByUser: paidByUser) } }
     var expense: ExpenseValue { get throws {
         .init(id: id, categoryID: categoryID, amount: amount, personalShare: try amounts.personalShare,
-              description: description, day: day, createdAt: createdAt)
+              description: description, day: day, createdAt: createdAt, conversion: conversion)
     } }
 }
 struct SharingInvitation: Codable, Identifiable, Equatable, Sendable {
@@ -66,4 +67,12 @@ struct RepaymentValue: Codable, Identifiable, Equatable, Sendable {
 }
 extension PersonalSplit {
     var reversed: Self { switch self { case .all: .none; case .none: .all; case .half: .half } }
+}
+
+struct NewExpenseSharing {
+    let userID: UUID
+    let username: String
+    let connection: SharingConnection
+    var paidByUser = true
+    var split: PersonalSplit = .half
 }

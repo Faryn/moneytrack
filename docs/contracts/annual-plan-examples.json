@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     {
       "id": "total-before-any-allocations",
@@ -18,22 +18,23 @@
       ],
       "expected": {
         "total": {
-          "allocation": 10000,
+          "allocation": 0,
           "carryover": 0,
           "spent": 5000,
-          "remaining": 5000
+          "remaining": -5000
         },
-        "guiltFree": {
-          "allocation": 10000,
+        "unallocated": 120000,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 5000,
-          "remaining": 5000
+          "remaining": -5000
         },
         "categories": {}
       }
     },
     {
-      "id": "reserved-and-guilt-free",
+      "id": "assigned-and-unallocated",
       "year": 2026,
       "month": 1,
       "total": 1200000,
@@ -64,16 +65,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 100000,
+          "allocation": 70000,
           "carryover": 0,
           "spent": 55000,
-          "remaining": 45000
+          "remaining": 15000
         },
-        "guiltFree": {
-          "allocation": 30000,
+        "unallocated": 360000,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 10000,
-          "remaining": 20000
+          "remaining": -10000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -123,16 +125,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 100000,
+          "allocation": 70000,
           "carryover": 0,
           "spent": 70000,
-          "remaining": 30000
+          "remaining": 0
         },
-        "guiltFree": {
-          "allocation": 30000,
+        "unallocated": 360000,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 10000,
-          "remaining": 20000
+          "remaining": -10000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -151,7 +154,7 @@
       }
     },
     {
-      "id": "both-pools-carry-forward",
+      "id": "assigned-carryover-and-unbudgeted-spending",
       "year": 2026,
       "month": 2,
       "total": 1200000,
@@ -194,16 +197,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 100000,
-          "carryover": 30000,
+          "allocation": 70000,
+          "carryover": 0,
           "spent": 55000,
-          "remaining": 75000
+          "remaining": 15000
         },
-        "guiltFree": {
-          "allocation": 30000,
-          "carryover": 20000,
+        "unallocated": 360000,
+        "unbudgeted": {
+          "allocation": 0,
+          "carryover": -10000,
           "spent": 15000,
-          "remaining": 35000
+          "remaining": -25000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -222,7 +226,7 @@
       }
     },
     {
-      "id": "all-unallocated-categories-share-pool",
+      "id": "unbudgeted-spending-does-not-use-unallocated-money",
       "year": 2026,
       "month": 1,
       "total": 120000,
@@ -250,16 +254,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 10000,
+          "allocation": 0,
           "carryover": 0,
           "spent": 6000,
-          "remaining": 4000
+          "remaining": -6000
         },
-        "guiltFree": {
-          "allocation": 10000,
+        "unallocated": 120000,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 6000,
-          "remaining": 4000
+          "remaining": -6000
         },
         "categories": {}
       }
@@ -298,16 +303,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 10000,
-          "carryover": 0,
-          "spent": 5900,
-          "remaining": 4100
-        },
-        "guiltFree": {
           "allocation": 5000,
           "carryover": 0,
+          "spent": 5900,
+          "remaining": -900
+        },
+        "unallocated": 60000,
+        "unbudgeted": {
+          "allocation": 0,
+          "carryover": 0,
           "spent": 2000,
-          "remaining": 3000
+          "remaining": -2000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -347,16 +353,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 10000,
-          "carryover": 0,
-          "spent": 1000,
-          "remaining": 9000
-        },
-        "guiltFree": {
           "allocation": 5000,
           "carryover": 0,
           "spent": 1000,
           "remaining": 4000
+        },
+        "unallocated": 60000,
+        "unbudgeted": {
+          "allocation": 0,
+          "carryover": 0,
+          "spent": 1000,
+          "remaining": -1000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -390,7 +397,8 @@
           "spent": 100,
           "remaining": -100
         },
-        "guiltFree": {
+        "unallocated": 0,
+        "unbudgeted": {
           "allocation": 0,
           "carryover": 0,
           "spent": 100,
@@ -423,7 +431,8 @@
           "spent": 0,
           "remaining": 1
         },
-        "guiltFree": {
+        "unallocated": 0,
+        "unbudgeted": {
           "allocation": 0,
           "carryover": 0,
           "spent": 0,
@@ -473,7 +482,8 @@
           "spent": 0,
           "remaining": 10
         },
-        "guiltFree": {
+        "unallocated": 0,
+        "unbudgeted": {
           "allocation": 0,
           "carryover": 0,
           "spent": 0,
@@ -502,7 +512,7 @@
       }
     },
     {
-      "id": "one-guilt-free-cent",
+      "id": "one-unallocated-cent",
       "year": 2026,
       "month": 12,
       "total": 13,
@@ -520,16 +530,17 @@
       "expenses": [],
       "expected": {
         "total": {
-          "allocation": 1,
+          "allocation": 0,
           "carryover": 12,
           "spent": 0,
-          "remaining": 13
+          "remaining": 12
         },
-        "guiltFree": {
-          "allocation": 1,
+        "unallocated": 1,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 0,
-          "remaining": 1
+          "remaining": 0
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {
@@ -575,16 +586,17 @@
       ],
       "expected": {
         "total": {
-          "allocation": 20000,
+          "allocation": 5000,
           "carryover": 0,
           "spent": 7000,
-          "remaining": 13000
+          "remaining": -2000
         },
-        "guiltFree": {
-          "allocation": 15000,
+        "unallocated": 180000,
+        "unbudgeted": {
+          "allocation": 0,
           "carryover": 0,
           "spent": 3000,
-          "remaining": 12000
+          "remaining": -3000
         },
         "categories": {
           "00000000-0000-0000-0000-000000000001": {

@@ -1,0 +1,4168 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "$ · US dollar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "$ · US-Dollar"
+          }
+        }
+      }
+    },
+    "%@ %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        }
+      }
+    },
+    "%@ paid you": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hat dir Geld gezahlt"
+          }
+        }
+      }
+    },
+    "%@ spent of %@ available": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ von %@ ausgegeben"
+          }
+        }
+      }
+    },
+    "%@ spent · No yearly budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ausgegeben · Kein Jahresbudget"
+          }
+        }
+      }
+    },
+    "%@ total": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ insgesamt"
+          }
+        }
+      }
+    },
+    "%@ · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        }
+      }
+    },
+    "%@ · 50/50%@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 50/50%@"
+          }
+        }
+      }
+    },
+    "%@ · Recorded by %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Erfasst von %@"
+          }
+        }
+      }
+    },
+    "%@, %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %@"
+          }
+        }
+      }
+    },
+    "%@, euros": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, Euro"
+          }
+        }
+      }
+    },
+    "0": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0"
+          }
+        }
+      }
+    },
+    "0%@00": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0%@00"
+          }
+        }
+      }
+    },
+    "1. Your Whole Year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1. Dein Jahresbudget"
+          }
+        }
+      }
+    },
+    "2. Assign to Categories": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2. Auf Kategorien verteilen"
+          }
+        }
+      }
+    },
+    "78 € Theodor, Restaurants": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "78 € Theodor, Restaurants"
+          }
+        }
+      }
+    },
+    "A category with this name already exists.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine Kategorie mit diesem Namen gibt es bereits."
+          }
+        }
+      }
+    },
+    "A plan belongs to one calendar year.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Plan gehört zu genau einem Kalenderjahr."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "A yearly budget belongs to one category and calendar year.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Jahresbudget gehört zu genau einer Kategorie und einem Kalenderjahr."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Accept invitation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einladung annehmen"
+          }
+        }
+      }
+    },
+    "Accept once for current and future sharing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einmal annehmen, um aktuelle und künftige Ausgaben zu teilen."
+          }
+        }
+      }
+    },
+    "Accepted": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angenommen"
+          }
+        }
+      }
+    },
+    "Account": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konto"
+          }
+        }
+      }
+    },
+    "Account, signed in as %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konto, angemeldet als %@"
+          }
+        }
+      }
+    },
+    "Accounts are created by the administrator. Your password isn't stored by Spendie on this iPhone.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konten werden von der Administration eingerichtet. Spendie speichert dein Passwort nicht auf diesem Gerät."
+          }
+        }
+      }
+    },
+    "Add Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie hinzufügen"
+          }
+        }
+      }
+    },
+    "Add Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe hinzufügen"
+          }
+        }
+      }
+    },
+    "After deletion, %@ owes you %@.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach dem Löschen schuldet dir %@ %@."
+          }
+        }
+      }
+    },
+    "After deletion, you are settled up.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach dem Löschen ist der Saldo ausgeglichen."
+          }
+        }
+      }
+    },
+    "After deletion, you owe %@ %@.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach dem Löschen schuldest du %@ %@."
+          }
+        }
+      }
+    },
+    "After recording": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach der Buchung"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles"
+          }
+        }
+      }
+    },
+    "Allocate Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget verteilen"
+          }
+        }
+      }
+    },
+    "Allocations must fit within the yearly total. The default category is reserved for uncategorized entries.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Zuweisungen dürfen das Jahresbudget nicht überschreiten. Die Standardkategorie ist für Buchungen ohne Kategorie reserviert."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Amount": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag"
+          }
+        }
+      }
+    },
+    "Amount: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag: %@"
+          }
+        }
+      }
+    },
+    "Another device created a budget for this category and year. Choose which amount to keep.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein anderes Gerät hat ein Budget für diese Kategorie und dieses Jahr angelegt. Wähle den Betrag aus, den du behalten möchtest."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Another device created this year's budget. Review both plans.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein anderes Gerät hat das Budget für dieses Jahr angelegt. Prüfe beide Pläne."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Assigned this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Monat zugewiesen"
+          }
+        }
+      }
+    },
+    "Assigned to categories": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorien zugewiesen"
+          }
+        }
+      }
+    },
+    "Awaiting acceptance": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annahme ausstehend"
+          }
+        }
+      }
+    },
+    "Bad Request": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ungültige Anfrage"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Balance unavailable": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saldo nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Bookings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buchungen"
+          }
+        }
+      }
+    },
+    "Both people can see these changes and their history.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beide Personen sehen diese Änderungen und ihren Verlauf."
+          }
+        }
+      }
+    },
+    "Both people lose this expense’s budget impact and obligation. Recorded repayments stay in the balance history.%@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Ausgabe und die daraus entstandene Schuld entfallen für beide Personen. Erfasste Rückzahlungen bleiben im Saldenverlauf.%@"
+          }
+        }
+      }
+    },
+    "Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbrechen"
+          }
+        }
+      }
+    },
+    "Carried forward": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übertrag"
+          }
+        }
+      }
+    },
+    "Categories": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorien"
+          }
+        }
+      }
+    },
+    "Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie"
+          }
+        }
+      }
+    },
+    "Category allocations exceed the yearly budget. Reduce them or increase the total.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Kategoriebudgets überschreiten das Jahresbudget. Verringere sie oder erhöhe das Gesamtbudget."
+          }
+        }
+      }
+    },
+    "Category allocations must be positive amounts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategoriebudgets müssen positive Beträge sein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Category name": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategoriename"
+          }
+        }
+      }
+    },
+    "Category suggested from your earlier expenses.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorievorschlag anhand deiner bisherigen Ausgaben."
+          }
+        }
+      }
+    },
+    "Category unavailable": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Changes need review": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen prüfen"
+          }
+        }
+      }
+    },
+    "Check %@ for your eight-digit code. Delivery can take a moment.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der achtstellige Code wurde an %@ gesendet. Die Zustellung kann einen Moment dauern."
+          }
+        }
+      }
+    },
+    "Check amount": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag prüfen"
+          }
+        }
+      }
+    },
+    "Check currency": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währung prüfen"
+          }
+        }
+      }
+    },
+    "Check person": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Person prüfen"
+          }
+        }
+      }
+    },
+    "Check the fields. Category names and category/year budgets must be unique.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüfe die Eingaben. Kategorienamen müssen eindeutig sein und pro Kategorie und Jahr darf es nur ein Budget geben."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Check the original amount and exchange rate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüfe den ursprünglichen Betrag und den Wechselkurs."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Check this item's fields before trying again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüfe die Eingaben und versuche es erneut."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Checking email verification": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail-Bestätigung wird geprüft"
+          }
+        }
+      }
+    },
+    "Choose Income or Expense explicitly when editing income.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle beim Bearbeiten einer Einnahme ausdrücklich Einnahme oder Ausgabe aus."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Choose a category for this expense.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle eine Kategorie für diese Ausgabe aus."
+          }
+        }
+      }
+    },
+    "Choose a month and year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monat und Jahr auswählen"
+          }
+        }
+      }
+    },
+    "Choose a valid calendar date.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle ein gültiges Datum aus."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Choose an accepted sharing connection.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle eine Person aus, die bereits eine Einladung angenommen hat."
+          }
+        }
+      }
+    },
+    "Choose another person.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle eine andere Person aus."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Choose someone to share with.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle eine Person zum Teilen aus."
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        }
+      }
+    },
+    "Codes expire after 30 minutes and allow five attempts. Only the newest code works.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Code ist 30 Minuten gültig. Du hast fünf Versuche. Nur der neueste Code funktioniert."
+          }
+        }
+      }
+    },
+    "Compare Versions": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versionen vergleichen"
+          }
+        }
+      }
+    },
+    "Connect to the internet to download exchange rates before saving this currency.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinde dich mit dem Internet, um vor dem Speichern die Wechselkurse abzurufen."
+          }
+        }
+      }
+    },
+    "Contact your Spendie administrator for information about your data.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wende dich für Auskunft zu deinen Daten an die Spendie-Administration."
+          }
+        }
+      }
+    },
+    "Copy on-device entries": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokale Buchungen kopieren"
+          }
+        }
+      }
+    },
+    "Couldn't Accept Invitation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einladung konnte nicht angenommen werden"
+          }
+        }
+      }
+    },
+    "Couldn't Delete Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe konnte nicht gelöscht werden"
+          }
+        }
+      }
+    },
+    "Couldn't Record Repayment": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rückzahlung konnte nicht erfasst werden"
+          }
+        }
+      }
+    },
+    "Couldn't Resolve Change": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderung konnte nicht übernommen werden"
+          }
+        }
+      }
+    },
+    "Couldn't Save": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speichern fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Couldn't Save Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget konnte nicht gespeichert werden"
+          }
+        }
+      }
+    },
+    "Couldn't Save Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie konnte nicht gespeichert werden"
+          }
+        }
+      }
+    },
+    "Couldn't Save Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe konnte nicht gespeichert werden"
+          }
+        }
+      }
+    },
+    "Couldn't Share Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe konnte nicht geteilt werden"
+          }
+        }
+      }
+    },
+    "Couldn't Sign In": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Couldn't Sign Out": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abmeldung fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Couldn't access the saved account credential.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf die gespeicherten Anmeldedaten konnte nicht zugegriffen werden."
+          }
+        }
+      }
+    },
+    "Couldn't calculate this budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget konnte nicht berechnet werden"
+          }
+        }
+      }
+    },
+    "Couldn't open your expenses": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben konnten nicht geöffnet werden"
+          }
+        }
+      }
+    },
+    "Couldn't sign in.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung fehlgeschlagen."
+          }
+        }
+      }
+    },
+    "Creator's share": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anteil der erstellenden Person"
+          }
+        }
+      }
+    },
+    "Currency": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währung"
+          }
+        }
+      }
+    },
+    "Currency shortcuts": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währungskürzel"
+          }
+        }
+      }
+    },
+    "Currency: EUR": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währung: EUR"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datum"
+          }
+        }
+      }
+    },
+    "Date, currency and category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datum, Währung und Kategorie"
+          }
+        }
+      }
+    },
+    "Date: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datum: %@"
+          }
+        }
+      }
+    },
+    "Decimal comma": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dezimalkomma"
+          }
+        }
+      }
+    },
+    "Decimal point": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dezimalpunkt"
+          }
+        }
+      }
+    },
+    "Delete Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe löschen"
+          }
+        }
+      }
+    },
+    "Delete Income": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahme löschen"
+          }
+        }
+      }
+    },
+    "Delete this expense?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Ausgabe löschen?"
+          }
+        }
+      }
+    },
+    "Delete this income?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Einnahme löschen?"
+          }
+        }
+      }
+    },
+    "Deleted": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelöscht"
+          }
+        }
+      }
+    },
+    "Deleted on the server": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Server gelöscht"
+          }
+        }
+      }
+    },
+    "Deleted on this iPhone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Gerät gelöscht"
+          }
+        }
+      }
+    },
+    "Description": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beschreibung"
+          }
+        }
+      }
+    },
+    "Description (optional)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beschreibung (optional)"
+          }
+        }
+      }
+    },
+    "Description or category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beschreibung oder Kategorie"
+          }
+        }
+      }
+    },
+    "Description: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beschreibung: %@"
+          }
+        }
+      }
+    },
+    "Details": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        }
+      }
+    },
+    "Development Server": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entwicklungsserver"
+          }
+        }
+      }
+    },
+    "Discard": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwerfen"
+          }
+        }
+      }
+    },
+    "Discard Changes?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen verwerfen?"
+          }
+        }
+      }
+    },
+    "Discard This Draft": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Entwurf verwerfen"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fertig"
+          }
+        }
+      }
+    },
+    "ECB · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EZB · %@"
+          }
+        }
+      }
+    },
+    "ECB · %@ · 1 EUR = %@ %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EZB · %@ · 1 EUR = %@ %@"
+          }
+        }
+      }
+    },
+    "EUR · Euro": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EUR · Euro"
+          }
+        }
+      }
+    },
+    "Edit Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit Income": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahme bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit Shared Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geteilte Ausgabe bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit Yearly Allocation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahreszuweisung bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit the original currency amount to change a converted expense.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bearbeite den Betrag in der ursprünglichen Währung, um eine umgerechnete Ausgabe zu ändern."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Edited": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bearbeitet"
+          }
+        }
+      }
+    },
+    "Email Verified": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail bestätigt"
+          }
+        }
+      }
+    },
+    "Email address": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail-Adresse"
+          }
+        }
+      }
+    },
+    "Email delivery hasn't been configured for this server.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Server ist kein E-Mail-Versand eingerichtet."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Email for Sharing": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail zum Teilen"
+          }
+        }
+      }
+    },
+    "Email verification is unavailable.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die E-Mail-Bestätigung ist nicht verfügbar."
+          }
+        }
+      }
+    },
+    "Enter a category name of 1–100 characters.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen Kategorienamen mit 1 bis 100 Zeichen ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a category name.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen Kategorienamen ein."
+          }
+        }
+      }
+    },
+    "Enter a positive amount with the fractional digits allowed by the selected currency.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen positiven Betrag mit den für die gewählte Währung zulässigen Nachkommastellen ein."
+          }
+        }
+      }
+    },
+    "Enter a valid amount and currency.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen gültigen Betrag und eine gültige Währung ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a valid amount with at most two decimal places.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen gültigen Betrag mit höchstens zwei Nachkommastellen ein."
+          }
+        }
+      }
+    },
+    "Enter a valid email address.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib eine gültige E-Mail-Adresse ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a valid personal expense, date, and category.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib eine gültige private Ausgabe mit Datum und Kategorie ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a valid repayment amount.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen gültigen Rückzahlungsbetrag ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a valid shared amount and description.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen gültigen Betrag und eine Beschreibung für die geteilte Ausgabe ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a valid yearly budget in exact cents.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib ein gültiges Jahresbudget mit höchstens zwei Nachkommastellen ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter a yearly total and valid category allocations.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib ein Jahresbudget und gültige Kategoriebeträge ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter an HTTPS server address. Local HTTP is available only in development.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib eine HTTPS-Serveradresse ein. Lokales HTTP ist nur für die Entwicklung verfügbar."
+          }
+        }
+      }
+    },
+    "Enter one positive euro amount with at most two decimal places, for example 78,50 €.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib einen positiven Eurobetrag mit höchstens zwei Nachkommastellen ein, zum Beispiel 78,50 €."
+          }
+        }
+      }
+    },
+    "Enter the other person's email address.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib die E-Mail-Adresse der anderen Person ein."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Enter zero to remove this category’s allocation and return the amount to Unallocated.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib null ein, um das Budget dieser Kategorie freizugeben. Der Betrag steht dann wieder zur Verteilung bereit."
+          }
+        }
+      }
+    },
+    "Exchange rate": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wechselkurs"
+          }
+        }
+      }
+    },
+    "Exchange rate needed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wechselkurs erforderlich"
+          }
+        }
+      }
+    },
+    "Exchange rates are unavailable for this currency.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für diese Währung sind keine Wechselkurse verfügbar."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Exchange rates are unavailable. Try again when connected.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wechselkurse sind nicht verfügbar. Versuche es erneut, wenn du online bist."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe"
+          }
+        }
+      }
+    },
+    "Expense Actions": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktionen für diese Ausgabe"
+          }
+        }
+      }
+    },
+    "Expense details": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabendetails"
+          }
+        }
+      }
+    },
+    "Expenses": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben"
+          }
+        }
+      }
+    },
+    "Expenses Without a Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben ohne Budget"
+          }
+        }
+      }
+    },
+    "Expenses save immediately on this iPhone. Pending changes stay here until the server accepts them.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben werden sofort auf diesem Gerät gespeichert. Ausstehende Änderungen bleiben hier, bis der Server sie übernimmt."
+          }
+        }
+      }
+    },
+    "Forbidden": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zugriff verweigert"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Fully allocated": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vollständig verteilt"
+          }
+        }
+      }
+    },
+    "Gone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht mehr verfügbar"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Half": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hälfte"
+          }
+        }
+      }
+    },
+    "History": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf"
+          }
+        }
+      }
+    },
+    "In euros": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Euro"
+          }
+        }
+      }
+    },
+    "Includes changes waiting to sync.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enthält Änderungen, die noch synchronisiert werden."
+          }
+        }
+      }
+    },
+    "Income": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahme"
+          }
+        }
+      }
+    },
+    "Income cannot be shared.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahmen können nicht geteilt werden."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Income · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahme · %@"
+          }
+        }
+      }
+    },
+    "Insert a currency symbol at the cursor": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währungssymbol an der Eingabeposition einfügen"
+          }
+        }
+      }
+    },
+    "Internal Server Error": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interner Serverfehler"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Invalid saved conversion.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gespeicherte Umrechnung ungültig."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Invitations": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einladungen"
+          }
+        }
+      }
+    },
+    "Invite by email": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per E-Mail einladen"
+          }
+        }
+      }
+    },
+    "Its spending will be removed from your budget.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Ausgabe wird nicht mehr auf dein Budget angerechnet."
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter bearbeiten"
+          }
+        }
+      }
+    },
+    "Keep My Changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meine Änderungen behalten"
+          }
+        }
+      }
+    },
+    "Keep My Current Changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meine aktuellen Änderungen behalten"
+          }
+        }
+      }
+    },
+    "Keeping your changes submits the current version on this iPhone. If it changed again elsewhere, you'll review it again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du deine Änderungen behältst, wird die aktuelle Version dieses Geräts übertragen. Wurde sie anderswo erneut geändert, kannst du beide Versionen wieder prüfen."
+          }
+        }
+      }
+    },
+    "Last recognized: %@. %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt erkannt: %@. %@"
+          }
+        }
+      }
+    },
+    "Left this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Monat übrig"
+          }
+        }
+      }
+    },
+    "Method Not Allowed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Methode nicht zulässig"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Monthly allocation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monatsbudget"
+          }
+        }
+      }
+    },
+    "Monthly budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monatsbudget"
+          }
+        }
+      }
+    },
+    "More than one person matches %@. Use their full name or choose in Details.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mehrere Personen passen zu %@. Gib den vollständigen Namen ein oder wähle die Person in den Details aus."
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "New Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Kategorie"
+          }
+        }
+      }
+    },
+    "New Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Ausgabe"
+          }
+        }
+      }
+    },
+    "New Income": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Einnahme"
+          }
+        }
+      }
+    },
+    "Next Month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächster Monat"
+          }
+        }
+      }
+    },
+    "No accepted connection with %@. Invite them by email from a saved expense first.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit %@ besteht noch keine Verbindung. Lade die Person zuerst aus einer gespeicherten Ausgabe per E-Mail ein."
+          }
+        }
+      }
+    },
+    "No bookings this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Buchungen in diesem Monat"
+          }
+        }
+      }
+    },
+    "No budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Budget"
+          }
+        }
+      }
+    },
+    "No budget assigned to this category.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Kategorie ist kein Budget zugewiesen."
+          }
+        }
+      }
+    },
+    "No category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Kategorie"
+          }
+        }
+      }
+    },
+    "No expenses this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Ausgaben in diesem Monat"
+          }
+        }
+      }
+    },
+    "No matching bookings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine passenden Buchungen"
+          }
+        }
+      }
+    },
+    "No shared expenses": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine geteilten Ausgaben"
+          }
+        }
+      }
+    },
+    "No unbudgeted expenses this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Ausgaben ohne Budget in diesem Monat"
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nichts"
+          }
+        }
+      }
+    },
+    "Not Found": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht gefunden"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "OK": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "On the server": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Server"
+          }
+        }
+      }
+    },
+    "On this iPhone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Gerät"
+          }
+        }
+      }
+    },
+    "Only records a payment made outside Spendie. Both people see the repayment; budgets stay unchanged.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erfasst eine Zahlung, die außerhalb von Spendie erfolgt ist. Beide sehen die Rückzahlung. Die Budgets bleiben unverändert."
+          }
+        }
+      }
+    },
+    "Only you can see or change your category.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur du kannst deine Kategorie sehen oder ändern."
+          }
+        }
+      }
+    },
+    "Open the shared expense to edit its details.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffne die geteilte Ausgabe, um ihre Details zu bearbeiten."
+          }
+        }
+      }
+    },
+    "Opening Spendie": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spendie wird geöffnet"
+          }
+        }
+      }
+    },
+    "Optional, once per account. Copies your current categories, budgets, and expenses into an empty account. Originals stay on this iPhone.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional, einmal pro Konto. Kopiert deine aktuellen Kategorien, Budgets und Ausgaben in ein leeres Konto. Die Originale bleiben auf diesem Gerät."
+          }
+        }
+      }
+    },
+    "Original amount": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ursprünglicher Betrag"
+          }
+        }
+      }
+    },
+    "Original creator": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellende Person"
+          }
+        }
+      }
+    },
+    "Original: %@ · ECB %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ursprünglich: %@ · EZB %@"
+          }
+        }
+      }
+    },
+    "Other participant": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Andere beteiligte Person"
+          }
+        }
+      }
+    },
+    "Other person": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Andere Person"
+          }
+        }
+      }
+    },
+    "Over budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget überschritten"
+          }
+        }
+      }
+    },
+    "Owes you": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schuldet dir"
+          }
+        }
+      }
+    },
+    "Paid by": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bezahlt von"
+          }
+        }
+      }
+    },
+    "Paid by: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bezahlt von: %@"
+          }
+        }
+      }
+    },
+    "Part of Your %@ Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teil deines Budgets für %@"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passwort"
+          }
+        }
+      }
+    },
+    "Payer": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zahlende Person"
+          }
+        }
+      }
+    },
+    "Payment": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zahlung"
+          }
+        }
+      }
+    },
+    "Pending changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausstehende Änderungen"
+          }
+        }
+      }
+    },
+    "People": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personen"
+          }
+        }
+      }
+    },
+    "Per month on average": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monatlich im Durchschnitt"
+          }
+        }
+      }
+    },
+    "Person": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Person"
+          }
+        }
+      }
+    },
+    "Personal": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privat"
+          }
+        }
+      }
+    },
+    "Prefilled from your existing category budgets. Any increase is available to allocate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus deinen vorhandenen Kategoriebudgets übernommen. Erhöhungen stehen zur Verteilung bereit."
+          }
+        }
+      }
+    },
+    "Previous Month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorheriger Monat"
+          }
+        }
+      }
+    },
+    "Privacy": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutz"
+          }
+        }
+      }
+    },
+    "Privacy information unavailable": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutzhinweise nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Quick entry": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnellerfassung"
+          }
+        }
+      }
+    },
+    "Rate date": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursdatum"
+          }
+        }
+      }
+    },
+    "Ready to sync": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bereit zur Synchronisierung"
+          }
+        }
+      }
+    },
+    "Recalculate %@?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ neu berechnen?"
+          }
+        }
+      }
+    },
+    "Record Repayment": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rückzahlung erfassen"
+          }
+        }
+      }
+    },
+    "Reduce category allocations before lowering the total this far.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verringere zuerst die Kategoriebudgets, bevor du das Gesamtbudget so weit senkst."
+          }
+        }
+      }
+    },
+    "Refresh Rates": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurse aktualisieren"
+          }
+        }
+      }
+    },
+    "Remaining budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbleibendes Budget"
+          }
+        }
+      }
+    },
+    "Repayment": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rückzahlung"
+          }
+        }
+      }
+    },
+    "Repayments": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rückzahlungen"
+          }
+        }
+      }
+    },
+    "Request Timeout": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeitüberschreitung"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Restart synchronization without discarding local changes.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starte die Synchronisierung erneut. Lokale Änderungen bleiben erhalten."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Review Changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen prüfen"
+          }
+        }
+      }
+    },
+    "Review Changes (%lld)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen prüfen (%lld)"
+          }
+        }
+      }
+    },
+    "Review changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen prüfen"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speichern"
+          }
+        }
+      }
+    },
+    "Save Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe speichern"
+          }
+        }
+      }
+    },
+    "Save Income": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einnahme speichern"
+          }
+        }
+      }
+    },
+    "Save Yearly Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresbudget speichern"
+          }
+        }
+      }
+    },
+    "Save as New Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als neue Ausgabe speichern"
+          }
+        }
+      }
+    },
+    "Save the yearly total to start assigning category amounts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speichere zuerst das Jahresbudget, um Beträge auf Kategorien zu verteilen."
+          }
+        }
+      }
+    },
+    "Saved on this iPhone · couldn't sync": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokal gespeichert · Synchronisierung fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Select Month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monat auswählen"
+          }
+        }
+      }
+    },
+    "Select a Booking": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buchung auswählen"
+          }
+        }
+      }
+    },
+    "Select a Category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kategorie auswählen"
+          }
+        }
+      }
+    },
+    "Select a Person": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Person auswählen"
+          }
+        }
+      }
+    },
+    "Selected month, %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgewählter Monat, %@"
+          }
+        }
+      }
+    },
+    "Send New Code": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuen Code senden"
+          }
+        }
+      }
+    },
+    "Send Verification Code": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätigungscode senden"
+          }
+        }
+      }
+    },
+    "Server": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server"
+          }
+        }
+      }
+    },
+    "Server address": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveradresse"
+          }
+        }
+      }
+    },
+    "Service Unavailable": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst nicht verfügbar"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Set Up Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget einrichten"
+          }
+        }
+      }
+    },
+    "Set Yearly Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresbudget festlegen"
+          }
+        }
+      }
+    },
+    "Set budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget festlegen"
+          }
+        }
+      }
+    },
+    "Set the total first, then assign the full amount to categories. Unspent and overspent category balances carry within the year.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege zuerst das Gesamtbudget fest und verteile es vollständig auf Kategorien. Restbeträge und Überschreitungen werden innerhalb des Jahres übertragen."
+          }
+        }
+      }
+    },
+    "Set the whole yearly budget in Yearly Plan before assigning category amounts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege zuerst das gesamte Jahresbudget im Jahresplan fest. Danach kannst du Beträge zuweisen."
+          }
+        }
+      }
+    },
+    "Set your yearly budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege dein Jahresbudget fest"
+          }
+        }
+      }
+    },
+    "Set your yearly budget, then assign the full amount to categories.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege dein Jahresbudget fest und verteile es vollständig auf Kategorien."
+          }
+        }
+      }
+    },
+    "Settle Up": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saldo ausgleichen"
+          }
+        }
+      }
+    },
+    "Settle up": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saldo ausgleichen"
+          }
+        }
+      }
+    },
+    "Settled up": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgeglichen"
+          }
+        }
+      }
+    },
+    "Share": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilen"
+          }
+        }
+      }
+    },
+    "Share Expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgabe teilen"
+          }
+        }
+      }
+    },
+    "Share With": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilen mit"
+          }
+        }
+      }
+    },
+    "Share a saved expense to connect with someone. Verify your email in Account to receive invitations.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teile eine gespeicherte Ausgabe, um dich mit jemandem zu verbinden. Bestätige deine E-Mail-Adresse im Konto, um Einladungen zu erhalten."
+          }
+        }
+      }
+    },
+    "Share of %@: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anteil von %@: %@"
+          }
+        }
+      }
+    },
+    "Share with": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilen mit"
+          }
+        }
+      }
+    },
+    "Shared": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geteilt"
+          }
+        }
+      }
+    },
+    "Shared Details": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemeinsame Details"
+          }
+        }
+      }
+    },
+    "Shared expense": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geteilte Ausgabe"
+          }
+        }
+      }
+    },
+    "Shared history": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemeinsamer Verlauf"
+          }
+        }
+      }
+    },
+    "Shared with %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geteilt mit %@"
+          }
+        }
+      }
+    },
+    "Sharing": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilen"
+          }
+        }
+      }
+    },
+    "Sign In": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmelden"
+          }
+        }
+      }
+    },
+    "Sign In Again": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut anmelden"
+          }
+        }
+      }
+    },
+    "Sign Out": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abmelden"
+          }
+        }
+      }
+    },
+    "Sign in again to continue syncing. Your saved expenses are still available.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich erneut an, um weiter zu synchronisieren. Deine gespeicherten Ausgaben bleiben verfügbar."
+          }
+        }
+      }
+    },
+    "Sign in again to resume syncing": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut anmelden, um weiter zu synchronisieren"
+          }
+        }
+      }
+    },
+    "Sign in from Account to share expenses.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich im Konto an, um Ausgaben zu teilen."
+          }
+        }
+      }
+    },
+    "Sign in to continue syncing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich an, um weiter zu synchronisieren."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Sign in to share": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum Teilen anmelden"
+          }
+        }
+      }
+    },
+    "Sign in to sync": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum Synchronisieren anmelden"
+          }
+        }
+      }
+    },
+    "Sign out before switching to a different account or server. Your saved entries will stay separate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich ab, bevor du das Konto oder den Server wechselst. Deine gespeicherten Buchungen bleiben getrennt."
+          }
+        }
+      }
+    },
+    "Sign out on this iPhone?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Gerät abmelden?"
+          }
+        }
+      }
+    },
+    "Signing In…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung läuft …"
+          }
+        }
+      }
+    },
+    "Spending without a category budget reduces the overall budget balance. Assign a budget to a category to track that spending against its own allocation.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben ohne Kategoriebudget verringern das verbleibende Gesamtbudget. Weise der Kategorie ein Budget zu, um diese Ausgaben separat zu verfolgen."
+          }
+        }
+      }
+    },
+    "Spent this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Monat ausgegeben"
+          }
+        }
+      }
+    },
+    "Spent this year through this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In diesem Jahr bis einschließlich dieses Monats ausgegeben"
+          }
+        }
+      }
+    },
+    "Start a new verification request.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fordere einen neuen Bestätigungscode an."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Storage": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speicherort"
+          }
+        }
+      }
+    },
+    "Submit your current changes?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine aktuellen Änderungen übertragen?"
+          }
+        }
+      }
+    },
+    "Sync Now": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt synchronisieren"
+          }
+        }
+      }
+    },
+    "Sync this expense before sharing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisiere diese Ausgabe, bevor du sie teilst."
+          }
+        }
+      }
+    },
+    "Synchronization": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung"
+          }
+        }
+      }
+    },
+    "Synchronization needs to catch up again. Your local changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Synchronisierung muss erneut abgeglichen werden. Deine lokalen Änderungen bleiben erhalten."
+          }
+        }
+      }
+    },
+    "Syncing…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird synchronisiert …"
+          }
+        }
+      }
+    },
+    "Tap + to add an expense.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe auf +, um eine Ausgabe hinzuzufügen."
+          }
+        }
+      }
+    },
+    "The app's server hasn't been configured. Contact your administrator.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für die App ist kein Server eingerichtet. Wende dich an die Administration."
+          }
+        }
+      }
+    },
+    "The balance changed. Close this form and review it before recording.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Saldo hat sich geändert. Schließe dieses Formular und prüfe den aktuellen Saldo, bevor du die Rückzahlung erfasst."
+          }
+        }
+      }
+    },
+    "The code is incorrect or expired. Request a new code after five attempts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Code ist falsch oder abgelaufen. Fordere nach fünf Versuchen einen neuen Code an."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The combined shared amount is too large to display.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Gesamtbetrag der geteilten Ausgaben ist zu groß für die Anzeige."
+          }
+        }
+      }
+    },
+    "The default category is reserved for uncategorized entries.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Standardkategorie ist für Buchungen ohne Kategorie reserviert."
+          }
+        }
+      }
+    },
+    "The expense changed. Sync it before sharing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Ausgabe wurde geändert. Synchronisiere sie, bevor du sie teilst."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The expense creation timestamp cannot change.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Erstellungszeitpunkt der Ausgabe kann nicht geändert werden."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The invitation changed. Refresh before accepting.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Einladung wurde geändert. Aktualisiere sie vor der Annahme."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The original amount, exchange rate and euro amount must agree.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ursprünglicher Betrag, Wechselkurs und Eurobetrag müssen zusammenpassen."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The server is unavailable. Your local changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server ist nicht erreichbar. Deine lokalen Änderungen bleiben erhalten."
+          }
+        }
+      }
+    },
+    "The server returned incompatible data. Your local changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat inkompatible Daten gesendet. Deine lokalen Änderungen bleiben erhalten."
+          }
+        }
+      }
+    },
+    "The shared balance changed. Refresh activity and record the repayment again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der gemeinsame Saldo hat sich geändert. Aktualisiere die Buchungen und erfasse die Rückzahlung erneut."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "The whole year's monthly balances will be recalculated. Expenses stay unchanged.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Monatsbeträge des gesamten Jahres werden neu berechnet. Ausgaben bleiben unverändert."
+          }
+        }
+      }
+    },
+    "This account already has a verified email address.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Konto hat bereits eine bestätigte E-Mail-Adresse."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This account already has entries. Sign in with copying turned off to keep the two sets separate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Konto enthält bereits Buchungen. Melde dich an, ohne lokale Buchungen zu kopieren, damit beide Bestände getrennt bleiben."
+          }
+        }
+      }
+    },
+    "This address identifies your account for sharing invitations. Continue signing in with your username and password.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Adresse ordnet Einladungen deinem Konto zu. Melde dich weiterhin mit Benutzernamen und Passwort an."
+          }
+        }
+      }
+    },
+    "This allocation exceeds the yearly total.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Zuweisung überschreitet das Jahresbudget."
+          }
+        }
+      }
+    },
+    "This category is reserved for uncategorized entries.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Kategorie ist für Buchungen ohne Kategorie reserviert."
+          }
+        }
+      }
+    },
+    "This category is still used by a booking or budget.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Kategorie wird noch von einer Buchung oder einem Budget verwendet."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This change needs review.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Änderung muss geprüft werden."
+          }
+        }
+      }
+    },
+    "This currency does not use fractional units.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Währung erlaubt keine Nachkommastellen."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This email address couldn't be verified for this account.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese E-Mail-Adresse konnte für das Konto nicht bestätigt werden."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This expense already has a sharing record. Use the server version and review its participants.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Ausgabe ist bereits zum Teilen erfasst. Übernimm die Serverversion und prüfe die Beteiligten."
+          }
+        }
+      }
+    },
+    "This expense hasn't been saved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Ausgabe wurde noch nicht gespeichert."
+          }
+        }
+      }
+    },
+    "This expense is no longer available.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Ausgabe ist nicht mehr verfügbar."
+          }
+        }
+      }
+    },
+    "This income booking will be removed. Your budget stays unchanged.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Einnahme wird gelöscht. Dein Budget bleibt unverändert."
+          }
+        }
+      }
+    },
+    "This item changed on another device. Review both versions.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Eintrag wurde auf einem anderen Gerät geändert. Prüfe beide Versionen."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This item or its category is unavailable to this account.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Eintrag oder seine Kategorie ist für dieses Konto nicht verfügbar."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This recalculates the category and overall balances for the year.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Kategorie- und Gesamtbeträge des Jahres werden neu berechnet."
+          }
+        }
+      }
+    },
+    "This records a payment made outside Spendie. If the balance changed, discard this draft and review the current balance before recording again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Damit erfasst du eine Zahlung außerhalb von Spendie. Falls sich der Saldo geändert hat, verwirf diesen Entwurf und prüfe den aktuellen Saldo, bevor du die Zahlung erneut erfasst."
+          }
+        }
+      }
+    },
+    "This saved request has different content. Review your changes.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese gespeicherte Anfrage hat einen anderen Inhalt. Prüfe deine Änderungen."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This shared expense was deleted. Its spending and obligation have been removed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese geteilte Ausgabe wurde gelöscht. Die Ausgabe und die daraus entstandene Schuld sind entfallen."
+          }
+        }
+      }
+    },
+    "This shared expense was deleted. Keep its history and create a new expense if needed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese geteilte Ausgabe wurde gelöscht. Behalte ihren Verlauf und lege bei Bedarf eine neue Ausgabe an."
+          }
+        }
+      }
+    },
+    "This year now has a whole budget. Review Yearly Plan and discard the old category-only update.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Jahr hat jetzt ein Gesamtbudget. Prüfe den Jahresplan und verwirf die alte Änderung am Kategoriebudget."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "This year's plan changed. Reopen it before assigning money.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Plan für dieses Jahr hat sich geändert. Öffne ihn erneut, bevor du Beträge zuweist."
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heute"
+          }
+        }
+      }
+    },
+    "Too Many Requests": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu viele Anfragen"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Too many attempts. Please try again shortly.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu viele Versuche. Versuche es in Kürze erneut."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Too many requests. Please try again later.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu viele Anfragen. Versuche es später erneut."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Total": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesamt"
+          }
+        }
+      }
+    },
+    "Total purchase": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesamtbetrag"
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut versuchen"
+          }
+        }
+      }
+    },
+    "Try a different description or category.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versuche eine andere Beschreibung oder Kategorie."
+          }
+        }
+      }
+    },
+    "Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typ"
+          }
+        }
+      }
+    },
+    "Unallocated": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verteilt"
+          }
+        }
+      }
+    },
+    "Unallocated after saving": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach dem Speichern nicht verteilt"
+          }
+        }
+      }
+    },
+    "Unallocated this year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Jahr nicht verteilt"
+          }
+        }
+      }
+    },
+    "Unauthorized": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung erforderlich"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Unavailable": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Unbudgeted Spending": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben ohne Budget"
+          }
+        }
+      }
+    },
+    "Unbudgeted spending": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgaben ohne Budget"
+          }
+        }
+      }
+    },
+    "Uncategorized": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ohne Kategorie"
+          }
+        }
+      }
+    },
+    "Unprocessable Entity": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anfrage konnte nicht verarbeitet werden"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Up to date": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktuell"
+          }
+        }
+      }
+    },
+    "Update Spendie for currency conversion. Your pending changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiere Spendie für die Währungsumrechnung. Ausstehende Änderungen bleiben erhalten."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Update Spendie for income. Your pending changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiere Spendie für Einnahmen. Ausstehende Änderungen bleiben erhalten."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Update Spendie for whole-year budgets. Your pending changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiere Spendie für Jahresbudgets. Ausstehende Änderungen bleiben erhalten."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Update Spendie to sync shared activity. Your pending changes are preserved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiere Spendie, um geteilte Buchungen zu synchronisieren. Ausstehende Änderungen bleiben erhalten."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Update Yearly Allocation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahreszuweisung aktualisieren"
+          }
+        }
+      }
+    },
+    "Update Yearly Budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresbudget aktualisieren"
+          }
+        }
+      }
+    },
+    "Updated %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiert am %@"
+          }
+        }
+      }
+    },
+    "Updating rates…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurse werden aktualisiert …"
+          }
+        }
+      }
+    },
+    "Use Server Version": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverversion übernehmen"
+          }
+        }
+      }
+    },
+    "Use a category name of at most 100 characters.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Kategoriename darf höchstens 100 Zeichen lang sein."
+          }
+        }
+      }
+    },
+    "Use a description of at most 500 characters.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Beschreibung darf höchstens 500 Zeichen lang sein."
+          }
+        }
+      }
+    },
+    "Use one currency: € or EUR, $ or USD, £ or GBP, or another supported code.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwende genau eine Währung: € oder EUR, $ oder USD, £ oder GBP oder einen anderen unterstützten Code."
+          }
+        }
+      }
+    },
+    "Username": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benutzername"
+          }
+        }
+      }
+    },
+    "Username or password is incorrect.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benutzername oder Passwort ist falsch."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Using saved ECB rates. Check the rate date below.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gespeicherte EZB-Kurse werden verwendet. Prüfe unten das Kursdatum."
+          }
+        }
+      }
+    },
+    "Verification Code": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätigungscode"
+          }
+        }
+      }
+    },
+    "Verification code": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätigungscode"
+          }
+        }
+      }
+    },
+    "Verify Email": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail bestätigen"
+          }
+        }
+      }
+    },
+    "Verify ownership of your mailbox to receive sharing invitations. Email isn't used for login or password recovery.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätige deine E-Mail-Adresse, um Einladungen zum Teilen zu erhalten. Sie dient weder zur Anmeldung noch zur Passwortwiederherstellung."
+          }
+        }
+      }
+    },
+    "Waiting to sync": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung ausstehend"
+          }
+        }
+      }
+    },
+    "We couldn't send the code to %@. Request a new code.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Code konnte nicht an %@ gesendet werden. Fordere einen neuen Code an."
+          }
+        }
+      }
+    },
+    "Whole yearly budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesamtes Jahresbudget"
+          }
+        }
+      }
+    },
+    "Year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahr"
+          }
+        }
+      }
+    },
+    "Year %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahr %@"
+          }
+        }
+      }
+    },
+    "Yearly Plan": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresplan"
+          }
+        }
+      }
+    },
+    "Yearly allocation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahreszuweisung"
+          }
+        }
+      }
+    },
+    "Yearly amount": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresbetrag"
+          }
+        }
+      }
+    },
+    "Yearly budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahresbudget"
+          }
+        }
+      }
+    },
+    "You": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du"
+          }
+        }
+      }
+    },
+    "You %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Anteil: %@"
+          }
+        }
+      }
+    },
+    "You owe": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du schuldest"
+          }
+        }
+      }
+    },
+    "You paid %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast %@ Geld gezahlt"
+          }
+        }
+      }
+    },
+    "Your account's saved entries and pending changes stay on this iPhone for your next sign-in.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die gespeicherten Buchungen und ausstehenden Änderungen bleiben bis zu deiner nächsten Anmeldung auf diesem Gerät."
+          }
+        }
+      }
+    },
+    "Your budget impact": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auswirkung auf dein Budget"
+          }
+        }
+      }
+    },
+    "Your category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Kategorie"
+          }
+        }
+      }
+    },
+    "Your entries are preserved. Review the yearly plan before continuing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Buchungen bleiben erhalten. Prüfe den Jahresplan, bevor du fortfährst."
+          }
+        }
+      }
+    },
+    "Your entries aren't connected to a Spendie account. Signing in keeps them separate unless you choose to copy them.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Buchungen sind mit keinem Spendie-Konto verbunden. Bei der Anmeldung bleiben sie getrennt, sofern du sie nicht kopierst."
+          }
+        }
+      }
+    },
+    "Your private category": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine private Kategorie"
+          }
+        }
+      }
+    },
+    "Your proposed share counts in the expense's original month immediately. A new person must accept before shared access starts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein vorgeschlagener Anteil zählt sofort im ursprünglichen Monat der Ausgabe. Neue Personen müssen die Einladung annehmen, bevor sie Zugriff erhalten."
+          }
+        }
+      }
+    },
+    "Your saved data hasn't been reset.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine gespeicherten Daten wurden nicht zurückgesetzt."
+          }
+        }
+      }
+    },
+    "Your share": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Anteil"
+          }
+        }
+      }
+    },
+    "Your share already counts in your budget.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Anteil zählt bereits für dein Budget."
+          }
+        }
+      }
+    },
+    "Your spending": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Ausgaben"
+          }
+        }
+      }
+    },
+    "left": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "übrig"
+          }
+        }
+      }
+    },
+    "over budget": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "über Budget"
+          }
+        }
+      }
+    },
+    "£ · British pound": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "£ · Britisches Pfund"
+          }
+        }
+      }
+    },
+    "€ · Euro": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "€ · Euro"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
