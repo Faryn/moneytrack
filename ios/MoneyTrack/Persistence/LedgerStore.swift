@@ -5,6 +5,7 @@ import SwiftData
 @MainActor @Observable
 final class LedgerStore {
     private let context: ModelContext
+    private let syncStorage: LedgerSyncStorage
     private(set) var categories: [CategoryValue] = []
     private(set) var archivedCategoryIDs: Set<UUID> = []
     var activeCategories: [CategoryValue] { categories.filter { !archivedCategoryIDs.contains($0.id) } }
@@ -21,8 +22,10 @@ final class LedgerStore {
     var today: Date { fixedToday ?? .now }
 
     init(container: ModelContainer, today: Date? = nil) throws {
-        context = ModelContext(container)
+        let context = ModelContext(container)
         context.autosaveEnabled = false
+        self.context = context
+        syncStorage = LedgerSyncStorage(context: context)
         fixedToday = today
         try reloadAll()
     }
@@ -82,7 +85,7 @@ final class LedgerStore {
                 try putAnnualPlan(updatedPlan)
                 let prior = pendingChanges.contains { $0.entity == "budget_plan" && $0.entityID == updatedPlan.id }
                 let change = try enqueue(entity: "budget_plan", id: updatedPlan.id, action: "upsert", payload: updatedPlan, offset: changes.count)
-                if let allocationBase, !prior { try operationState(change.id)?.baseRevision = allocationBase }
+                if let allocationBase, !prior { try syncStorage.operationState(change.id)?.baseRevision = allocationBase }
                 changes.append(change)
             }
             if let annual {
@@ -142,7 +145,7 @@ final class LedgerStore {
             try putConversion(value.id, value.conversion)
             try putIncome(value.id, value.isIncome)
             pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value, offset: offset)
-            if let expectedRevision, !priorPending { try operationState(pending.id)?.baseRevision = expectedRevision }
+            if let expectedRevision, !priorPending { try syncStorage.operationState(pending.id)?.baseRevision = expectedRevision }
             if let sharing { try queueEntryShare(value, sharing: sharing, sourceOperationID: pending.id, offset: offset + 1) }
         }
         expenses.removeAll { $0.id == value.id }; expenses.append(value)
@@ -169,110 +172,85 @@ final class LedgerStore {
     }
 
     private func commit(_ changes: () throws -> Void) throws {
-        do {
-            try changes()
-            // One explicit save commits domain data and outbox entries together.
-            try context.save()
-        } catch {
-            context.rollback()
-            throw error
-        }
+        try syncCommit(changes)
         saveCount += 1
     }
 
     private func enqueue<T: Encodable>(
         entity: String, id: UUID, action: String, payload: T, offset: Int = 0
     ) throws -> PendingChangeValue {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.sortedKeys]
-        let value = PendingChangeValue(id: UUID(), entityID: id, entity: entity, action: action,
-                                       sequence: (pendingChanges.last?.sequence ?? 0) + Int64(offset) + 1,
-                                       payload: try encoder.encode(payload))
-        let prior = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains {
-            ($0.entityKind == entity || (entity == "shared_assignment" && $0.entityKind == "shared_expense")) && $0.entityID == id
-        }
-        let base = prior ? nil : try remoteState(entity, id)?.revision ?? 0
-        context.insert(LedgerSchemaV2.OperationState(id: value.id, baseRevision: base))
-        context.insert(PendingChangeRecord(value))
-        return value
+        let sequence = (pendingChanges.last?.sequence ?? 0) + Int64(offset) + 1
+        return try syncStorage.enqueue(entity: entity, id: id, action: action, payload: payload, sequence: sequence)
     }
 }
 
 // Synchronization never creates a second local domain mutation or running balance.
 extension LedgerStore {
-    func recordRevision(_ entity: String, _ id: UUID) throws -> Int64 { try remoteState(entity, id)?.revision ?? 0 }
-    var cursor: String? { get throws { try syncState().cursor } }
-    var hasImportedLocal: Bool { get throws { try syncState().importedLocal } }
+    func recordRevision(_ entity: String, _ id: UUID) throws -> Int64 { try syncStorage.remoteState(entity, id)?.revision ?? 0 }
+    var cursor: String? { get throws { try syncStorage.metadata().cursor } }
+    var hasImportedLocal: Bool { get throws { try syncStorage.metadata().importedLocal } }
 
     func prepareNextOperation() throws -> (UUID, Data)? {
         guard let pending = pendingChanges.first else { return nil }
-        let state = try operationState(pending.id) ?? LedgerSchemaV2.OperationState(id: pending.id, baseRevision: 0)
-        if state.issueData != nil { return nil }
-        if let data = state.wireData { return (pending.id, data) }
-        var payload = try JSONDecoder().decode(JSONValue.self, from: pending.payload)
-        if pending.entity == "shared_expense", case .object(var fields) = payload,
-           fields["command"] == .string("share") {
-            if fields["sourceRevision"] == nil {
-                guard let row = try context.fetch(FetchDescriptor<LedgerSchemaV3.SharedRecord>()).first(where: { $0.key == RemoteRecord.key("source_ack", pending.entityID) }),
-                      case .object(let ack) = try JSONDecoder().decode(JSONValue.self, from: row.data),
-                      ack["operationID"] == fields["sourceOperationID"], let revision = ack["revision"] else { throw ConnectionError.invalidData }
-                fields["sourceRevision"] = revision
-            }
-            fields.removeValue(forKey: "sourceOperationID")
-            payload = .object(fields)
-        }
-        let expectedRevision: Int64
-        if let base = state.baseRevision { expectedRevision = base }
-        else { expectedRevision = try remoteState(pending.entity, pending.entityID)?.revision ?? 0 }
-        let wire = WireOperation(operationID: pending.id, entity: pending.entity, entityID: pending.entityID,
-                                 action: pending.action, expectedRevision: expectedRevision, payload: payload)
-        let data = try JSONEncoder().encode(wire)
-        try syncCommit {
-            if try operationState(pending.id) == nil { context.insert(state) }
-            state.wireData = data
-        }
+        let state = try syncStorage.operationState(pending.id)
+        if state?.issueData != nil { return nil }
+        if let data = state?.wireData { return (pending.id, data) }
+        let data = try syncStorage.encodeOperation(pending, baseRevision: state == nil ? 0 : state?.baseRevision)
+        try syncCommit { try syncStorage.freeze(data, for: pending.id) }
         return (pending.id, data)
     }
 
     func acknowledge(_ id: UUID, record: RemoteRecord) throws {
         guard let pending = pendingChanges.first(where: { $0.id == id }),
               pending.entity == record.entity, pending.entityID == record.entityID else { throw ConnectionError.invalidData }
+        let refreshOneExpense = pending.entity == "expense" && !sharedExpenses.contains { $0.id == pending.entityID }
+        var applied = false
+        var updatedExpense: ExpenseValue?
         try syncCommit {
             if pending.entity == "expense" {
                 try putShared("source_ack", pending.entityID, payload: .object(["operationID": .string(id.uuidString), "revision": .integer(record.revision)]), deleted: false)
             }
-            try removeOperation(id)
-            let latest = try remember(record)
-            let remaining = try context.fetch(FetchDescriptor<PendingChangeRecord>())
-                .filter { $0.entityKind == pending.entity && $0.entityID == pending.entityID }.sorted { $0.sequence < $1.sequence }
-            if let next = remaining.first {
-                let state = try operationState(next.id) ?? LedgerSchemaV2.OperationState(id: next.id, baseRevision: nil)
-                if try operationState(next.id) == nil { context.insert(state) }
-                // Depend on our acknowledged revision, never silently on someone else's later edit.
-                if state.baseRevision == nil { state.baseRevision = record.revision }
-            } else {
+            try syncStorage.removeOperation(id)
+            let latest = try syncStorage.remember(record)
+            if try !syncStorage.advanceDependentBase(after: pending, revision: record.revision) {
                 try applyRemote(latest)
+                applied = true
+                if refreshOneExpense, !latest.deleted {
+                    guard let saved = try expenseRecord(latest.entityID) else { throw ConnectionError.invalidData }
+                    updatedExpense = try expenseValue(saved)
+                }
             }
         }
-        try reloadAll()
+        if refreshOneExpense {
+            pendingChanges.removeAll { $0.id == id }
+            if issues.contains(where: { $0.id == id }) { issues.removeAll { $0.id == id } }
+            if applied {
+                expenses.removeAll { $0.id == pending.entityID }
+                if let updatedExpense {
+                    let index = expenses.firstIndex {
+                        updatedExpense.day > $0.day || (updatedExpense.day == $0.day && updatedExpense.createdAt > $0.createdAt)
+                    } ?? expenses.endIndex
+                    expenses.insert(updatedExpense, at: index)
+                }
+            }
+        } else {
+            try reloadAll()
+        }
     }
 
-    func restartPull() throws { try syncCommit { try syncState().cursor = nil } }
+    func restartPull() throws { try syncCommit { try syncStorage.metadata().cursor = nil } }
 
     func receive(_ page: ChangePage) throws {
         try syncCommit {
-            let pendingRecords = try context.fetch(FetchDescriptor<PendingChangeRecord>(sortBy: [SortDescriptor(\.sequence)]))
+            let pendingRecords = try syncStorage.pendingRecords()
             let pendingKeys = Set(pendingRecords.map { RemoteRecord.key($0.entityKind, $0.entityID) })
             for record in page.changes {
-                let latest = try remember(record)
+                let latest = try syncStorage.remember(record)
                 if record.entity == "budget_plan" {
                     let value = try record.payload.decoded(AnnualBudgetPlan.self)
                     if let old = annualPlans.first(where: { $0.year == value.year && $0.id != value.id }),
                        let pending = pendingChanges.first(where: { $0.entity == "budget_plan" && $0.entityID == old.id }) {
-                        let state = try operationState(pending.id) ?? LedgerSchemaV2.OperationState(id: pending.id, baseRevision: 0)
-                        if try operationState(pending.id) == nil { context.insert(state) }
-                        state.issueData = try JSONEncoder().encode(SyncIssue(id: pending.id, entity: "budget_plan", entityID: old.id,
+                        try syncStorage.recordIssue(SyncIssue(id: pending.id, entity: "budget_plan", entityID: old.id,
                             message: "Another device created this year's budget. Review both plans.", current: record))
                         continue
                     }
@@ -287,15 +265,13 @@ extension LedgerStore {
                     }) {
                         let issue = SyncIssue(id: pending.id, entity: "year_budget", entityID: pending.entityID,
                             message: "Another device created a budget for this category and year. Choose which amount to keep.", current: record)
-                        let state = try operationState(pending.id) ?? LedgerSchemaV2.OperationState(id: pending.id, baseRevision: 0)
-                        if try operationState(pending.id) == nil { context.insert(state) }
-                        state.issueData = try JSONEncoder().encode(issue)
+                        try syncStorage.recordIssue(issue)
                         continue
                     }
                 }
                 if !pendingKeys.contains(record.key) { try applyRemote(latest) }
             }
-            try syncState().cursor = page.cursor
+            try syncStorage.metadata().cursor = page.cursor
         }
         try reloadAll()
     }
@@ -304,20 +280,22 @@ extension LedgerStore {
         guard let pending = pendingChanges.first(where: { $0.id == id }) else { throw ConnectionError.invalidData }
         let issue = SyncIssue(id: id, entity: pending.entity, entityID: pending.entityID, message: message, current: current)
         try syncCommit {
-            if let current { try remember(current) }
-            let state = try operationState(id) ?? LedgerSchemaV2.OperationState(id: id, baseRevision: 0)
-            if try operationState(id) == nil { context.insert(state) }
-            state.issueData = try JSONEncoder().encode(issue)
+            if let current { try syncStorage.remember(current) }
+            try syncStorage.recordIssue(issue)
         }
         try reloadAll()
     }
 
     func resolve(_ issue: SyncIssue, keepLocal: Bool) throws {
         if issue.entity == "budget_plan" { try resolvePlan(issue, keepLocal: keepLocal); return }
+        if !keepLocal, issue.current == nil, ["category", "expense"].contains(issue.entity) {
+            try discardRejectedPersonalChange(issue)
+            return
+        }
         if issue.entity == "year_budget", issue.current == nil, !keepLocal {
             try syncCommit {
-                for pending in pendingChanges.filter({ $0.entity == issue.entity && $0.entityID == issue.entityID }) { try removeOperation(pending.id) }
-                if let cached = try remoteState(issue.entity, issue.entityID) { try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data)) }
+                for pending in pendingChanges.filter({ $0.entity == issue.entity && $0.entityID == issue.entityID }) { try syncStorage.removeOperation(pending.id) }
+                if let cached = try syncStorage.remoteState(issue.entity, issue.entityID) { try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data)) }
                 else if let row = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == issue.entityID }) { context.delete(row) }
             }
             try reloadAll(); saveCount += 1; return
@@ -327,13 +305,13 @@ extension LedgerStore {
         }
         guard let first = pendingChanges.first(where: { $0.id == issue.id }) else { throw ConnectionError.invalidData }
         let selected = pendingChanges.filter { $0.entity == issue.entity && $0.entityID == issue.entityID }
-        let originalBase = try operationState(first.id)?.baseRevision ?? 0
+        let originalBase = try syncStorage.operationState(first.id)?.baseRevision ?? 0
         try syncCommit {
             let latest = try localPayload(entity: issue.entity, id: issue.entityID)
-            for pending in selected { try removeOperation(pending.id) }
+            for pending in selected { try syncStorage.removeOperation(pending.id) }
             if !keepLocal {
                 guard let current = issue.current else { throw ConnectionError.invalidData }
-                let cached = try remoteState(current.entity, current.entityID)
+                let cached = try syncStorage.remoteState(current.entity, current.entityID)
                     .flatMap { try JSONDecoder().decode(RemoteRecord.self, from: $0.data) }
                 if current.entityID != issue.entityID && issue.entity == "year_budget" {
                     if let old = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == issue.entityID }) { context.delete(old) }
@@ -346,7 +324,7 @@ extension LedgerStore {
                 if let saved = try context.fetch(FetchDescriptor<YearBudgetRecord>()).first(where: { $0.id == value.id }) { saved.amount = value.amount }
                 else { context.insert(YearBudgetRecord(value)) }
                 let pending = try enqueue(entity: "year_budget", id: value.id, action: "upsert", payload: value)
-                try replaceSequence(pending.id, with: first.sequence, base: current.revision)
+                try syncStorage.replaceSequence(pending.id, with: first.sequence, base: current.revision)
             } else if issue.current?.deleted == true && issue.entity == "expense" && latest.0 == "upsert" {
                 let old = try latest.1.decoded(ExpenseValue.self)
                 let value = ExpenseValue(id: UUID(), categoryID: old.categoryID, amount: old.amount,
@@ -356,22 +334,82 @@ extension LedgerStore {
                 try putConversion(value.id, value.conversion)
                 try putIncome(value.id, value.isIncome)
                 let pending = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value)
-                try replaceSequence(pending.id, with: first.sequence, base: 0)
+                try syncStorage.replaceSequence(pending.id, with: first.sequence, base: 0)
             } else if issue.current?.deleted == true && latest.0 == "delete" {
                 if let current = issue.current { try applyRemote(current) }
             } else {
                 let pending = try enqueue(entity: issue.entity, id: issue.entityID, action: latest.0, payload: latest.1)
                 let base = issue.current?.revision ?? originalBase
-                try replaceSequence(pending.id, with: first.sequence, base: base)
+                try syncStorage.replaceSequence(pending.id, with: first.sequence, base: base)
             }
         }
         try reloadAll()
         saveCount += 1
     }
 
+    private func discardRejectedPersonalChange(_ issue: SyncIssue) throws {
+        guard issues.contains(issue), let first = pendingChanges.first(where: { $0.id == issue.id }) else {
+            throw ConnectionError.invalidData
+        }
+        let id = issue.entityID
+        if issue.entity == "expense", sharedExpenses.contains(where: { $0.id == id }) || pendingChanges.contains(where: {
+            $0.entityID == id && ["shared_expense", "shared_assignment"].contains($0.entity)
+        }) {
+            throw ConnectionError.rejected(String(localized: "This expense is linked to sharing changes. Its draft was kept."))
+        }
+
+        try syncCommit {
+            if let cached = try syncStorage.remoteState(issue.entity, id) {
+                try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data))
+            } else {
+                guard (try syncStorage.operationState(first.id)?.baseRevision ?? 0) == 0 else {
+                    throw ConnectionError.invalidData
+                }
+                if issue.entity == "category" {
+                    guard try !categoryHasReferences(id) else {
+                        throw ConnectionError.rejected(String(localized: "This category is used by other entries or pending changes. Rename it and try again."))
+                    }
+                    let descriptor = FetchDescriptor<CategoryRecord>(predicate: #Predicate { $0.id == id })
+                    if let row = try context.fetch(descriptor).first { context.delete(row) }
+                } else {
+                    if let row = try expenseRecord(id) { context.delete(row) }
+                    try putConversion(id, nil)
+                    try putIncome(id, false)
+                }
+            }
+            for pending in pendingChanges where pending.entity == issue.entity && pending.entityID == id {
+                try syncStorage.removeOperation(pending.id)
+            }
+        }
+        try reloadAll()
+        saveCount += 1
+    }
+
+    private func categoryHasReferences(_ id: UUID) throws -> Bool {
+        if expenses.contains(where: { $0.categoryID == id }) || sharedExpenses.contains(where: { $0.categoryID == id }) ||
+            budgets.contains(where: { $0.categoryID == id }) ||
+            annualPlans.contains(where: { $0.freeCategoryID == id || $0.allocations.contains { $0.categoryID == id } }) {
+            return true
+        }
+        func matches(_ field: JSONValue?) -> Bool {
+            guard case .string(let value) = field else { return false }
+            return UUID(uuidString: value) == id
+        }
+        let decoder = JSONDecoder()
+        return try pendingChanges.contains { pending in
+            guard case .object(let fields) = try decoder.decode(JSONValue.self, from: pending.payload) else { return false }
+            if matches(fields["categoryID"]) || matches(fields["freeCategoryID"]) { return true }
+            guard case .array(let items) = fields["allocations"] else { return false }
+            return items.contains { item in
+                guard case .object(let allocation) = item else { return false }
+                return matches(allocation["categoryID"])
+            }
+        }
+    }
+
     // A deliberate, one-time copy into an empty account. The original store stays intact.
     func importLocal(_ source: LedgerStore) throws {
-        if try syncState().importedLocal { return }
+        if try syncStorage.metadata().importedLocal { return }
         guard categories.isEmpty, budgets.isEmpty, annualPlans.isEmpty, expenses.isEmpty, pendingChanges.isEmpty else { throw ConnectionError.notEmpty }
         var categoryIDs: [UUID: UUID] = [:]
         try syncCommit {
@@ -411,7 +449,7 @@ extension LedgerStore {
                 _ = try enqueue(entity: "expense", id: value.id, action: "upsert", payload: value, offset: offset)
                 offset += 1
             }
-            try syncState().importedLocal = true
+            try syncStorage.metadata().importedLocal = true
         }
         try reloadAll()
     }
@@ -441,40 +479,6 @@ extension LedgerStore {
         }
     }
 
-    private func replaceSequence(_ id: UUID, with sequence: Int64, base: Int64) throws {
-        try context.fetch(FetchDescriptor<PendingChangeRecord>()).first(where: { $0.id == id })?.sequence = sequence
-        try operationState(id)?.baseRevision = base
-    }
-    private func removeOperation(_ id: UUID) throws {
-        if let value = try context.fetch(FetchDescriptor<PendingChangeRecord>()).first(where: { $0.id == id }) { context.delete(value) }
-        if let value = try operationState(id) { context.delete(value) }
-    }
-    private func operationState(_ id: UUID) throws -> LedgerSchemaV2.OperationState? {
-        try context.fetch(FetchDescriptor<LedgerSchemaV2.OperationState>()).first { $0.id == id }
-    }
-    private func remoteState(_ entity: String, _ id: UUID) throws -> LedgerSchemaV2.RemoteState? {
-        let key = RemoteRecord.key(entity, id)
-        return try context.fetch(FetchDescriptor<LedgerSchemaV2.RemoteState>(predicate: #Predicate { $0.key == key })).first
-    }
-    private func syncState() throws -> LedgerSchemaV2.SyncState {
-        if let state = try context.fetch(FetchDescriptor<LedgerSchemaV2.SyncState>()).first { return state }
-        let state = LedgerSchemaV2.SyncState(); context.insert(state); return state
-    }
-    @discardableResult
-    private func remember(_ record: RemoteRecord) throws -> RemoteRecord {
-        guard record.revision > 0 else { throw ConnectionError.invalidData }
-        if let saved = try remoteState(record.entity, record.entityID) {
-            if saved.revision > record.revision {
-                return try JSONDecoder().decode(RemoteRecord.self, from: saved.data)
-            }
-            saved.data = try JSONEncoder().encode(record)
-            saved.revision = record.revision
-        } else {
-            context.insert(LedgerSchemaV2.RemoteState(key: record.key, revision: record.revision,
-                data: try JSONEncoder().encode(record)))
-        }
-        return record
-    }
     private func applyRemote(_ record: RemoteRecord) throws {
         switch record.entity {
         case "category":
@@ -542,8 +546,14 @@ extension LedgerStore {
         return value
     }
     private func syncCommit(_ changes: () throws -> Void) throws {
-        do { try changes(); try context.save() }
-        catch { context.rollback(); throw error }
+        do {
+            try changes()
+            // One explicit save commits domain data and sync metadata together.
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
     private func reloadAll() throws {
         categories = try context.fetch(FetchDescriptor<CategoryRecord>()).map(\.value)
@@ -576,10 +586,8 @@ extension LedgerStore {
         expenses.removeAll { sharedIDs.contains($0.id) }
         expenses += try sharedExpenses.filter { !$0.deleted }.map { try $0.expense }
         expenses.sort { $0.day == $1.day ? $0.createdAt > $1.createdAt : $0.day > $1.day }
-        pendingChanges = try context.fetch(FetchDescriptor<PendingChangeRecord>()).map(\.value).sorted { $0.sequence < $1.sequence }
-        issues = try context.fetch(FetchDescriptor<LedgerSchemaV2.OperationState>()).compactMap {
-            try $0.issueData.map { try JSONDecoder().decode(SyncIssue.self, from: $0) }
-        }
+        pendingChanges = try syncStorage.pendingChanges()
+        issues = try syncStorage.issues()
     }
 }
 
@@ -624,7 +632,7 @@ extension LedgerStore {
         if let dependency = pendingChanges.last(where: { $0.entity == "expense" && $0.entityID == id }) {
             fields["sourceOperationID"] = .string(dependency.id.uuidString)
         } else {
-            guard let revision = try remoteState("expense", id)?.revision else { throw ConnectionError.rejected(String(localized: "Sync this expense before sharing.")) }
+            guard let revision = try syncStorage.remoteState("expense", id)?.revision else { throw ConnectionError.rejected(String(localized: "Sync this expense before sharing.")) }
             fields["sourceRevision"] = .integer(revision)
         }
         if let connection { fields["recipientID"] = .string(connection.otherID.uuidString) }
@@ -636,11 +644,11 @@ extension LedgerStore {
         try reloadAll()
     }
     func acceptInvitation(_ invitation: SharingInvitation) throws {
-        let revision = try remoteState("sharing_invitation", invitation.id)?.revision ?? 1
+        let revision = try syncStorage.remoteState("sharing_invitation", invitation.id)?.revision ?? 1
         try commit {
             let pending = try enqueue(entity: "shared_expense", id: invitation.id, action: "upsert",
                 payload: JSONValue.object(["id": .string(invitation.id.uuidString), "command": .string("accept")]))
-            try operationState(pending.id)?.baseRevision = revision
+            try syncStorage.operationState(pending.id)?.baseRevision = revision
         }
         try reloadAll()
     }
@@ -666,13 +674,13 @@ extension LedgerStore {
             try putShared("shared_expense", value.id, payload: .value(value), deleted: false)
             if commonChanged {
                 let pending = try enqueue(entity: "shared_expense", id: value.id, action: "upsert", payload: commonCommand(value))
-                if !priorCommon { try operationState(pending.id)?.baseRevision = original.revision }
+                if !priorCommon { try syncStorage.operationState(pending.id)?.baseRevision = original.revision }
             }
             if categoryID != original.categoryID {
                 let payload = SharedAssignment(id: value.id, categoryID: categoryID)
                 try putShared("shared_assignment", value.id, payload: .value(payload), deleted: false)
                 let pending = try enqueue(entity: "shared_assignment", id: value.id, action: "upsert", payload: payload, offset: 1)
-                if !priorAssignment { try operationState(pending.id)?.baseRevision = original.assignmentRevision }
+                if !priorAssignment { try syncStorage.operationState(pending.id)?.baseRevision = original.assignmentRevision }
             }
         }
         try reloadAll()
@@ -720,22 +728,22 @@ extension LedgerStore {
             _ = try ExpenseDay(iso: value.day.iso)
             for bootstrap in value.bootstrapRecords {
                 let pending = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains { $0.entityKind == bootstrap.entity && $0.entityID == bootstrap.entityID }
-                let latest = try remember(bootstrap)
+                let latest = try syncStorage.remember(bootstrap)
                 if !pending { try applyRemote(latest) }
             }
             let assignmentPending = try context.fetch(FetchDescriptor<PendingChangeRecord>()).contains { $0.entityKind == "shared_assignment" && $0.entityID == value.id }
             let assignmentKey = RemoteRecord.key("shared_assignment", value.id)
             let cached = try context.fetch(FetchDescriptor<LedgerSchemaV3.SharedRecord>()).first { $0.key == assignmentKey }
-            let knownRevision = try remoteState("shared_assignment", value.id)?.revision ?? 0
+            let knownRevision = try syncStorage.remoteState("shared_assignment", value.id)?.revision ?? 0
             let serverAssignment = SharedAssignment(id: value.id, categoryID: value.categoryID)
-            try remember(RemoteRecord(entity: "shared_assignment", entityID: value.id, revision: value.assignmentRevision,
+            try syncStorage.remember(RemoteRecord(entity: "shared_assignment", entityID: value.id, revision: value.assignmentRevision,
                 deleted: false, payload: try .value(serverAssignment)))
             if let cached, assignmentPending || knownRevision > value.assignmentRevision {
                 value.categoryID = try JSONDecoder().decode(JSONValue.self, from: cached.data).decoded(SharedAssignment.self).categoryID
             } else {
                 let a = SharedAssignment(id: value.id, categoryID: value.categoryID)
                 let envelope = RemoteRecord(entity: "shared_assignment", entityID: value.id, revision: value.assignmentRevision, deleted: false, payload: try .value(a))
-                try remember(envelope)
+                try syncStorage.remember(envelope)
                 try putShared("shared_assignment", value.id, payload: envelope.payload, deleted: false)
             }
             value.deleted = record.deleted
@@ -772,12 +780,12 @@ extension LedgerStore {
             if issue.entity == "shared_expense", let value = sharedExpenses.first(where: { $0.id == issue.entityID }), !value.deleted {
                 latest = ("upsert", try commonCommand(value))
             }
-            for pending in selected { try removeOperation(pending.id) }
+            for pending in selected { try syncStorage.removeOperation(pending.id) }
             if keepLocal {
                 guard issue.current?.deleted != true else { throw ConnectionError.rejected(String(localized: "This shared expense was deleted. Keep its history and create a new expense if needed.")) }
                 let pending = try enqueue(entity: issue.entity, id: issue.entityID, action: latest.0, payload: latest.1)
-                try replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
-            } else if let cached = try remoteState(issue.entity, issue.entityID) {
+                try syncStorage.replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
+            } else if let cached = try syncStorage.remoteState(issue.entity, issue.entityID) {
                 try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data))
             } else {
                 let key = RemoteRecord.key(issue.entity, issue.entityID)
@@ -837,12 +845,12 @@ extension LedgerStore {
             }
             try putAnnualPlan(value)
             let pending = try enqueue(entity: "budget_plan", id: value.id, action: "upsert", payload: value, offset: offset)
-            if let confirmedBase, !prior { try operationState(pending.id)?.baseRevision = confirmedBase }
+            if let confirmedBase, !prior { try syncStorage.operationState(pending.id)?.baseRevision = confirmedBase }
         }
         try reloadAll()
     }
     private func effectivePlanRevision(snapshot: AnnualBudgetPlan?, expected: Int64?) throws -> Int64? {
-        guard let snapshot, let cached = try remoteState("budget_plan", snapshot.id),
+        guard let snapshot, let cached = try syncStorage.remoteState("budget_plan", snapshot.id),
               try JSONDecoder().decode(RemoteRecord.self, from: cached.data).payload.decoded(AnnualBudgetPlan.self) == snapshot else { return expected }
         return cached.revision
     }
@@ -860,20 +868,20 @@ extension LedgerStore {
         let selected = pendingChanges.filter { $0.entity == "budget_plan" && $0.entityID == issue.entityID }
         guard let first = selected.first, let local = annualPlans.first(where: { $0.id == issue.entityID }) else { throw ConnectionError.invalidData }
         try syncCommit {
-            for change in selected { try removeOperation(change.id) }
+            for change in selected { try syncStorage.removeOperation(change.id) }
             if keepLocal {
                 let canonical = issue.current?.entityID ?? local.id
                 let value = AnnualBudgetPlan(id: canonical, year: local.year, total: local.total, freeCategoryID: local.freeCategoryID, allocations: local.allocations)
                 if canonical != local.id, let row = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).first(where: { $0.id == local.id }) { context.delete(row) }
                 try putAnnualPlan(value)
                 let pending = try enqueue(entity: "budget_plan", id: canonical, action: "upsert", payload: value)
-                try replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
+                try syncStorage.replaceSequence(pending.id, with: first.sequence, base: issue.current?.revision ?? 0)
             } else {
                 if let row = try context.fetch(FetchDescriptor<LedgerSchemaV4.AnnualPlanRecord>()).first(where: { $0.id == local.id }) { context.delete(row) }
                 if let current = issue.current {
-                    let latest = try remoteState(current.entity, current.entityID).flatMap { try JSONDecoder().decode(RemoteRecord.self, from: $0.data) }
+                    let latest = try syncStorage.remoteState(current.entity, current.entityID).flatMap { try JSONDecoder().decode(RemoteRecord.self, from: $0.data) }
                     try applyRemote(latest ?? current)
-                } else if let cached = try remoteState("budget_plan", local.id) {
+                } else if let cached = try syncStorage.remoteState("budget_plan", local.id) {
                     try applyRemote(JSONDecoder().decode(RemoteRecord.self, from: cached.data))
                 }
             }

@@ -16,18 +16,17 @@ struct ExpenseListView: View {
     }
     var body: some View {
         List {
-            Section { MonthSelector(month: $month) }
             Section {
+                MonthSelector(month: $month)
+                let spending = -monthExpenses.reduce(0) { $0 + $1.budgetSpending }
                 LabeledContent("Your spending") {
-                    Text(Money.format(-monthExpenses.reduce(0) { $0 + $1.budgetSpending }))
-                        .foregroundStyle(AmountColors.negative).monospacedDigit()
+                    Text(Money.format(spending)).fontWeight(.semibold).monospacedDigit()
+                        .foregroundStyle(AmountColors.remaining(spending))
                 }
-            }
-            if monthExpenses.contains(where: \.isIncome) {
-                Section {
+                if monthExpenses.contains(where: \.isIncome) {
                     LabeledContent("Income") {
                         Text("+" + Money.format(monthExpenses.filter(\.isIncome).reduce(0) { $0 + $1.amount }))
-                            .foregroundStyle(AmountColors.positive).monospacedDigit()
+                            .fontWeight(.semibold).monospacedDigit().foregroundStyle(AmountColors.positive)
                     }
                 }
             }
@@ -52,6 +51,7 @@ struct ExpenseListView: View {
                 }
             }
         }
+        .listSectionSpacing(16)
         .navigationTitle("Bookings")
         .searchable(text: $search, prompt: "Description or category")
     }

@@ -263,6 +263,7 @@ struct QuickExpenseEntry: View {
                 .accessibilityIdentifier("expense.quick-details")
             Button("Save", action: save)
                 .buttonStyle(.borderedProminent)
+                .tint(Color("ProminentAction"))
                 .buttonBorderShape(.capsule)
                 .controlSize(.small)
                 .frame(minHeight: 44)
@@ -271,7 +272,7 @@ struct QuickExpenseEntry: View {
         }
     }
     private var entryContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             let headerLayout = typeSize.isAccessibilitySize
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
                 : AnyLayout(HStackLayout(spacing: 8))
@@ -286,10 +287,14 @@ struct QuickExpenseEntry: View {
                     Button("$ · US dollar") { insertCurrency("$") }
                     Button("£ · British pound") { insertCurrency("£") }
                 } label: {
-                    Text(currencyTitle).font(.subheadline).lineLimit(1).fixedSize()
+                    HStack(spacing: 4) {
+                        Text(currencyTitle).font(.subheadline.weight(.medium)).lineLimit(1).fixedSize()
+                        Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).accessibilityHidden(true)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
                 }
-                .menuIndicator(.visible)
-                .frame(minWidth: 44, minHeight: 44)
+                .menuIndicator(.hidden)
                 .accessibilityLabel("Currency shortcuts")
                 .accessibilityHint("Insert a currency symbol at the cursor")
                 .accessibilityValue(currency)
@@ -297,17 +302,18 @@ struct QuickExpenseEntry: View {
                 Divider().frame(height: 24).accessibilityHidden(true)
                 QuickEntryTextField(text: $text, isFocused: $focused, locale: locale, editor: editor, onSubmit: save)
             }
-            .padding(.horizontal, 12).padding(.vertical, 6)
+            .padding(.horizontal, 10)
             .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 4) {
                 let previewLayout = typeSize.isAccessibilitySize
                     ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-                    : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 12))
+                    : AnyLayout(HStackLayout(spacing: 12))
                 previewLayout {
                     Text(previewAmount.map { Money.format($0) } ?? "—")
-                        .font(.title3.weight(.semibold)).monospacedDigit()
+                        .font(.title2.weight(.semibold)).monospacedDigit()
                         .foregroundStyle(parsed != nil && euroAmount != nil ? Color.primary : Color.secondary)
                         .contentTransition(.identity)
+                        .lineLimit(1).minimumScaleFactor(0.8).layoutPriority(1)
                         .accessibilityLabel(previewLabel)
                         .accessibilityIdentifier("expense.quick-preview")
                     if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
@@ -319,18 +325,24 @@ struct QuickExpenseEntry: View {
                             }
                         }
                     } label: {
-                        Text(categoryName)
-                            .font(.subheadline)
-                            .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
-                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 5) {
+                            Text(categoryName)
+                                .font(.subheadline)
+                                .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2.weight(.semibold)).accessibilityHidden(true)
+                        }
+                        .frame(minHeight: 44)
+                        .contentShape(.rect)
                     }
-                    .menuIndicator(.visible)
+                    .menuIndicator(.hidden)
                     .accessibilityLabel("Category")
                     .accessibilityValue(categoryName)
                     .accessibilityIdentifier("expense.quick-category")
                 }
                 Text(entryStatus)
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(recognition.issue == nil ? Color.secondary : AmountColors.negative)
                     .accessibilityIdentifier("expense.quick-status")
             }
             .padding(.horizontal, 2)

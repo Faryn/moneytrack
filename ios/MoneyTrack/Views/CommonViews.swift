@@ -140,7 +140,10 @@ struct ListRowForeground: ShapeStyle {
     }
 
     func resolve(in environment: EnvironmentValues) -> some ShapeStyle {
-        environment.backgroundProminence == .increased ? AnyShapeStyle(.primary) : AnyShapeStyle(color)
+        if environment.backgroundProminence == .increased {
+            return environment.colorScheme == .dark ? Color.black : Color.white
+        }
+        return color
     }
 }
 
@@ -149,24 +152,37 @@ struct MonthSelector: View {
     @State private var showingPicker = false
     var body: some View {
         HStack {
-            Button("Previous Month", systemImage: "chevron.left") { month = month.moved(by: -1) }
-                .labelStyle(.iconOnly)
-                .accessibilityIdentifier("month.previous")
-                .disabled(month.year == 1900 && month.month == 1)
+            Button { month = month.moved(by: -1) } label: {
+                Label("Previous Month", systemImage: "chevron.left")
+                    .labelStyle(.iconOnly)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
+            }
+            .accessibilityIdentifier("month.previous")
+            .disabled(month.year == 1900 && month.month == 1)
             Spacer(minLength: 8)
             Button { showingPicker = true } label: {
-                Text(month.title).font(.headline)
+                Text(month.title).font(.headline).multilineTextAlignment(.center)
+                    .frame(minHeight: 44)
+                    .contentShape(.rect)
             }
             .accessibilityLabel("Selected month, \(month.title)")
             .accessibilityHint("Choose a month and year")
             .accessibilityIdentifier("budget.month")
             Spacer(minLength: 8)
-            Button("Next Month", systemImage: "chevron.right") { month = month.moved(by: 1) }
-                .labelStyle(.iconOnly)
-                .accessibilityIdentifier("month.next")
-                .disabled(month.year == 9999 && month.month == 12)
+            Button { month = month.moved(by: 1) } label: {
+                Label("Next Month", systemImage: "chevron.right")
+                    .labelStyle(.iconOnly)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
+            }
+            .accessibilityIdentifier("month.next")
+            .disabled(month.year == 9999 && month.month == 12)
         }
         .buttonStyle(.borderless)
+        .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         .sheet(isPresented: $showingPicker) {
             MonthPickerSheet(month: $month)
                 .presentationDetents([.height(340), .large])
@@ -244,9 +260,8 @@ struct RemainingAmount: View {
     var large = false
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(amount < 0 ? "Over budget" : "Left this month").foregroundStyle(.secondary)
             Text(Money.format(abs(amount)))
-                .font(large ? .largeTitle.weight(.semibold) : .title2.weight(.semibold))
+                .font(large ? .system(.largeTitle, design: .rounded, weight: .semibold) : .title2.weight(.semibold))
                 .foregroundStyle(AmountColors.remaining(amount))
                 .monospacedDigit()
                 .contentTransition(.numericText())
@@ -254,6 +269,8 @@ struct RemainingAmount: View {
                 .accessibilityIdentifier(large ? "budget.remaining" : "category.remaining")
                 .accessibilityLabel(amount < 0 ? "Over budget" : "Remaining budget")
                 .accessibilityValue(Money.format(abs(amount)))
+            Text(amount < 0 ? "Over budget" : "Left this month")
+                .font(.subheadline).foregroundStyle(.secondary).accessibilityHidden(true)
         }
     }
 }
@@ -269,17 +286,19 @@ struct ExpenseRow: View {
         layout {
             VStack(alignment: .leading, spacing: 4) {
                 Text(expense.description.isEmpty ? category : expense.description)
-                    .foregroundStyle(.primary)
-                Text(expense.isIncome ? String(localized: "Income · \(category)") : category).font(.subheadline).foregroundStyle(.secondary)
+                    .fontWeight(.medium).foregroundStyle(ListRowForeground(.primary))
+                Text(expense.isIncome ? String(localized: "Income · \(category)") : category)
+                    .font(.subheadline).foregroundStyle(ListRowForeground(.secondary))
             }
             if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 4) {
                 Text((expense.isIncome ? "+" : "") + Money.format(expense.signedAmount))
                     .foregroundStyle(ListRowForeground(expense.isIncome ? AmountColors.positive : expense.personalShare > 0 ? AmountColors.negative : .primary))
-                    .monospacedDigit()
+                    .fontWeight(.semibold).monospacedDigit()
+                    .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
                 if expense.personalShare != expense.amount {
                     Text("\(Money.format(expense.amount)) total")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(ListRowForeground(.secondary))
                 }
             }
         }
@@ -315,6 +334,7 @@ struct QuickEntryTextField: UIViewRepresentable {
         let field = UITextField()
         context.coordinator.attach(to: field)
         field.borderStyle = .none
+        field.tintColor = UIColor(named: "AccentColor")
         field.autocorrectionType = .no
         field.returnKeyType = .done
         field.enablesReturnKeyAutomatically = true

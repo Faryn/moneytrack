@@ -202,6 +202,7 @@ private struct SyncReviewDetail: View {
     let issue: SyncIssue
     @State private var error: String?
     @State private var confirmKeep = false
+    @State private var confirmDiscard = false
     private var isSharingProposal: Bool {
         guard let change = store.pendingChanges.first(where: { $0.id == issue.id }),
               let payload = try? JSONDecoder().decode(JSONValue.self, from: change.payload), case .object(let fields) = payload else { return false }
@@ -217,6 +218,13 @@ private struct SyncReviewDetail: View {
                     if issue.entity == "category", let category = store.categories.first(where: { $0.id == issue.entityID }) {
                         NavigationLink("Edit Category") { CategoryEditor(category: category, year: ExpenseDay(date: store.today).year) }
                     }
+                    if issue.current == nil, issue.entity == "expense",
+                       let expense = store.expenses.first(where: { $0.id == issue.entityID }),
+                       !store.sharedExpenses.contains(where: { $0.id == expense.id }) {
+                        NavigationLink(expense.isIncome ? "Edit Income" : "Edit Expense") {
+                            ExpenseForm(expense: expense, today: store.today)
+                        }
+                    }
                 }
             }
             if let remote = issue.current {
@@ -230,8 +238,8 @@ private struct SyncReviewDetail: View {
                 if !isSharingProposal && (issue.current != nil || !["shared_expense", "shared_assignment", "repayment", "budget_plan", "year_budget"].contains(issue.entity)) && (issue.current?.deleted != true || issue.entity == "expense") {
                     Button(issue.current?.deleted == true ? "Save as New Expense" : "Keep My Current Changes") { confirmKeep = true }
                 }
-                if ["shared_expense", "shared_assignment", "repayment", "budget_plan", "year_budget"].contains(issue.entity) && issue.current == nil {
-                    Button("Discard This Draft", role: .destructive) { resolve(keep: false) }
+                if issue.current == nil {
+                    Button("Discard This Draft", role: .destructive) { confirmDiscard = true }
                 }
             } footer: {
                 Text("Keeping your changes submits the current version on this iPhone. If it changed again elsewhere, you'll review it again.")
@@ -240,6 +248,12 @@ private struct SyncReviewDetail: View {
         .navigationTitle("Compare Versions")
         .confirmationDialog("Submit your current changes?", isPresented: $confirmKeep, titleVisibility: .visible) {
             Button("Keep My Changes") { resolve(keep: true) }
+        }
+        .confirmationDialog("Discard Changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard This Draft", role: .destructive) { resolve(keep: false) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the rejected change and any later edits to the same item.")
         }
         .alert("Couldn't Resolve Change", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button("OK", role: .cancel) {}

@@ -56,10 +56,13 @@ defmodule MoneyTrack.Currency do
     end
   end
 
-  def parse(value) when is_binary(value) do
-    value = value |> String.trim() |> String.replace(",", ".")
+  def parse(value, opts \\ [])
 
-    if Regex.match?(~r/\A[0-9]+(\.[0-9]{1,2})?\z/, value) do
+  def parse(value, opts) when is_binary(value) do
+    value = value |> String.trim() |> String.replace(",", ".")
+    minimum = if Keyword.get(opts, :allow_zero, false), do: 0, else: 1
+
+    if byte_size(value) <= 16 && Regex.match?(~r/\A[0-9]+(\.[0-9]{1,2})?\z/, value) do
       [whole | fraction] = String.split(value, ".")
 
       fraction =
@@ -69,13 +72,13 @@ defmodule MoneyTrack.Currency do
         end
 
       amount = String.to_integer(whole) * 100 + fraction
-      if amount in 1..99_999_999_999, do: {:ok, amount}, else: :error
+      if amount in minimum..99_999_999_999, do: {:ok, amount}, else: :error
     else
       :error
     end
   end
 
-  def parse(_), do: :error
+  def parse(_, _), do: :error
 
   def original_input(conversion) do
     amount = conversion["originalAmount"]

@@ -5,17 +5,18 @@ struct BudgetView: View {
     @Environment(AppSession.self) private var app
     @Binding var month: BudgetMonth
     let openYearlyPlan: () -> Void
-    private var overview: [CategoryBudget] { store.overview(month: month) }
-    private var plan: AnnualBudgetPlan? { store.annualPlan(year: month.year) }
-    private var whole: AnnualBudgetOverview? { try? store.wholeBudget(month: month) }
-    private var hasPlan: Bool { plan != nil || overview.contains { ($0.annual ?? 0) > 0 } }
-    private var totals: BudgetAmounts {
-        whole?.total ?? BudgetAmounts(allocation: overview.reduce(0) { $0 + $1.allocation }, carryover: overview.reduce(0) { $0 + $1.carryover }, spent: overview.reduce(0) { $0 + $1.spent })
-    }
-
     var body: some View {
+        let plan = store.annualPlan(year: month.year)
+        let whole = try? store.wholeBudget(month: month)
+        let overview = plan == nil ? store.overview(month: month) : whole?.categories ?? []
+        let hasPlan = plan != nil || overview.contains { ($0.annual ?? 0) > 0 }
+        let totals = whole?.total ?? BudgetAmounts(
+            allocation: overview.reduce(0) { $0 + $1.allocation },
+            carryover: overview.reduce(0) { $0 + $1.carryover },
+            spent: overview.reduce(0) { $0 + $1.spent }
+        )
+
         List {
-            Section { MonthSelector(month: $month) }
             if !store.issues.isEmpty {
                 Section {
                     NavigationLink { SyncReviewList() } label: {
@@ -23,16 +24,16 @@ struct BudgetView: View {
                     }
                 }
             }
-            if plan != nil && whole == nil {
-                Section { ContentUnavailableView("Couldn't calculate this budget", systemImage: "exclamationmark.triangle", description: Text("Your entries are preserved. Review the yearly plan before continuing.")) }
-            } else if hasPlan {
-                Section {
+            Section {
+                MonthSelector(month: $month)
+                if plan != nil && whole == nil {
+                    ContentUnavailableView("Couldn't calculate this budget", systemImage: "exclamationmark.triangle", description: Text("Your entries are preserved. Review the yearly plan before continuing."))
+                } else if hasPlan {
                     RemainingAmount(amount: totals.remaining, large: true)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
                     BudgetSupportingAmounts(amounts: totals, allocationLabel: plan == nil ? String(localized: "Monthly budget") : String(localized: "Assigned this month"))
-                }
-            } else {
-                Section {
+                        .padding(.vertical, 4)
+                } else {
                     ContentUnavailableView {
                         Label("Set your yearly budget", systemImage: "chart.pie")
                     } description: {
@@ -43,29 +44,10 @@ struct BudgetView: View {
                     }
                 }
             }
-            if let whole {
+            let categories = overview.filter { $0.id != plan?.freeCategoryID }
+            if !categories.isEmpty || (whole?.unbudgeted.remaining ?? 0) < 0 {
                 Section {
-                    if whole.unallocated > 0 {
-                        LabeledContent("Unallocated this year") {
-                            Text(Money.format(whole.unallocated)).monospacedDigit()
-                                .accessibilityIdentifier("budget.unallocated")
-                        }
-                        Button("Allocate Budget", action: openYearlyPlan)
-                            .accessibilityIdentifier("budget.allocate")
-                    }
-                    if whole.unbudgeted.remaining < 0 {
-                        NavigationLink { UnbudgetedSpendingView(month: month) } label: {
-                            LabeledContent("Unbudgeted spending") {
-                                Text(Money.format(-whole.unbudgeted.spent)).foregroundStyle(AmountColors.negative)
-                                    .monospacedDigit().accessibilityIdentifier("budget.unbudgeted.spent")
-                            }
-                        }.accessibilityIdentifier("budget.unbudgeted")
-                    }
-                }
-            }
-            if !overview.filter({ $0.id != plan?.freeCategoryID }).isEmpty {
-                Section {
-                    ForEach(overview.filter { $0.id != plan?.freeCategoryID }) { item in
+                    ForEach(categories) { item in
                         NavigationLink {
                             CategoryDetailView(categoryID: item.id, month: month)
                         } label: {
@@ -73,13 +55,32 @@ struct BudgetView: View {
                         }
                         .accessibilityIdentifier("category-\(item.category.name)")
                     }
+                    if let whole, whole.unbudgeted.remaining < 0 {
+                        NavigationLink { UnbudgetedSpendingView(month: month) } label: {
+                            LabeledContent("Unbudgeted spending") {
+                                Text(Money.format(-whole.unbudgeted.spent)).foregroundStyle(ListRowForeground(AmountColors.negative))
+                                    .monospacedDigit().accessibilityIdentifier("budget.unbudgeted.spent")
+                            }
+                        }.accessibilityIdentifier("budget.unbudgeted")
+                    }
                 } header: {
                     Text("Categories")
                 }
             }
-            Section {
-                Button("Yearly Plan", action: openYearlyPlan)
-                    .accessibilityIdentifier("budget.yearly-plan")
+            if hasPlan {
+                Section {
+                    if let whole, whole.unallocated > 0 {
+                        LabeledContent("Unallocated this year") {
+                            Text(Money.format(whole.unallocated)).monospacedDigit()
+                                .accessibilityIdentifier("budget.unallocated")
+                        }
+                        Button("Allocate Budget", action: openYearlyPlan)
+                            .accessibilityIdentifier("budget.allocate")
+                    } else {
+                        Button("Yearly Plan", action: openYearlyPlan)
+                            .accessibilityIdentifier("budget.yearly-plan")
+                    }
+                }
             }
         }
         .listSectionSpacing(16)
@@ -144,7 +145,7 @@ private struct CategoryBudgetRow: View {
             }
             if item.annual != nil && item.available > 0 {
                 ProgressView(value: min(Double(item.spent), Double(item.available)), total: Double(item.available))
-                    .tint(item.remaining < 0 ? AmountColors.negative : AmountColors.positive)
+                    .tint(item.remaining < 0 ? AmountColors.negative : .secondary)
                     .accessibilityHidden(true)
             }
         }
@@ -153,7 +154,7 @@ private struct CategoryBudgetRow: View {
     }
     private var nameAndSpending: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(name).foregroundStyle(.primary)
+            Text(name).foregroundStyle(ListRowForeground(.primary))
             Text(item.annual == nil
                  ? "\(Money.format(item.spent)) spent · No yearly budget"
                  : "\(Money.format(item.spent)) spent of \(Money.format(item.available)) available")
@@ -170,7 +171,7 @@ private struct CategoryBudgetRow: View {
                 Text(item.remaining < 0 ? "over budget" : "left")
                     .font(.caption).foregroundStyle(ListRowForeground(AmountColors.remaining(item.remaining)))
             } else {
-                Text("Set budget").font(.subheadline).foregroundStyle(.secondary)
+                Text("Set budget").font(.subheadline).foregroundStyle(ListRowForeground(.secondary))
             }
         }
     }

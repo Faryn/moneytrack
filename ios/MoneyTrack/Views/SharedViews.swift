@@ -26,14 +26,15 @@ private struct SharedActivityRow: View {
             : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 16))
         layout {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.body.weight(.medium)).foregroundStyle(.primary)
-                Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).font(.body.weight(.medium)).foregroundStyle(ListRowForeground(.primary))
+                Text(subtitle).font(.subheadline).foregroundStyle(ListRowForeground(.secondary))
             }
             if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 4) {
                 Text(amount.map { Money.format($0) } ?? String(localized: "Unavailable"))
                     .font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(ListRowForeground(amountColor))
-                Text(amountLabel).font(.subheadline).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
+                Text(amountLabel).font(.caption).foregroundStyle(ListRowForeground(.secondary))
             }
         }
         .padding(.vertical, 4)
@@ -70,6 +71,7 @@ struct SharedHomeView: View {
                                     do { try store.acceptInvitation(invitation) } catch { self.error = error.localizedDescription }
                                 }
                                 .buttonStyle(.borderedProminent).controlSize(.small)
+                                .tint(Color("ProminentAction"))
                                 .disabled(store.pendingChanges.contains { $0.entity == "shared_expense" && $0.entityID == invitation.id })
                                 .accessibilityIdentifier("sharing.accept.\(invitation.id)")
                             }.padding(.vertical, 4)
@@ -87,7 +89,7 @@ struct SharedHomeView: View {
                                     : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
                                 layout {
                                     Text(SharedDisplay.person(connection.otherName))
-                                        .font(.body.weight(.medium)).foregroundStyle(.primary)
+                                        .font(.body.weight(.medium)).foregroundStyle(ListRowForeground(.primary))
                                     if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
                                     SharedBalanceLabel(balance: try? store.sharedBalance(connection.id),
                                                        alignment: typeSize.isAccessibilitySize ? .leading : .trailing)
@@ -128,6 +130,7 @@ struct SharedHomeView: View {
 }
 
 struct SharedBalanceLabel: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let balance: Int64?
     var alignment: HorizontalAlignment = .leading
     var prominent = false
@@ -137,14 +140,16 @@ struct SharedBalanceLabel: View {
     }
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
-            Text(status).font(.subheadline).foregroundStyle(.secondary).accessibilityHidden(balance != nil)
             if let balance {
                 Text(Money.format(abs(balance)))
-                    .font(prominent ? .largeTitle.weight(.semibold) : .body.weight(.semibold))
+                    .font(prominent ? .system(.largeTitle, design: .rounded, weight: .semibold) : .body.weight(.semibold))
                     .foregroundStyle(ListRowForeground(AmountColors.remaining(balance))).monospacedDigit()
+                    .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
                     .accessibilityLabel(balance == 0 ? "Settled up" : "\(status) \(Money.format(abs(balance)))")
                     .accessibilityIdentifier("sharing.balance")
             }
+            Text(status).font(prominent ? .subheadline : .caption)
+                .foregroundStyle(ListRowForeground(.secondary)).accessibilityHidden(balance != nil)
         }
     }
 }
@@ -163,6 +168,7 @@ struct SharedPersonView: View {
                     SharedBalanceLabel(balance: balance, prominent: true)
                     Button("Settle up", systemImage: "arrow.left.arrow.right") { settling = true }
                         .buttonStyle(.borderedProminent)
+                        .tint(Color("ProminentAction"))
                         .disabled(balance == nil || balance == 0)
                         .accessibilityIdentifier("sharing.settle")
                 }.padding(.vertical, 8)

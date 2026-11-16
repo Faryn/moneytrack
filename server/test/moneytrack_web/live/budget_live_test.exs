@@ -98,6 +98,49 @@ defmodule MoneyTrackWeb.BudgetLiveTest do
     assert has_element?(view, "a[href='/plan?year=2027']")
   end
 
+  test "legacy budget rejection rolls back a new category", %{conn: conn} do
+    import MoneyTrack.Fixtures
+    alias MoneyTrack.Ledger
+
+    user = user()
+    {category, _} = category(user)
+
+    assert {:ok, _} =
+             Ledger.apply_operation(
+               user,
+               operation("year_budget", %{
+                 "id" => Ecto.UUID.generate(),
+                 "categoryID" => category["entityID"],
+                 "year" => 2025,
+                 "amount" => 120_000
+               })
+             )
+
+    assert {:ok, _} =
+             Ledger.apply_operation(
+               user,
+               operation("budget_plan", %{
+                 "id" => Ecto.UUID.generate(),
+                 "year" => 2026,
+                 "total" => 120_000,
+                 "freeCategoryID" => category["entityID"],
+                 "allocations" => []
+               })
+             )
+
+    {:ok, token, _} = MoneyTrack.Accounts.create_session(user, "browser", "Test browser")
+    {:ok, view, _} = live(init_test_session(conn, %{session_token: token}), "/?month=2025-01")
+    {:ok, before} = Ledger.changes(user)
+
+    view
+    |> form("#budget-form", budget: %{categoryID: "", name: "Food", year: "2026", amount: "600"})
+    |> render_submit()
+
+    assert render(view) =~ "This year now has a whole budget"
+    refute Enum.any?(Ledger.snapshot(user).categories, &(&1.name == "Food"))
+    assert {:ok, %{changes: []}} = Ledger.changes(user, before.cursor)
+  end
+
   test "saving a budget preserves an expense draft in the other form", %{conn: conn} do
     import MoneyTrack.Fixtures
     alias MoneyTrack.Ledger

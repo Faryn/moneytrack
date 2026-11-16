@@ -1,7 +1,6 @@
 defmodule MoneyTrackWeb.PlanLive do
   use MoneyTrackWeb, :live_view
-  alias MoneyTrack.{Ledger, Repo}
-  alias MoneyTrack.Ledger.Category
+  alias MoneyTrack.Ledger
   @impl true
   def mount(_, _, socket) do
     if connected?(socket),
@@ -38,20 +37,21 @@ defmodule MoneyTrackWeb.PlanLive do
   def handle_event("total", %{"plan" => p}, socket) do
     socket = assign(socket, form: to_form(p, as: :plan))
 
-    with {:ok, total} <- parse(p["total"]),
+    with {:ok, total} <- MoneyTrack.Currency.parse(p["total"], allow_zero: true),
          {:ok, allocations} <- Jason.decode(p["allocations"]),
          true <- is_list(allocations) do
-      free = free_category(socket, allocations)
+      {free_id, new_category} = free_category(socket, allocations)
 
       payload = %{
         "id" => p["id"],
         "year" => socket.assigns.year,
         "total" => total,
-        "freeCategoryID" => free.id,
+        "freeCategoryID" => free_id,
         "allocations" => allocations
       }
 
-      {:noreply, save(socket, operation(payload, integer(p["revision"]), p["operationID"]))}
+      op = operation(payload, integer(p["revision"]), p["operationID"])
+      {:noreply, save(socket, op, new_category)}
     else
       _ -> {:noreply, assign(socket, error: gettext("Enter a valid yearly total."))}
     end
@@ -88,7 +88,10 @@ defmodule MoneyTrackWeb.PlanLive do
     socket = assign(socket, allocation_form: to_form(p, as: :allocation))
 
     with {snapshot, revision} <- socket.assigns.allocation_snapshot,
-         {:ok, amount} <- parse(if(p["amount"] == "", do: "0", else: p["amount"])),
+         {:ok, amount} <-
+           MoneyTrack.Currency.parse(if(p["amount"] == "", do: "0", else: p["amount"]),
+             allow_zero: true
+           ),
          true <-
            amount +
              Enum.sum(
@@ -96,8 +99,7 @@ defmodule MoneyTrackWeb.PlanLive do
                  Enum.reject(snapshot["allocations"], &(&1["categoryID"] == p["categoryID"])),
                  & &1["amount"]
                )
-             ) <= snapshot["total"],
-         :ok <- ensure_category(socket, p) do
+             ) <= snapshot["total"] do
       entries = Enum.reject(snapshot["allocations"], &(&1["categoryID"] == p["categoryID"]))
 
       entries =
@@ -106,7 +108,8 @@ defmodule MoneyTrackWeb.PlanLive do
           else: entries ++ [%{"categoryID" => p["categoryID"], "amount" => amount}]
 
       payload = Map.put(snapshot, "allocations", entries)
-      {:noreply, save(socket, operation(payload, revision, p["operationID"]))}
+      category = if p["new"] == "true", do: {p["categoryID"], p["name"]}
+      {:noreply, save(socket, operation(payload, revision, p["operationID"]), category)}
     else
       _ ->
         {:noreply,
@@ -129,7 +132,7 @@ defmodule MoneyTrackWeb.PlanLive do
 
   def handle_event("keep_local", _, socket) do
     case socket.assigns.conflict do
-      %{operation: op, current: current} ->
+      %{operation: op, current: current, new_category: category} ->
         updated =
           op
           |> Map.put("operationID", Ecto.UUID.generate())
@@ -137,15 +140,15 @@ defmodule MoneyTrackWeb.PlanLive do
           |> Map.put("expectedRevision", current["revision"])
           |> Map.update!("payload", &Map.put(&1, "id", current["entityID"]))
 
-        {:noreply, save(socket, updated)}
+        {:noreply, save(socket, updated, category)}
 
       _ ->
         {:noreply, socket}
     end
   end
 
-  defp save(socket, op) do
-    case Ledger.apply_operation(socket.assigns.current_user, op) do
+  defp save(socket, op, new_category) do
+    case Ledger.apply_budget_operation(socket.assigns.current_user, op, new_category) do
       {:ok, _} ->
         socket
         |> assign(error: nil, conflict: nil, allocation_form: nil, allocation_snapshot: nil)
@@ -156,7 +159,7 @@ defmodule MoneyTrackWeb.PlanLive do
         socket
         |> assign(
           error: gettext("This year's plan changed. Review the server plan before replacing it."),
-          conflict: %{operation: op, current: current}
+          conflict: %{operation: op, current: current, new_category: new_category}
         )
         |> reload()
 
@@ -205,7 +208,7 @@ defmodule MoneyTrackWeb.PlanLive do
 
   defp free_category(socket, allocations) do
     if socket.assigns.plan do
-      Repo.get!(Category, socket.assigns.plan.free_category_id)
+      {socket.assigns.plan.free_category_id, nil}
     else
       ids = Enum.map(allocations, & &1["categoryID"])
       candidates = socket.assigns.ledger.categories
@@ -213,22 +216,12 @@ defmodule MoneyTrackWeb.PlanLive do
       found = Enum.find(candidates, &(&1.name_key == "uncategorized" && &1.id not in ids))
 
       if found do
-        found
+        {found.id, nil}
       else
         name = unique_name("Uncategorized", candidates)
         id = Ecto.UUID.generate()
 
-        {:ok, _} =
-          Ledger.apply_operation(socket.assigns.current_user, %{
-            "operationID" => Ecto.UUID.generate(),
-            "entity" => "category",
-            "entityID" => id,
-            "action" => "upsert",
-            "expectedRevision" => 0,
-            "payload" => %{"id" => id, "name" => name}
-          })
-
-        Repo.get!(Category, id)
+        {id, {id, name}}
       end
     end
   end
@@ -238,26 +231,6 @@ defmodule MoneyTrackWeb.PlanLive do
       name = if n == 1, do: base, else: "#{base} #{n}"
       unless Enum.any?(categories, &(&1.name_key == String.downcase(name))), do: name
     end) || raise "too many default-category names"
-  end
-
-  defp ensure_category(socket, p) do
-    if p["new"] == "true" do
-      op = %{
-        "operationID" => p["categoryID"],
-        "entity" => "category",
-        "entityID" => p["categoryID"],
-        "action" => "upsert",
-        "expectedRevision" => 0,
-        "payload" => %{"id" => p["categoryID"], "name" => p["name"]}
-      }
-
-      case Ledger.apply_operation(socket.assigns.current_user, op) do
-        {:ok, _} -> :ok
-        _ -> :error
-      end
-    else
-      :ok
-    end
   end
 
   defp operation(payload, revision, id),
@@ -277,26 +250,6 @@ defmodule MoneyTrackWeb.PlanLive do
     end
   end
 
-  defp parse(v) when is_binary(v) do
-    v = v |> String.trim() |> String.replace(",", ".")
-
-    if byte_size(v) <= 16 && Regex.match?(~r/\A[0-9]+(?:\.[0-9]{1,2})?\z/, v) do
-      [whole | rest] = String.split(v, ".")
-
-      fraction =
-        case rest do
-          [] -> 0
-          [n] -> String.to_integer(String.pad_trailing(n, 2, "0"))
-        end
-
-      amount = String.to_integer(whole) * 100 + fraction
-      if amount <= 99_999_999_999, do: {:ok, amount}, else: :error
-    else
-      :error
-    end
-  end
-
-  defp parse(_), do: :error
   defp input_amount(n), do: "#{div(n, 100)}.#{String.pad_leading(to_string(rem(n, 100)), 2, "0")}"
   defp money(cents), do: MoneyTrackWeb.Language.money(cents)
   @impl true

@@ -33,7 +33,12 @@ defmodule MoneyTrackWeb.BudgetLive do
       Enum.all?(~w(categoryID name amount), &(socket.assigns.budget_form.params[&1] in [nil, ""]))
 
     changed_year = month.year != socket.assigns.month.year
-    socket = assign(socket, :month, month)
+
+    socket =
+      if month == socket.assigns.month,
+        do: socket,
+        else: socket |> assign(:month, month) |> assign_monthly_summary()
+
     socket = if changed_year && blank, do: new_budget(socket), else: socket
     {:noreply, socket}
   end
@@ -122,7 +127,7 @@ defmodule MoneyTrackWeb.BudgetLive do
        save_operation(
          socket,
          op,
-         if(params["kind"] == "income", do: nil, else: params["shareWith"])
+         share_with: if(params["kind"] == "income", do: nil, else: params["shareWith"])
        )}
     else
       _ ->
@@ -172,6 +177,7 @@ defmodule MoneyTrackWeb.BudgetLive do
 
         form = %{
           "categoryID" => id,
+          "newCategoryID" => Ecto.UUID.generate(),
           "name" => category.name,
           "id" => if(budget, do: budget.id, else: Ecto.UUID.generate()),
           "operationID" => Ecto.UUID.generate(),
@@ -222,11 +228,13 @@ defmodule MoneyTrackWeb.BudgetLive do
   def handle_event("save_budget", %{"budget" => params}, socket) do
     socket = assign(socket, :budget_form, to_form(params, as: :budget))
 
-    with {:ok, cents} <- parse_amount(params["amount"]),
+    with {:ok, cents} <- MoneyTrack.Currency.parse(params["amount"], allow_zero: true),
          {year, ""} <- Integer.parse(params["year"] || ""),
          true <- year in 1900..9999,
-         {revision, ""} <- Integer.parse(params["revision"] || ""),
-         {:ok, category_id} <- ensure_category(socket, params) do
+         {revision, ""} <- Integer.parse(params["revision"] || "") do
+      new_category = if params["categoryID"] == "", do: {params["newCategoryID"], params["name"]}
+      category_id = if new_category, do: elem(new_category, 0), else: params["categoryID"]
+
       payload = %{
         "id" => params["id"],
         "categoryID" => category_id,
@@ -234,8 +242,8 @@ defmodule MoneyTrackWeb.BudgetLive do
         "amount" => cents
       }
 
-      {:noreply,
-       save_operation(socket, operation("year_budget", payload, revision, params["operationID"]))}
+      op = operation("year_budget", payload, revision, params["operationID"])
+      {:noreply, save_operation(socket, op, new_category: new_category)}
     else
       _ ->
         {:noreply,
@@ -257,7 +265,7 @@ defmodule MoneyTrackWeb.BudgetLive do
   def handle_event("keep_mine", _, %{assigns: %{conflict: nil}} = socket), do: {:noreply, socket}
 
   def handle_event("keep_mine", _, socket) do
-    %{operation: op, current: current} = socket.assigns.conflict
+    %{operation: op, current: current, new_category: category} = socket.assigns.conflict
 
     op =
       op
@@ -285,14 +293,20 @@ defmodule MoneyTrackWeb.BudgetLive do
         op
       end
 
-    {:noreply, save_operation(socket, op)}
+    {:noreply, save_operation(socket, op, new_category: category)}
   end
 
-  defp save_operation(socket, operation, share_with \\ nil) do
+  defp save_operation(socket, operation, options \\ []) do
+    user = socket.assigns.current_user
+    share_with = options[:share_with]
+    new_category = options[:new_category]
+
     result =
-      if share_with in [nil, ""],
-        do: Ledger.apply_operation(socket.assigns.current_user, operation),
-        else: Ledger.create_shared_expense(socket.assigns.current_user, operation, share_with)
+      cond do
+        share_with not in [nil, ""] -> Ledger.create_shared_expense(user, operation, share_with)
+        new_category != nil -> Ledger.apply_budget_operation(user, operation, new_category)
+        true -> Ledger.apply_operation(user, operation)
+      end
 
     case result do
       {:ok, _} ->
@@ -303,7 +317,11 @@ defmodule MoneyTrackWeb.BudgetLive do
         |> put_flash(:info, gettext("Saved"))
 
       {:error, {:conflict, current}} when not is_nil(current) ->
-        assign(socket, :conflict, %{operation: operation, current: current})
+        assign(socket, :conflict, %{
+          operation: operation,
+          current: current,
+          new_category: new_category
+        })
 
       {:error, {:validation, message}} ->
         put_flash(socket, :error, MoneyTrackWeb.Language.message(message))
@@ -325,25 +343,6 @@ defmodule MoneyTrackWeb.BudgetLive do
 
   defp reset_saved_form(socket, _operation), do: new_expense(socket)
 
-  defp ensure_category(_socket, %{"categoryID" => id}) when id != "", do: {:ok, id}
-
-  defp ensure_category(socket, params) do
-    id = Ecto.UUID.generate()
-
-    case Ledger.apply_operation(
-           socket.assigns.current_user,
-           operation(
-             "category",
-             %{"id" => id, "name" => params["name"] || ""},
-             0,
-             Ecto.UUID.generate()
-           )
-         ) do
-      {:ok, _} -> {:ok, id}
-      error -> error
-    end
-  end
-
   defp operation(kind, payload, revision, operation_id),
     do: %{
       "entity" => kind,
@@ -354,12 +353,16 @@ defmodule MoneyTrackWeb.BudgetLive do
       "action" => "upsert"
     }
 
-  defp reload(socket),
-    do:
-      assign(socket,
-        ledger: Ledger.snapshot(socket.assigns.current_user),
-        sharing_connections: MoneyTrack.Sharing.snapshot(socket.assigns.current_user).connections
-      )
+  defp reload(socket) do
+    user = socket.assigns.current_user
+
+    socket
+    |> assign(
+      ledger: Ledger.snapshot(user),
+      sharing_connections: MoneyTrack.Sharing.snapshot(user).connections
+    )
+    |> assign_monthly_summary()
+  end
 
   defp new_expense(socket) do
     assign(
@@ -392,6 +395,7 @@ defmodule MoneyTrackWeb.BudgetLive do
         to_form(
           %{
             "categoryID" => "",
+            "newCategoryID" => Ecto.UUID.generate(),
             "name" => "",
             "id" => Ecto.UUID.generate(),
             "operationID" => Ecto.UUID.generate(),
@@ -403,31 +407,41 @@ defmodule MoneyTrackWeb.BudgetLive do
         )
       )
 
-  defp overview(ledger, month) do
-    if plan = Enum.find(ledger.plans, &(&1.year == month.year)) do
-      whole = whole_budget(ledger, month, plan)
+  defp assign_monthly_summary(socket) do
+    %{ledger: ledger, month: month} = socket.assigns
+    plan = Enum.find(ledger.plans, &(&1.year == month.year))
+    whole = if plan, do: whole_budget(ledger, month, plan)
 
-      Enum.map(ledger.categories, fn c ->
-        allocation = Enum.find(plan.allocations["items"], &(&1["categoryID"] == c.id))
+    overview =
+      if plan, do: plan_overview(ledger, month, plan, whole), else: legacy_overview(ledger, month)
 
-        spent =
-          ledger.expenses
-          |> Enum.filter(
-            &(&1.kind != "income" && &1.category_id == c.id && &1.expense_date.year == month.year &&
-                &1.expense_date.month == month.month)
-          )
-          |> Enum.map(& &1.personal_share)
-          |> Enum.sum()
+    remaining =
+      if whole,
+        do: whole["total"]["remaining"],
+        else: Enum.sum(Enum.map(overview, & &1.result["remaining"]))
 
-        result =
-          whole["categories"][c.id] ||
-            %{"allocation" => 0, "carryover" => 0, "spent" => spent, "remaining" => 0}
+    assign(socket, plan: plan, whole: whole, overview: overview, total_remaining: remaining)
+  end
 
-        %{category: c, budget: allocation, result: result}
-      end)
-    else
-      legacy_overview(ledger, month)
-    end
+  defp plan_overview(ledger, month, plan, whole) do
+    Enum.map(ledger.categories, fn c ->
+      allocation = Enum.find(plan.allocations["items"], &(&1["categoryID"] == c.id))
+
+      spent =
+        ledger.expenses
+        |> Enum.filter(
+          &(&1.kind != "income" && &1.category_id == c.id && &1.expense_date.year == month.year &&
+              &1.expense_date.month == month.month)
+        )
+        |> Enum.map(& &1.personal_share)
+        |> Enum.sum()
+
+      result =
+        whole["categories"][c.id] ||
+          %{"allocation" => 0, "carryover" => 0, "spent" => spent, "remaining" => 0}
+
+      %{category: c, budget: allocation, result: result}
+    end)
   end
 
   defp whole_budget(ledger, month, plan) do
@@ -510,27 +524,6 @@ defmodule MoneyTrackWeb.BudgetLive do
   defp color(cents) when cents < 0, do: "text-red-700 dark:text-red-300"
   defp color(_), do: "text-base-content"
 
-  defp parse_amount(value) when is_binary(value) do
-    value = value |> String.trim() |> String.replace(",", ".")
-
-    if Regex.match?(~r/\A\d+(\.\d{1,2})?\z/, value) do
-      [whole | fraction] = String.split(value, ".")
-
-      fraction =
-        case fraction do
-          [] -> 0
-          [value] -> value |> String.pad_trailing(2, "0") |> String.to_integer()
-        end
-
-      amount = String.to_integer(whole) * 100 + fraction
-      if amount <= 99_999_999_999, do: {:ok, amount}, else: :error
-    else
-      :error
-    end
-  end
-
-  defp parse_amount(_), do: :error
-
   defp expense_category_options(ledger, day, fallback_year) do
     year =
       case Date.from_iso8601(day || "") do
@@ -543,17 +536,6 @@ defmodule MoneyTrackWeb.BudgetLive do
 
   @impl true
   def render(assigns) do
-    assigns = assign(assigns, :overview, overview(assigns.ledger, assigns.month))
-    plan = Enum.find(assigns.ledger.plans, &(&1.year == assigns.month.year))
-    whole = if plan, do: whole_budget(assigns.ledger, assigns.month, plan)
-
-    remaining =
-      if whole,
-        do: whole["total"]["remaining"],
-        else: Enum.sum(Enum.map(assigns.overview, & &1.result["remaining"]))
-
-    assigns = assign(assigns, plan: plan, whole: whole, total_remaining: remaining)
-
     ~H"""
     <Layouts.app flash={@flash} current_scope={%{user: @current_user}}>
       <section id="budget-overview" class="space-y-6">
@@ -720,6 +702,7 @@ defmodule MoneyTrackWeb.BudgetLive do
           class="space-y-3"
         >
           <.input field={@budget_form[:id]} type="hidden" />
+          <.input field={@budget_form[:newCategoryID]} type="hidden" />
           <.input field={@budget_form[:operationID]} type="hidden" />
           <.input field={@budget_form[:revision]} type="hidden" />
           <.input

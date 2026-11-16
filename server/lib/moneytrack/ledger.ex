@@ -81,6 +81,39 @@ defmodule MoneyTrack.Ledger do
 
   def apply_operation(_, _), do: {:error, :invalid_operation}
 
+  def apply_budget_operation(user, operation, nil), do: apply_operation(user, operation)
+
+  def apply_budget_operation(%User{} = user, %{"entity" => entity} = operation, {id, name})
+      when entity in ["budget_plan", "year_budget"] do
+    category = %{
+      "operationID" => id,
+      "entity" => "category",
+      "entityID" => id,
+      "action" => "upsert",
+      "expectedRevision" => 0,
+      "payload" => %{"id" => id, "name" => name}
+    }
+
+    result =
+      Repo.transaction(fn ->
+        case apply_operation(user, category) do
+          {:ok, _} -> :ok
+          {:error, {:conflict, _}} -> Repo.rollback(:invalid_operation)
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+        case apply_operation(user, operation) do
+          {:ok, record} -> record
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    if match?({:ok, _}, result) && !Repo.in_transaction?(),
+      do: Phoenix.PubSub.broadcast(MoneyTrack.PubSub, "ledger:#{user.id}", :ledger_changed)
+
+    result
+  end
+
   def create_shared_expense(%User{} = user, operation, recipient_id) do
     if operation["entity"] != "expense" || operation["action"] != "upsert" ||
          operation["expectedRevision"] != 0 do

@@ -9,6 +9,7 @@ final class WholeBudgetFlowTests: XCTestCase {
         app.launchEnvironment["MONEYTRACK_TEST_TODAY"] = "2026-01-15"
         app.launch()
         XCTAssertTrue(app.buttons["Budget einrichten"].waitForExistence(timeout: 10))
+        assertTabOrder(["Ausgaben", "Budget", "Geteilt"], in: app)
         app.buttons["account.open"].tap()
         app.buttons["account.privacy"].tap()
         XCTAssertTrue(app.navigationBars["Datenschutz"].waitForExistence(timeout: 5))
@@ -44,6 +45,7 @@ final class WholeBudgetFlowTests: XCTestCase {
 
         let setup = app.buttons["budget.setup"]
         XCTAssertTrue(setup.waitForExistence(timeout: 10))
+        assertTabOrder(["Expenses", "Budget", "Shared"], in: app)
         XCTAssertLessThan(app.frame.width, app.frame.height)
         setup.tap()
         let annualBudget = app.textFields["budget.annual"]
@@ -110,17 +112,33 @@ final class WholeBudgetFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Sign in to share"].exists)
     }
 
+    private func assertTabOrder(_ titles: [String], in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let positions = titles.map { title in
+            let tab = tabButton(title, in: app)
+            XCTAssertTrue(tab.exists, "Missing tab \(title)", file: file, line: line)
+            return tab.frame.midX
+        }
+        XCTAssertTrue(zip(positions, positions.dropFirst()).allSatisfy { $0 < $1 }, file: file, line: line)
+    }
+
+    private func tabButton(_ title: String, in app: XCUIApplication) -> XCUIElement {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return app.buttons.matching(NSPredicate(format: "label == %@", title)).firstMatch
+        }
+        return app.tabBars.buttons[title]
+    }
+
     private func tapTab(_ title: String, in app: XCUIApplication) {
+        let tab = tabButton(title, in: app)
         if UIDevice.current.userInterfaceIdiom == .pad {
             // The native top bar exposes overlapping accessibility elements for each tab.
-            let tab = app.buttons.matching(NSPredicate(format: "label == %@", title)).firstMatch
             XCTAssertTrue(tab.waitForExistence(timeout: 5))
             for _ in 0..<2 where !tab.isSelected {
                 tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             }
             XCTAssertTrue(tab.isSelected)
         } else {
-            app.tabBars.buttons[title].tap()
+            tab.tap()
         }
     }
 
@@ -147,6 +165,7 @@ final class WholeBudgetFlowTests: XCTestCase {
         app.launch()
         let heading = app.buttons["budget.month"]
         XCTAssertTrue(heading.waitForExistence(timeout: 10))
+        assertTabOrder(["Expenses", "Budget", "Shared"], in: app)
         heading.tap()
         XCTAssertTrue(app.buttons["month.done"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.pickerWheels.count, 2)
@@ -168,7 +187,7 @@ final class WholeBudgetFlowTests: XCTestCase {
         december.adjust(toPickerWheelValue: "February")
         app.buttons["month.cancel"].tap()
         XCTAssertTrue(heading.label.contains("December 2025"))
-        app.tabBars.buttons["Expenses"].tap()
+        tapTab("Expenses", in: app)
         XCTAssertTrue(heading.label.contains("December 2025"))
         heading.tap()
         XCTAssertEqual(app.pickerWheels.count, 2)

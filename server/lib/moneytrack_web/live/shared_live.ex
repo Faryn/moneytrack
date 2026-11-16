@@ -159,7 +159,7 @@ defmodule MoneyTrackWeb.SharedLive do
   def handle_event("repay", %{"repayment" => p}, socket) do
     socket = assign(socket, repayment_form: to_form(p, as: :repayment))
 
-    with {:ok, amount} <- amount(p["amount"]),
+    with {:ok, amount} <- MoneyTrack.Currency.parse(p["amount"]),
          {:ok, date} <- Date.from_iso8601(p["day"] || ""),
          {balance, ""} <- Integer.parse(p["balance"] || ""),
          connection when not is_nil(connection) <-
@@ -297,26 +297,6 @@ defmodule MoneyTrackWeb.SharedLive do
 
   defp int_value(_), do: 0
 
-  defp amount(value) when is_binary(value) do
-    value = value |> String.trim() |> String.replace(",", ".")
-
-    if byte_size(value) <= 16 && Regex.match?(~r/\A[0-9]+(?:\.[0-9]{1,2})?\z/, value) do
-      [whole | rest] = String.split(value, ".")
-
-      fraction =
-        case rest do
-          [] -> 0
-          [v] -> v |> String.pad_trailing(2, "0") |> String.to_integer()
-        end
-
-      cents = String.to_integer(whole) * 100 + fraction
-      if cents in 1..99_999_999_999, do: {:ok, cents}, else: :error
-    else
-      :error
-    end
-  end
-
-  defp amount(_), do: :error
   defp day(d), do: %{"year" => d.year, "month" => d.month, "day" => d.day}
 
   defp iso_day(d),

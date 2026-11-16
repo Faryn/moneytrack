@@ -28,6 +28,8 @@ All money is integer EUR cents. Total can be zero and cannot exceed 99,999,999,9
 
 There is one plan per owner/year. Total, free category, and allocations share one revision and commit with their change event and operation result in one transaction. Stale edits return the full current private plan for review. Concurrent creation for the same year returns the canonical record, including its potentially different UUID. Choosing Keep My Plan explicitly submits a new operation against that displayed canonical revision; a later conflict requires another review.
 
+When a web budget form creates a category, the category, budget update, and both sync events commit together. A stale or invalid budget rolls back the category and its sync event.
+
 ## Calculation
 
 [ADR 0021](../adr/0021-allocate-the-full-budget.md) defines the current calculation. Unallocated is the annual total less the sum of category allocations. It is available to assign. For each month, the overall balance starts with the sum of assigned category amounts plus carryover and subtracts all personal-share spending. Show spending without a category allocation separately. The sum of category balances less cumulative unbudgeted spending equals the overall balance. Income and repayments have no budget impact. January starts with zero carryover.

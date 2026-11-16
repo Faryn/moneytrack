@@ -21,6 +21,18 @@ defmodule MoneyTrack.CurrencyTest do
     assert {:error, _} = Currency.decode_rates("<broken>")
   end
 
+  test "amount forms share exact cents and set their own zero policy" do
+    assert {:ok, 7850} = Currency.parse(" 78,50 ")
+    assert {:ok, 7850} = Currency.parse("78.5")
+    assert {:ok, 99_999_999_999} = Currency.parse("999999999.99")
+    assert {:ok, 0} = Currency.parse("0,00", allow_zero: true)
+    assert :error = Currency.parse("0,00")
+
+    for invalid <- [nil, "", "78.001", "1.000,00", "1000000000", "-1", "1e3"] do
+      assert :error = Currency.parse(invalid, allow_zero: true)
+    end
+  end
+
   test "exact conversion rounds once, then shares and repayments conserve euro cents" do
     for {original, currency, rate, euro, other} <- [
           {12345, "USD", "1.25", 9876, 4938},

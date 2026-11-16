@@ -16,15 +16,15 @@ struct AppRootView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Budget", systemImage: "chart.pie", value: AppTab.budget) {
-                ledgerNavigation("Select a Category", systemImage: "chart.pie") {
-                    BudgetView(month: $month, openYearlyPlan: { sheet = .yearly(month.year) })
-                        .toolbar { EntryToolbar(account: { sheet = .account }) }
-                }
-            }
             Tab("Expenses", systemImage: "list.bullet", value: AppTab.expenses) {
                 ledgerNavigation("Select a Booking", systemImage: "list.bullet", showsAdd: true) {
                     ExpenseListView(month: $month)
+                        .toolbar { EntryToolbar(account: { sheet = .account }) }
+                }
+            }
+            Tab("Budget", systemImage: "chart.pie", value: AppTab.budget) {
+                ledgerNavigation("Select a Category", systemImage: "chart.pie") {
+                    BudgetView(month: $month, openYearlyPlan: { sheet = .yearly(month.year) })
                         .toolbar { EntryToolbar(account: { sheet = .account }) }
                 }
             }
@@ -133,6 +133,7 @@ struct ReachableExpenseButton: View {
                 .symbolEffectsRemoved(reduceMotion)
         }
         .buttonStyle(.borderedProminent).buttonBorderShape(.circle).controlSize(.large)
+        .tint(Color("ProminentAction"))
         .accessibilityIdentifier("expense.add")
         .sensoryFeedback(.selection, trigger: activations)
     }

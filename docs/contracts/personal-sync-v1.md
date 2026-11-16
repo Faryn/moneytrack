@@ -67,6 +67,8 @@ Cursors are signed, account-bound, and based on a private per-user sequence. Pag
 - `409 operation_reused`: the operation UUID was reused with different content; do not retry modified content under that UUID.
 - `404`: an item or category is unavailable to this account. No foreign payload is returned.
 - `422`: invalid fields/constraints. Preserve the change for correction and explicit retry; duplicate category names can be renamed.
+
+For a rejected personal booking or category with no server version in the response, the native review can discard the draft after confirmation. It restores the latest cached server version when available or removes the local-only item. Later edits to the same item are discarded in the same transaction. Dependent bookings, budgets, and sharing updates are protected from draft removal.
 - `400 invalid_cursor`: restart the retained feed, preserving local work.
 - `429`: login throttling; respect `Retry-After`.
 

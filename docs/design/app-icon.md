@@ -9,7 +9,9 @@ Approved on 2026-11-04: a sage wallet and ivory coin on a deep pine background. 
 
 These are art-direction targets; shading in the generated raster varies around them.
 
-The approved original is [moneytrack-icon-source.png](moneytrack-icon-source.png). The app uses [AppIcon.png](../../ios/MoneyTrack/Assets.xcassets/AppIcon.appiconset/AppIcon.png), resized proportionally to 1024×1024 for the existing universal iOS app-icon asset catalog. It is an opaque RGB PNG with square outer edges; iOS supplies the icon mask. The existing app accent and financial green/red semantics remain unchanged.
+The approved original is [moneytrack-icon-source.png](moneytrack-icon-source.png). The app uses [AppIcon.png](../../ios/MoneyTrack/Assets.xcassets/AppIcon.appiconset/AppIcon.png), resized proportionally to 1024×1024 for the universal iOS app-icon asset catalog. It is an opaque RGB PNG with square outer edges. iOS supplies the icon mask.
+
+The iOS interface takes its action and selection tint from the icon’s pine palette, with separate light and dark variants. Positive and negative amounts use their own green and red colors.
 
 ## Artwork provenance
 

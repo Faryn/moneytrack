@@ -39,6 +39,7 @@ The primary client is a universal iPhone and iPad app using SwiftUI and standard
 
 ### Home
 
+- Show Expenses, Budget, and Shared in that tab order. Open Budget on launch.
 - Display the selected month's total remaining budget prominently.
 - Show the monthly allocation, carryover, and personal spending as supporting figures.
 - Allow moving between months with the existing heading and previous/next arrows. Tapping the heading opens the native month-and-year wheel picker at the displayed month, with Done to apply and Cancel to keep the current selection. Budget and Expenses share the selected month.

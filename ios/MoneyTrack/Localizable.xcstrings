@@ -3316,6 +3316,16 @@
         }
       }
     },
+    "This category is used by other entries or pending changes. Rename it and try again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Andere Buchungen oder ausstehende Änderungen verwenden diese Kategorie. Benenne sie um und versuche es erneut."
+          }
+        }
+      }
+    },
     "This category is still used by a booking or budget.": {
       "localizations": {
         "de": {
@@ -3379,6 +3389,16 @@
         }
       }
     },
+    "This expense is linked to sharing changes. Its draft was kept.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Ausgabe ist mit Änderungen an der Aufteilung verknüpft. Der Entwurf wurde behalten."
+          }
+        }
+      }
+    },
     "This expense is no longer available.": {
       "localizations": {
         "de": {
@@ -3437,6 +3457,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Damit erfasst du eine Zahlung außerhalb von Spendie. Falls sich der Saldo geändert hat, verwirf diesen Entwurf und prüfe den aktuellen Saldo, bevor du die Zahlung erneut erfasst."
+          }
+        }
+      }
+    },
+    "This removes the rejected change and any later edits to the same item.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dadurch werden die abgelehnte Änderung und alle späteren Änderungen an diesem Eintrag verworfen."
           }
         }
       }
