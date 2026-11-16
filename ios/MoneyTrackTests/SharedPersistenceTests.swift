@@ -4,6 +4,29 @@ import SwiftData
 
 @MainActor
 final class SharedPersistenceTests: XCTestCase {
+    func testBlockedQueueKeepsSharingSourceWithItsProposal() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = try LedgerStore(container: LedgerPersistence.container(root: root))
+        let category = try store.saveCategory(name: "Groceries", year: 2026, annualAmount: nil)
+        try acknowledgePersonal(store)
+        try store.saveCategory(name: "Rejected", year: 2026, annualAmount: nil)
+        let rejected = try XCTUnwrap(store.prepareNextOperation())
+        try store.recordIssue(rejected.0, message: "Validation failed", current: nil)
+        let day = try ExpenseDay(iso: "2026-01-15")
+        let source = try store.saveExpense(amount: 500, description: "Shared source", categoryID: category, day: day)
+        try store.shareExpense(source, viewerID: UUID(), username: "Viewer", email: "partner@example.org", connection: nil, paidByUser: true, split: .half)
+        let personal = try store.saveExpense(amount: 100, description: "Personal", categoryID: category, day: day)
+
+        let prepared = try XCTUnwrap(store.prepareNextOperation())
+        let wire = try JSONDecoder().decode(WireOperation.self, from: prepared.1)
+        XCTAssertEqual(wire.entityID, personal)
+        try store.acknowledge(prepared.0, record: .init(entity: "expense", entityID: personal, revision: 1, deleted: false, payload: wire.payload))
+        XCTAssertNil(try store.prepareNextOperation())
+        XCTAssertEqual(store.pendingChanges.map(\.entity), ["category", "expense", "shared_expense"])
+        XCTAssertEqual(store.expenses.first { $0.id == source }?.personalShare, 250)
+    }
+
     func testEntrySharingCommitsPersonalSourceAndShareTogetherAndSurvivesReopen() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

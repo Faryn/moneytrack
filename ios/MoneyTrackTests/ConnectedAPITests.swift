@@ -106,6 +106,67 @@ final class ConnectedAPITests: XCTestCase {
         try await transport.signOut(credential)
     }
 
+    func testUnrelatedBookingReachesSecondDeviceWhileCategoryConflictIsPending() async throws {
+        guard let address = ProcessInfo.processInfo.environment["MONEYTRACK_TEST_SERVER"],
+              address == "http://127.0.0.1:4004" else { throw XCTSkip("Run scripts/check-connected for the isolated real-server check.") }
+        let transport = HTTPTransport()
+        let server = try ServerAddress.parse(address)
+        let first = try await transport.signIn(server: server, username: "native-queue-fixture", password: "fixture-passphrase-2026")
+        let second = try await transport.signIn(server: server, username: "native-queue-fixture", password: "fixture-passphrase-2026")
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let firstRoot = root.appending(path: "device-a")
+        let namespace = StoreNamespace.serverAccount(server, first.userID)
+        let peer = try LedgerStore(container: LedgerPersistence.container(root: root.appending(path: "device-b"), namespace: namespace))
+        let food = try peer.saveCategory(name: "Food", year: 2026, annualAmount: nil)
+        let travel = try peer.saveCategory(name: "Travel", year: 2026, annualAmount: nil)
+        try await pump(peer, transport, second)
+
+        let waiting: UUID, independent: UUID
+        do {
+            let offline = try LedgerStore(container: LedgerPersistence.container(root: firstRoot, namespace: namespace))
+            try await pump(offline, transport, first)
+            try peer.saveCategory(id: food, name: "Renamed on the second device", year: 2026, annualAmount: nil)
+            try await pump(peer, transport, second)
+            try offline.saveCategory(id: food, name: "Offline rename", year: 2026, annualAmount: nil)
+            let day = try ExpenseDay(iso: "2026-01-15")
+            waiting = try offline.saveExpense(amount: 100, description: "Groceries", categoryID: food, day: day)
+            independent = try offline.saveExpense(amount: 500, description: "Train", categoryID: travel, day: day)
+        }
+
+        let vault = EphemeralVault()
+        try vault.write(first)
+        let session = AppSession(vault: vault, transport: transport, root: firstRoot)
+        try session.open()
+        let store = try XCTUnwrap(session.store)
+        try await waitForSync(session)
+        XCTAssertEqual(store.issues.map(\.entityID), [food])
+        XCTAssertEqual(store.pendingChanges.map(\.entityID), [food, waiting])
+        XCTAssertEqual(store.categories.first { $0.id == food }?.name, "Offline rename")
+        try await pump(peer, transport, second)
+        XCTAssertEqual(peer.expenses.map(\.id), [independent])
+
+        try store.resolve(XCTUnwrap(store.issues.first), keepLocal: false)
+        try await waitForSync(session)
+        try await pump(peer, transport, second)
+        XCTAssertEqual(Set(peer.expenses.map(\.id)), [waiting, independent])
+        XCTAssertEqual(store.categories.first { $0.id == food }?.name, "Renamed on the second device")
+        XCTAssertTrue(store.pendingChanges.isEmpty)
+        XCTAssertTrue(store.issues.isEmpty)
+        try await session.signOut()
+        try await transport.signOut(second)
+    }
+
+    private func waitForSync(_ session: AppSession) async throws {
+        await session.synchronize()
+        let deadline = ContinuousClock.now + .seconds(5)
+        while session.isSyncing && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertFalse(session.isSyncing)
+        XCTAssertNil(session.syncError)
+    }
+
     private func pump(_ store: LedgerStore, _ transport: HTTPTransport, _ credential: SessionCredential) async throws {
         while let (id, data) = try store.prepareNextOperation() {
             let response = try await transport.push(data, credential: credential)

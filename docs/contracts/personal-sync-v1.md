@@ -69,6 +69,8 @@ Cursors are signed, account-bound, and based on a private per-user sequence. Pag
 - `422`: invalid fields/constraints. Preserve the change for correction and explicit retry; duplicate category names can be renamed.
 
 For a rejected personal booking or category with no server version in the response, the native review can discard the draft after confirmation. It restores the latest cached server version when available or removes the local-only item. Later edits to the same item are discarded in the same transaction. Dependent bookings, budgets, and sharing updates are protected from draft removal.
+
+While a rejected operation awaits review, iOS can upload unrelated personal bookings in queue order. A booking waits for earlier changes to the same booking or its category, and its category must already have a server revision. Bookings linked to sharing keep their original place in the queue. Prepared requests retain their original bytes across retries.
 - `400 invalid_cursor`: restart the retained feed, preserving local work.
 - `429`: login throttling; respect `Retry-After`.
 

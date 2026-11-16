@@ -51,7 +51,8 @@ final class SyncPersistenceTests: XCTestCase {
         let other = try store.saveExpense(amount: 300, description: "Independent", categoryID: category.id, day: day)
         let otherChange = try XCTUnwrap(store.pendingChanges.last)
         try store.recordIssue(first.0, message: "Validation failed", current: nil)
-        XCTAssertNil(try store.prepareNextOperation())
+        let independent = try XCTUnwrap(store.prepareNextOperation())
+        XCTAssertEqual(independent.0, otherChange.id)
 
         try store.resolve(XCTUnwrap(store.issues.first), keepLocal: false)
 
@@ -60,7 +61,43 @@ final class SyncPersistenceTests: XCTestCase {
         XCTAssertEqual(reopened.pendingChanges, [otherChange])
         XCTAssertTrue(reopened.issues.isEmpty)
         XCTAssertTrue(try ModelContext(container).fetch(FetchDescriptor<LedgerSchemaV6.IncomeRecord>()).isEmpty)
-        XCTAssertEqual(try reopened.prepareNextOperation()?.0, otherChange.id)
+        XCTAssertEqual(try reopened.prepareNextOperation()?.1, independent.1)
+    }
+
+    func testBlockedQueueRetainsBookingAndCategoryDependenciesAndFrozenBytes() throws {
+        let root = directory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let container = try LedgerPersistence.container(root: root)
+        let store = try LedgerStore(container: container)
+        let food = CategoryValue(id: UUID(), name: "Food")
+        let travel = CategoryValue(id: UUID(), name: "Travel")
+        try store.receive(.init(changes: [remote(food, revision: 1), remote(travel, revision: 1)], cursor: "categories", hasMore: false))
+        let day = try ExpenseDay(iso: "2026-01-15")
+        try store.saveCategory(id: food.id, name: "Groceries", year: 2026, annualAmount: nil)
+        let rename = try XCTUnwrap(store.prepareNextOperation())
+        try store.recordIssue(rename.0, message: "Validation failed", current: nil)
+        let waiting = try store.saveExpense(amount: 100, description: "Groceries", categoryID: food.id, day: day)
+        let newCategory = try store.saveCategory(name: "Added offline", year: 2026, annualAmount: nil)
+        let dependent = try store.saveExpense(amount: 200, description: "Needs new category", categoryID: newCategory, day: day)
+        let trip = try store.saveExpense(amount: 300, description: "Train", categoryID: travel.id, day: day)
+        try store.saveExpense(id: trip, amount: 400, description: "Later edit", categoryID: travel.id, day: day)
+        let fare = try store.saveExpense(amount: 500, description: "Taxi", categoryID: travel.id, day: day)
+
+        let tripRequest = try XCTUnwrap(store.prepareNextOperation())
+        let reopened = try LedgerStore(container: container)
+        XCTAssertEqual(try reopened.prepareNextOperation()?.1, tripRequest.1)
+        let wire = try JSONDecoder().decode(WireOperation.self, from: tripRequest.1)
+        XCTAssertEqual(wire.entityID, trip)
+        try reopened.recordIssue(tripRequest.0, message: "Validation failed", current: nil)
+
+        let fareRequest = try XCTUnwrap(reopened.prepareNextOperation())
+        let fareWire = try JSONDecoder().decode(WireOperation.self, from: fareRequest.1)
+        XCTAssertEqual(fareWire.entityID, fare)
+        try reopened.acknowledge(fareRequest.0, record: .init(entity: "expense", entityID: fare, revision: 1, deleted: false, payload: fareWire.payload))
+        XCTAssertNil(try reopened.prepareNextOperation())
+        XCTAssertEqual(reopened.pendingChanges.map(\.entityID), [food.id, waiting, newCategory, dependent, trip, trip])
+        XCTAssertEqual(reopened.issues.count, 2)
+        XCTAssertEqual(reopened.expenses.first { $0.id == trip }?.amount, 400)
     }
 
     func testDiscardRejectedExpenseEditRestoresLatestCachedRevision() throws {

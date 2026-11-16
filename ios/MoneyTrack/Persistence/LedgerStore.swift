@@ -191,13 +191,52 @@ extension LedgerStore {
     var hasImportedLocal: Bool { get throws { try syncStorage.metadata().importedLocal } }
 
     func prepareNextOperation() throws -> (UUID, Data)? {
-        guard let pending = pendingChanges.first else { return nil }
+        guard let first = pendingChanges.first else { return nil }
+        let pending: PendingChangeValue
+        if issues.contains(where: { $0.id == first.id }) {
+            guard let independent = try nextIndependentBooking() else { return nil }
+            pending = independent
+        } else {
+            pending = first
+        }
         let state = try syncStorage.operationState(pending.id)
         if state?.issueData != nil { return nil }
         if let data = state?.wireData { return (pending.id, data) }
         let data = try syncStorage.encodeOperation(pending, baseRevision: state == nil ? 0 : state?.baseRevision)
         try syncCommit { try syncStorage.freeze(data, for: pending.id) }
         return (pending.id, data)
+    }
+
+    private func nextIndependentBooking() throws -> PendingChangeValue? {
+        let rejected = Set(issues.map(\.id))
+        var sharedIDs = Set(sharedExpenses.map(\.id))
+        sharedIDs.formUnion(pendingChanges.lazy.filter {
+            $0.entity == "shared_expense" || $0.entity == "shared_assignment"
+        }.map(\.entityID))
+        var earlierCategories = Set<UUID>()
+        var earlierBookings = Set<UUID>()
+        let decoder = JSONDecoder()
+
+        for pending in pendingChanges {
+            if pending.entity == "category" { earlierCategories.insert(pending.entityID) }
+            guard pending.entity == "expense", earlierBookings.insert(pending.entityID).inserted,
+                  !rejected.contains(pending.id), !sharedIDs.contains(pending.entityID) else { continue }
+
+            let categoryID: UUID?
+            if pending.action == "delete" {
+                categoryID = try expenseRecord(pending.entityID)?.categoryID
+            } else if pending.action == "upsert",
+                      case .object(let fields) = try? decoder.decode(JSONValue.self, from: pending.payload),
+                      case .string(let identifier) = fields["categoryID"] {
+                categoryID = UUID(uuidString: identifier)
+            } else {
+                continue
+            }
+            guard let categoryID, !earlierCategories.contains(categoryID), !archivedCategoryIDs.contains(categoryID),
+                  try recordRevision("category", categoryID) > 0 else { continue }
+            return pending
+        }
+        return nil
     }
 
     func acknowledge(_ id: UUID, record: RemoteRecord) throws {

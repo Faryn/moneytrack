@@ -13,6 +13,7 @@ end
 
 for username <- [
       "native-core-fixture",
+      "native-queue-fixture",
       "ui-connected-fixture",
       "shared-a-fixture",
       "shared-b-fixture",

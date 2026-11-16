@@ -108,7 +108,6 @@ final class AppSession {
                 } catch let issue as ServerRejection {
                     guard generation == started else { return }
                     try store.recordIssue(id, message: issue.message, current: issue.current)
-                    break
                 }
             }
             var restarted = false
